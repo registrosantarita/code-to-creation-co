@@ -1,0 +1,220 @@
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useState } from "react";
+import { toast } from "sonner";
+import { z } from "zod";
+import { supabase } from "@/integrations/supabase/client";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Badge } from "@/components/ui/badge";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { STATUS_ANALISE } from "@/lib/labels";
+
+export const Route = createFileRoute("/_authenticated/painel")({
+  head: () => ({
+    meta: [
+      { title: "Painel de análises — Conferência Registral" },
+      {
+        name: "description",
+        content:
+          "Acompanhe suas análises de conferência registral, documentos e comparações técnicas.",
+      },
+      { property: "og:title", content: "Painel de análises — Conferência Registral" },
+      {
+        property: "og:description",
+        content: "Gestão de casos de conferência registral e geométrica.",
+      },
+    ],
+  }),
+  component: Painel,
+});
+
+const novaAnalise = z.object({
+  title: z.string().trim().min(3, "Informe um título com ao menos 3 caracteres.").max(255),
+  objective: z.string().trim().max(2000),
+  tags: z.string().max(300),
+});
+
+function Painel() {
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
+  const [open, setOpen] = useState(false);
+  const [title, setTitle] = useState("");
+  const [objective, setObjective] = useState("");
+  const [tags, setTags] = useState("");
+
+  const { data: analyses, isLoading } = useQuery({
+    queryKey: ["analyses"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("analyses")
+        .select("id, title, objective, status, tags, created_at")
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  const create = useMutation({
+    mutationFn: async () => {
+      const parsed = novaAnalise.safeParse({ title, objective, tags });
+      if (!parsed.success) throw new Error(parsed.error.issues[0]!.message);
+      const { data: userData } = await supabase.auth.getUser();
+      const uid = userData.user?.id;
+      if (!uid) throw new Error("Sessão expirada.");
+      const { data, error } = await supabase
+        .from("analyses")
+        .insert({
+          title: parsed.data.title,
+          objective: parsed.data.objective,
+          created_by: uid,
+          responsible_user_id: uid,
+          tags: parsed.data.tags
+            .split(",")
+            .map((t) => t.trim())
+            .filter(Boolean)
+            .slice(0, 12),
+        })
+        .select("id")
+        .single();
+      if (error) throw error;
+      return data.id;
+    },
+    onSuccess: (id) => {
+      setOpen(false);
+      setTitle("");
+      setObjective("");
+      setTags("");
+      queryClient.invalidateQueries({ queryKey: ["analyses"] });
+      navigate({ to: "/analises/$id", params: { id } });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  return (
+    <main className="mx-auto max-w-6xl px-6 py-12">
+      <div className="flex flex-wrap items-end justify-between gap-4">
+        <div>
+          <p className="eyebrow">Casos de conferência</p>
+          <h1 className="mt-2 text-4xl">Minhas análises</h1>
+        </div>
+        <Dialog open={open} onOpenChange={setOpen}>
+          <DialogTrigger asChild>
+            <Button>Nova análise</Button>
+          </DialogTrigger>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle className="font-display">Abrir nova análise</DialogTitle>
+              <DialogDescription>
+                Cada análise reúne documentos, extrações, comparações e achados
+                com trilha de auditoria.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="titulo">Título do caso</Label>
+                <Input
+                  id="titulo"
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                  placeholder="Ex.: Desdobro — Matrícula 12.345"
+                  maxLength={255}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="objetivo">Objetivo da conferência</Label>
+                <Textarea
+                  id="objetivo"
+                  value={objective}
+                  onChange={(e) => setObjective(e.target.value)}
+                  placeholder="Ex.: Verificar equivalência entre o memorial apresentado e o descritivo da matrícula."
+                  rows={3}
+                  maxLength={2000}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="tags">Etiquetas (separadas por vírgula)</Label>
+                <Input
+                  id="tags"
+                  value={tags}
+                  onChange={(e) => setTags(e.target.value)}
+                  placeholder="desdobro, confrontante, memorial"
+                  maxLength={300}
+                />
+              </div>
+            </div>
+            <DialogFooter>
+              <Button
+                onClick={() => create.mutate()}
+                disabled={create.isPending}
+              >
+                {create.isPending ? "Criando..." : "Criar análise"}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      </div>
+
+      <div className="rule-gold mt-8 w-24" />
+
+      {isLoading ? (
+        <p className="mt-10 text-sm text-muted-foreground">Carregando análises...</p>
+      ) : !analyses || analyses.length === 0 ? (
+        <div className="panel mt-10 p-10 text-center">
+          <h2 className="text-2xl">Nenhuma análise ainda</h2>
+          <p className="mx-auto mt-3 max-w-md text-sm text-muted-foreground">
+            Abra uma análise para enviar memoriais, extrair dados técnicos e
+            comparar documentos com tolerâncias configuráveis.
+          </p>
+        </div>
+      ) : (
+        <ul className="mt-10 grid gap-4 md:grid-cols-2">
+          {analyses.map((a) => (
+            <li key={a.id}>
+              <Link
+                to="/analises/$id"
+                params={{ id: a.id }}
+                className="panel block p-6 transition-colors hover:border-accent"
+              >
+                <div className="flex items-start justify-between gap-4">
+                  <h2 className="text-xl leading-snug">{a.title}</h2>
+                  <Badge variant="secondary" className="shrink-0">
+                    {STATUS_ANALISE[a.status]}
+                  </Badge>
+                </div>
+                {a.objective && (
+                  <p className="mt-3 line-clamp-2 text-sm text-muted-foreground">
+                    {a.objective}
+                  </p>
+                )}
+                <div className="mt-4 flex flex-wrap items-center gap-2">
+                  {(a.tags ?? []).map((t) => (
+                    <span
+                      key={t}
+                      className="rounded-sm border border-border px-2 py-0.5 text-[11px] text-muted-foreground"
+                    >
+                      {t}
+                    </span>
+                  ))}
+                  <span className="numeric ml-auto text-[11px] text-muted-foreground">
+                    {new Date(a.created_at).toLocaleDateString("pt-BR")}
+                  </span>
+                </div>
+              </Link>
+            </li>
+          ))}
+        </ul>
+      )}
+    </main>
+  );
+}
