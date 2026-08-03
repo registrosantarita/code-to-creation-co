@@ -13,6 +13,8 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedPainelRouteImport } from './routes/_authenticated/painel'
+import { Route as AuthenticatedAnalisesIdRouteImport } from './routes/_authenticated/analises.$id'
+import { Route as AuthenticatedComparacoesIdRouteImport } from './routes/_authenticated/comparacoes.$id'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -33,16 +35,31 @@ const AuthenticatedPainelRoute = AuthenticatedPainelRouteImport.update({
   path: '/painel',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedAnalisesIdRoute = AuthenticatedAnalisesIdRouteImport.update({
+  id: '/analises/$id',
+  path: '/analises/$id',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedComparacoesIdRoute =
+  AuthenticatedComparacoesIdRouteImport.update({
+    id: '/comparacoes/$id',
+    path: '/comparacoes/$id',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/painel': typeof AuthenticatedPainelRoute
+  '/analises/$id': typeof AuthenticatedAnalisesIdRoute
+  '/comparacoes/$id': typeof AuthenticatedComparacoesIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/painel': typeof AuthenticatedPainelRoute
+  '/analises/$id': typeof AuthenticatedAnalisesIdRoute
+  '/comparacoes/$id': typeof AuthenticatedComparacoesIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -50,13 +67,22 @@ export interface FileRoutesById {
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
   '/_authenticated/painel': typeof AuthenticatedPainelRoute
+  '/_authenticated/analises/$id': typeof AuthenticatedAnalisesIdRoute
+  '/_authenticated/comparacoes/$id': typeof AuthenticatedComparacoesIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/auth' | '/painel'
+  fullPaths: '/' | '/auth' | '/painel' | '/analises/$id' | '/comparacoes/$id'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/auth' | '/painel'
-  id: '__root__' | '/' | '/_authenticated' | '/auth' | '/_authenticated/painel'
+  to: '/' | '/auth' | '/painel' | '/analises/$id' | '/comparacoes/$id'
+  id:
+    | '__root__'
+    | '/'
+    | '/_authenticated'
+    | '/auth'
+    | '/_authenticated/painel'
+    | '/_authenticated/analises/$id'
+    | '/_authenticated/comparacoes/$id'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -95,15 +121,33 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedPainelRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/analises/$id': {
+      id: '/_authenticated/analises/$id'
+      path: '/analises/$id'
+      fullPath: '/analises/$id'
+      preLoaderRoute: typeof AuthenticatedAnalisesIdRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/comparacoes/$id': {
+      id: '/_authenticated/comparacoes/$id'
+      path: '/comparacoes/$id'
+      fullPath: '/comparacoes/$id'
+      preLoaderRoute: typeof AuthenticatedComparacoesIdRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
   }
 }
 
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedPainelRoute: typeof AuthenticatedPainelRoute
+  AuthenticatedAnalisesIdRoute: typeof AuthenticatedAnalisesIdRoute
+  AuthenticatedComparacoesIdRoute: typeof AuthenticatedComparacoesIdRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedPainelRoute: AuthenticatedPainelRoute,
+  AuthenticatedAnalisesIdRoute: AuthenticatedAnalisesIdRoute,
+  AuthenticatedComparacoesIdRoute: AuthenticatedComparacoesIdRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =

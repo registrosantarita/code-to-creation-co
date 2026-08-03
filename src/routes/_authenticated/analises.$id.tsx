@@ -198,7 +198,7 @@ function AnaliseDetalhe() {
       const path = `${uid}/${id}/${crypto.randomUUID()}.${ext}`;
       const { error: upErr } = await supabase.storage
         .from("documentos")
-        .upload(path, file, { contentType: file.type || undefined });
+        .upload(path, file, { contentType: file.type || "application/octet-stream" });
       if (upErr) throw new Error("Falha no envio do arquivo.");
       const { data, error } = await supabase
         .from("documents")
