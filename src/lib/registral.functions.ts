@@ -1,5 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import type { Json } from "@/integrations/supabase/types";
 import { z } from "zod";
 import { parseMemorial } from "./memorial-parser";
 import {
@@ -218,7 +219,7 @@ export const runComparison = createServerFn({ method: "POST" })
         document_b_id: data.documentBId,
         tolerances: tol,
         summary: result.summary,
-        metrics: result.metrics,
+        metrics: result.metrics as unknown as Json,
         created_by: userId,
       })
       .select("id")
@@ -234,7 +235,7 @@ export const runComparison = createServerFn({ method: "POST" })
           code: f.code,
           title: f.title,
           description: f.description,
-          evidence: f.evidence,
+          evidence: f.evidence as unknown as Json,
         })),
       );
     }
