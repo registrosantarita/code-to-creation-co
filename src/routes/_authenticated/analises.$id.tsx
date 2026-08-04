@@ -531,15 +531,47 @@ function AnaliseDetalhe() {
                             Nenhum dado técnico extraído deste documento.
                           </p>
                         )}
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="mt-5"
-                          disabled={reprocessar.isPending}
-                          onClick={() => reprocessar.mutate(d.id)}
-                        >
-                          Reprocessar extração
-                        </Button>
+                        <div className="mt-5 flex flex-wrap gap-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            disabled={reprocessar.isPending}
+                            onClick={() => reprocessar.mutate(d.id)}
+                          >
+                            Reprocessar extração
+                          </Button>
+                          {parcel && (parcel.segments ?? []).length > 0 && (
+                            <Button
+                              size="sm"
+                              onClick={() => {
+                                const base = (d.file_name ?? "descricao").replace(
+                                  /\.[^.]+$/,
+                                  "",
+                                );
+                                const r = exportarDescricaoXlsx(
+                                  {
+                                    label: parcel.label,
+                                    area_m2: parcel.area_m2,
+                                    declared_perimeter_m: parcel.declared_perimeter_m,
+                                    computed_perimeter_m: parcel.computed_perimeter_m,
+                                    vertex_count: parcel.vertex_count,
+                                    raw_extraction: parcel.raw_extraction,
+                                    segments: (parcel.segments ?? []) as never,
+                                  },
+                                  `descricao-conferida-${base}.xlsx`,
+                                );
+                                toast.success(
+                                  r.sigef
+                                    ? `Planilha SIGEF gerada (${r.linhas} linhas): perímetro + confrontação.`
+                                    : `Planilha gerada (${r.linhas} linhas) no layout de coordenadas planas.`,
+                                );
+                              }}
+                            >
+                              Baixar descrição (XLSX)
+                            </Button>
+                          )}
+                        </div>
+
                       </AccordionContent>
                     </AccordionItem>
                   );
