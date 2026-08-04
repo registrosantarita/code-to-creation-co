@@ -162,6 +162,8 @@ export const REGRAS: RegraLexical[] = [
   AZIMUTE,
   RUMO,
   DISTANCIA,
+  ALTITUDE,
+
   CONFRONTACAO,
   VERTICE,
   SEGUE,
