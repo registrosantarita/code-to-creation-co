@@ -3,7 +3,35 @@ const path = require("path");
 
 const APP_URL = "https://code-to-creation-co.lovable.app";
 
+function nav(win) {
+  return win.webContents.navigationHistory;
+}
+
+function childMenu(child) {
+  return Menu.buildFromTemplate([
+    {
+      label: "Navegar",
+      submenu: [
+        {
+          label: "Voltar",
+          accelerator: "Alt+Left",
+          click: () => nav(child).canGoBack() && nav(child).goBack(),
+        },
+        {
+          label: "Avançar",
+          accelerator: "Alt+Right",
+          click: () => nav(child).canGoForward() && nav(child).goForward(),
+        },
+        { role: "reload", label: "Recarregar" },
+        { type: "separator" },
+        { label: "Cancelar e fechar", accelerator: "Esc", click: () => child.close() },
+      ],
+    },
+  ]);
+}
+
 function createWindow() {
+
   const win = new BrowserWindow({
     width: 1440,
     height: 900,
