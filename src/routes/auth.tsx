@@ -166,8 +166,15 @@ function AuthPage() {
 
       <main className="flex items-center justify-center px-6 py-16">
         <div className="w-full max-w-sm">
-          <p className="eyebrow">Acesso à plataforma</p>
+          <Link
+            to="/"
+            className="text-xs text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
+          >
+            ← Voltar ao início
+          </Link>
+          <p className="eyebrow mt-6">Acesso à plataforma</p>
           <h2 className="mt-3 text-3xl">Entrar</h2>
+
 
           {awaitingConfirm ? (
             <div className="panel mt-8 p-6">
