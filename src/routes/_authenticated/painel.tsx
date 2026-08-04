@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
+import { LogOut, Plus } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -52,6 +53,13 @@ function Painel() {
   const [title, setTitle] = useState("");
   const [objective, setObjective] = useState("");
   const [tags, setTags] = useState("");
+
+  async function signOut() {
+    await queryClient.cancelQueries();
+    queryClient.clear();
+    await supabase.auth.signOut();
+    navigate({ to: "/auth", replace: true });
+  }
 
   const { data: analyses, isLoading } = useQuery({
     queryKey: ["analyses"],
@@ -115,8 +123,16 @@ function Painel() {
         </div>
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild>
-            <Button size="lg">Nova análise — enviar arquivos ou colar texto</Button>
+            <Button size="lg">
+              <Plus className="mr-2 h-4 w-4" />
+              Nova análise
+            </Button>
           </DialogTrigger>
+
+          <Button variant="outline" size="lg" onClick={signOut}>
+            <LogOut className="mr-2 h-4 w-4" />
+            Sair
+          </Button>
 
           <DialogContent>
             <DialogHeader>
