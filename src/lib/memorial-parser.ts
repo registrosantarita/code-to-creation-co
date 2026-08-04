@@ -139,7 +139,12 @@ const CONFRONT_RE =
 
 export function parseMemorial(text: string): ParsedParcel {
   const warnings: string[] = [];
-  const flat = text.replace(/\u00a0/g, " ");
+  const { text: flat, aplicadas } = normalizeMemorialText(text);
+  if (aplicadas.length > 0) {
+    warnings.push(
+      `Padronização léxica aplicada antes da extração (${aplicadas.length}): ${aplicadas.join("; ")}.`,
+    );
+  }
 
   let area: number | null = null;
   const areaMatch = AREA_RE.exec(flat);
