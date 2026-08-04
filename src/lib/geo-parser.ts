@@ -6,7 +6,7 @@
 
 import type { ParsedParcel, ParsedSegment } from "./memorial-parser";
 
-export type LonLat = { lon: number; lat: number; alt?: number | null };
+export type LonLat = { lon: number; lat: number; alt: number | null };
 
 const R = 6378137; // raio equatorial WGS-84, em metros
 const rad = (d: number) => (d * Math.PI) / 180;
