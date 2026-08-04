@@ -359,6 +359,110 @@ export type Database = {
           },
         ]
       }
+      norm_chunks: {
+        Row: {
+          content: string
+          created_at: string
+          embedding: string | null
+          id: string
+          norm_id: string
+          seq: number
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          embedding?: string | null
+          id?: string
+          norm_id: string
+          seq: number
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          embedding?: string | null
+          id?: string
+          norm_id?: string
+          seq?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "norm_chunks_norm_id_fkey"
+            columns: ["norm_id"]
+            isOneToOne: false
+            referencedRelation: "norms"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      norms: {
+        Row: {
+          chunk_count: number
+          created_at: string
+          created_by: string
+          effective_from: string | null
+          effective_to: string | null
+          embedding_model: string
+          ementa: string
+          full_text: string
+          hierarchy: number
+          id: string
+          issuer: string
+          jurisdiction: string
+          norm_type: Database["public"]["Enums"]["norm_type"]
+          number: string | null
+          source_url: string | null
+          status: Database["public"]["Enums"]["norm_status"]
+          tags: string[]
+          title: string
+          updated_at: string
+          year: number | null
+        }
+        Insert: {
+          chunk_count?: number
+          created_at?: string
+          created_by: string
+          effective_from?: string | null
+          effective_to?: string | null
+          embedding_model?: string
+          ementa?: string
+          full_text?: string
+          hierarchy?: number
+          id?: string
+          issuer?: string
+          jurisdiction?: string
+          norm_type?: Database["public"]["Enums"]["norm_type"]
+          number?: string | null
+          source_url?: string | null
+          status?: Database["public"]["Enums"]["norm_status"]
+          tags?: string[]
+          title: string
+          updated_at?: string
+          year?: number | null
+        }
+        Update: {
+          chunk_count?: number
+          created_at?: string
+          created_by?: string
+          effective_from?: string | null
+          effective_to?: string | null
+          embedding_model?: string
+          ementa?: string
+          full_text?: string
+          hierarchy?: number
+          id?: string
+          issuer?: string
+          jurisdiction?: string
+          norm_type?: Database["public"]["Enums"]["norm_type"]
+          number?: string | null
+          source_url?: string | null
+          status?: Database["public"]["Enums"]["norm_status"]
+          tags?: string[]
+          title?: string
+          updated_at?: string
+          year?: number | null
+        }
+        Relationships: []
+      }
       parcels: {
         Row: {
           analysis_id: string
@@ -529,6 +633,30 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      buscar_normas_semantico: {
+        Args: {
+          filtro_status?: Database["public"]["Enums"]["norm_status"]
+          match_count?: number
+          query_embedding: string
+        }
+        Returns: {
+          chunk_id: string
+          content: string
+          effective_from: string
+          effective_to: string
+          ementa: string
+          issuer: string
+          norm_id: string
+          norm_type: Database["public"]["Enums"]["norm_type"]
+          number: string
+          seq: number
+          similarity: number
+          source_url: string
+          status: Database["public"]["Enums"]["norm_status"]
+          title: string
+          year: number
+        }[]
+      }
       can_access_analysis: {
         Args: { _analysis_id: string; _user_id: string }
         Returns: boolean
@@ -575,6 +703,18 @@ export type Database = {
       document_source_type: "upload" | "pasted_text" | "imported"
       document_status: "uploaded" | "parsed" | "failed" | "archived"
       finding_severity: "critical" | "moderate" | "informative" | "inconclusive"
+      norm_status: "vigente" | "revogada" | "suspensa" | "em_consulta"
+      norm_type:
+        | "lei"
+        | "decreto"
+        | "provimento"
+        | "resolucao"
+        | "normas_servico"
+        | "parecer"
+        | "decisao_administrativa"
+        | "sumula"
+        | "enunciado"
+        | "outro"
       result_classification:
         | "compatible"
         | "compatible_with_remarks"
@@ -744,6 +884,19 @@ export const Constants = {
       document_source_type: ["upload", "pasted_text", "imported"],
       document_status: ["uploaded", "parsed", "failed", "archived"],
       finding_severity: ["critical", "moderate", "informative", "inconclusive"],
+      norm_status: ["vigente", "revogada", "suspensa", "em_consulta"],
+      norm_type: [
+        "lei",
+        "decreto",
+        "provimento",
+        "resolucao",
+        "normas_servico",
+        "parecer",
+        "decisao_administrativa",
+        "sumula",
+        "enunciado",
+        "outro",
+      ],
       result_classification: [
         "compatible",
         "compatible_with_remarks",

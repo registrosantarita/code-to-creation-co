@@ -16,6 +16,7 @@ import { Route as McpRouteImport } from './routes/mcp'
 import { Route as Char91DotmcpChar93ListToolsRouteImport } from './routes/[.mcp]/list-tools'
 import { Route as Char91DotwellKnownChar93OauthProtectedResourceRouteImport } from './routes/[.well-known]/oauth-protected-resource'
 import { Route as AuthenticatedCreditosRouteImport } from './routes/_authenticated/creditos'
+import { Route as AuthenticatedNormasRouteImport } from './routes/_authenticated/normas'
 import { Route as AuthenticatedPainelRouteImport } from './routes/_authenticated/painel'
 import { Route as DotlovableOauthConsentRouteImport } from './routes/[.]lovable.oauth.consent'
 import { Route as Char91DotmcpChar93InvokeToolToolRouteImport } from './routes/[.mcp]/invoke-tool/$tool'
@@ -58,6 +59,11 @@ const AuthenticatedCreditosRoute = AuthenticatedCreditosRouteImport.update({
   path: '/creditos',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedNormasRoute = AuthenticatedNormasRouteImport.update({
+  id: '/normas',
+  path: '/normas',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedPainelRoute = AuthenticatedPainelRouteImport.update({
   id: '/painel',
   path: '/painel',
@@ -93,6 +99,7 @@ export interface FileRoutesByFullPath {
   '/.mcp/list-tools': typeof Char91DotmcpChar93ListToolsRoute
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   '/creditos': typeof AuthenticatedCreditosRoute
+  '/normas': typeof AuthenticatedNormasRoute
   '/painel': typeof AuthenticatedPainelRoute
   '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
@@ -106,6 +113,7 @@ export interface FileRoutesByTo {
   '/.mcp/list-tools': typeof Char91DotmcpChar93ListToolsRoute
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   '/creditos': typeof AuthenticatedCreditosRoute
+  '/normas': typeof AuthenticatedNormasRoute
   '/painel': typeof AuthenticatedPainelRoute
   '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
@@ -121,6 +129,7 @@ export interface FileRoutesById {
   '/.mcp/list-tools': typeof Char91DotmcpChar93ListToolsRoute
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   '/_authenticated/creditos': typeof AuthenticatedCreditosRoute
+  '/_authenticated/normas': typeof AuthenticatedNormasRoute
   '/_authenticated/painel': typeof AuthenticatedPainelRoute
   '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
@@ -136,6 +145,7 @@ export interface FileRouteTypes {
     | '/.mcp/list-tools'
     | '/.well-known/oauth-protected-resource'
     | '/creditos'
+    | '/normas'
     | '/painel'
     | '/.lovable/oauth/consent'
     | '/.mcp/invoke-tool/$tool'
@@ -149,6 +159,7 @@ export interface FileRouteTypes {
     | '/.mcp/list-tools'
     | '/.well-known/oauth-protected-resource'
     | '/creditos'
+    | '/normas'
     | '/painel'
     | '/.lovable/oauth/consent'
     | '/.mcp/invoke-tool/$tool'
@@ -163,6 +174,7 @@ export interface FileRouteTypes {
     | '/.mcp/list-tools'
     | '/.well-known/oauth-protected-resource'
     | '/_authenticated/creditos'
+    | '/_authenticated/normas'
     | '/_authenticated/painel'
     | '/.lovable/oauth/consent'
     | '/.mcp/invoke-tool/$tool'
@@ -232,6 +244,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedCreditosRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/normas': {
+      id: '/_authenticated/normas'
+      path: '/normas'
+      fullPath: '/normas'
+      preLoaderRoute: typeof AuthenticatedNormasRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/painel': {
       id: '/_authenticated/painel'
       path: '/painel'
@@ -272,6 +291,7 @@ declare module '@tanstack/react-router' {
 
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedCreditosRoute: typeof AuthenticatedCreditosRoute
+  AuthenticatedNormasRoute: typeof AuthenticatedNormasRoute
   AuthenticatedPainelRoute: typeof AuthenticatedPainelRoute
   AuthenticatedAnalisesIdRoute: typeof AuthenticatedAnalisesIdRoute
   AuthenticatedComparacoesIdRoute: typeof AuthenticatedComparacoesIdRoute
@@ -279,6 +299,7 @@ interface AuthenticatedRouteRouteChildren {
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedCreditosRoute: AuthenticatedCreditosRoute,
+  AuthenticatedNormasRoute: AuthenticatedNormasRoute,
   AuthenticatedPainelRoute: AuthenticatedPainelRoute,
   AuthenticatedAnalisesIdRoute: AuthenticatedAnalisesIdRoute,
   AuthenticatedComparacoesIdRoute: AuthenticatedComparacoesIdRoute,
