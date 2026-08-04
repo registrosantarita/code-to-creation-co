@@ -249,6 +249,8 @@ export function parseMemorial(text: string): ParsedParcel {
 
   const chunks = splitSegments(flat);
   const segments: ParsedSegment[] = [];
+  const coordMap = new Map<string, VertexCoord>();
+
 
   chunks.forEach((chunk) => {
     const pair = VERTEX_PAIR_RE.exec(chunk);
