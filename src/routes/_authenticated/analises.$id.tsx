@@ -34,6 +34,7 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
+import { EstimativaCreditosArquivo } from "@/components/EstimativaCreditos";
 
 export const Route = createFileRoute("/_authenticated/analises/$id")({
   head: () => ({
@@ -330,7 +331,7 @@ function AnaliseDetalhe() {
                     disabled={enviarArquivo.isPending}
                     onChange={(e) => {
                       const f = e.target.files?.[0];
-                      if (f) enviarArquivo.mutate(f);
+                      if (f) setArquivoPendente(f);
                       e.target.value = "";
                     }}
                   />
@@ -339,12 +340,16 @@ function AnaliseDetalhe() {
                     Arquivos KML, KMZ e GeoJSON têm o perímetro, os azimutes e a
                     área calculados diretamente da geometria (WGS-84).
                   </p>
-                  {enviarArquivo.isPending && (
-                    <p className="text-xs text-muted-foreground">
-                      Enviando e extraindo...
-                    </p>
-                  )}
                 </div>
+                {arquivoPendente && (
+                  <EstimativaCreditosArquivo
+                    arquivo={arquivoPendente}
+                    processando={enviarArquivo.isPending}
+                    onCancelar={() => setArquivoPendente(null)}
+                    onConfirmar={() => enviarArquivo.mutate(arquivoPendente)}
+                  />
+                )}
+
               </div>
 
               <div className="space-y-4">
