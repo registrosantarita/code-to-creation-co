@@ -116,13 +116,13 @@ const AREA_RE =
   /área\s*(?:total|superficial|do\s+(?:imóvel|imovel|lote|terreno))?\s*(?:é|de|:|igual a)?\s*([\d.,]+)\s*(m²|m2|metros\s+quadrados|ha|hectares?|alqueires?)/i;
 const PERIM_RE =
   /per[ií]metro\s*(?:total)?\s*(?:é|de|:|igual a)?\s*([\d.,]+)\s*(m|metros)\b/i;
-const MATRICULA_RE = /matr[ií]cula\s*(?:n[ºo°.]*\s*)?([\d.\-/]+)/i;
+const MATRICULA_RE = /matr[ií]cula\s*(?:n[ºo°.]*\s*)?([\d.\-/]*\d)/i;
 
 /** Divide o corpo do memorial em trechos por vértice. */
 function splitSegments(text: string): string[] {
   const normalized = text.replace(/\s+/g, " ");
   const parts = normalized.split(
-    /(?=(?:deste|desse|daí|dai|do|partindo\s+do|segue(?:-se)?\s+do)?\s*(?:v[ée]rtice|ponto|marco|estaca)\s+[A-Z0-9][\w\-.]{0,12}\s*(?:,|\s)\s*(?:segue|deflete|confront|com\s+azimute|azimute|rumo|ruma|até|deste|distância))/i,
+    /(?<!at[ée]\s)(?<!at[ée]\s(?:o|a)\s)(?=(?:deste|desse|daí|dai|do|partindo\s+do|segue(?:-se)?\s+do)?\s*(?:v[ée]rtice|ponto|marco|estaca)\s+[A-Z0-9][\w\-.]{0,12}\s*(?:,|\s)\s*(?:segue|deflete|confront|com\s+azimute|azimute|rumo|ruma|até|deste|distância))/i,
   );
   return parts.map((p) => p.trim()).filter((p) => p.length > 15);
 }
