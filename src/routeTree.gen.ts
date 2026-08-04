@@ -14,6 +14,7 @@ import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedCreditosRouteImport } from './routes/_authenticated/creditos'
 import { Route as AuthenticatedPainelRouteImport } from './routes/_authenticated/painel'
+import { Route as DotlovableOauthConsentRouteImport } from './routes/[.]lovable.oauth.consent'
 import { Route as AuthenticatedAnalisesIdRouteImport } from './routes/_authenticated/analises.$id'
 import { Route as AuthenticatedComparacoesIdRouteImport } from './routes/_authenticated/comparacoes.$id'
 
@@ -41,6 +42,11 @@ const AuthenticatedPainelRoute = AuthenticatedPainelRouteImport.update({
   path: '/painel',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const DotlovableOauthConsentRoute = DotlovableOauthConsentRouteImport.update({
+  id: '/.lovable/oauth/consent',
+  path: '/.lovable/oauth/consent',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthenticatedAnalisesIdRoute = AuthenticatedAnalisesIdRouteImport.update({
   id: '/analises/$id',
   path: '/analises/$id',
@@ -58,6 +64,7 @@ export interface FileRoutesByFullPath {
   '/auth': typeof AuthRoute
   '/creditos': typeof AuthenticatedCreditosRoute
   '/painel': typeof AuthenticatedPainelRoute
+  '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/analises/$id': typeof AuthenticatedAnalisesIdRoute
   '/comparacoes/$id': typeof AuthenticatedComparacoesIdRoute
 }
@@ -66,6 +73,7 @@ export interface FileRoutesByTo {
   '/auth': typeof AuthRoute
   '/creditos': typeof AuthenticatedCreditosRoute
   '/painel': typeof AuthenticatedPainelRoute
+  '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/analises/$id': typeof AuthenticatedAnalisesIdRoute
   '/comparacoes/$id': typeof AuthenticatedComparacoesIdRoute
 }
@@ -76,6 +84,7 @@ export interface FileRoutesById {
   '/auth': typeof AuthRoute
   '/_authenticated/creditos': typeof AuthenticatedCreditosRoute
   '/_authenticated/painel': typeof AuthenticatedPainelRoute
+  '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/_authenticated/analises/$id': typeof AuthenticatedAnalisesIdRoute
   '/_authenticated/comparacoes/$id': typeof AuthenticatedComparacoesIdRoute
 }
@@ -86,6 +95,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/creditos'
     | '/painel'
+    | '/.lovable/oauth/consent'
     | '/analises/$id'
     | '/comparacoes/$id'
   fileRoutesByTo: FileRoutesByTo
@@ -94,6 +104,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/creditos'
     | '/painel'
+    | '/.lovable/oauth/consent'
     | '/analises/$id'
     | '/comparacoes/$id'
   id:
@@ -103,6 +114,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/_authenticated/creditos'
     | '/_authenticated/painel'
+    | '/.lovable/oauth/consent'
     | '/_authenticated/analises/$id'
     | '/_authenticated/comparacoes/$id'
   fileRoutesById: FileRoutesById
@@ -111,6 +123,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AuthRoute: typeof AuthRoute
+  DotlovableOauthConsentRoute: typeof DotlovableOauthConsentRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -150,6 +163,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedPainelRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/.lovable/oauth/consent': {
+      id: '/.lovable/oauth/consent'
+      path: '/.lovable/oauth/consent'
+      fullPath: '/.lovable/oauth/consent'
+      preLoaderRoute: typeof DotlovableOauthConsentRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_authenticated/analises/$id': {
       id: '/_authenticated/analises/$id'
       path: '/analises/$id'
@@ -188,6 +208,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AuthRoute: AuthRoute,
+  DotlovableOauthConsentRoute: DotlovableOauthConsentRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
