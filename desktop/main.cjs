@@ -3,7 +3,35 @@ const path = require("path");
 
 const APP_URL = "https://code-to-creation-co.lovable.app";
 
+function nav(win) {
+  return win.webContents.navigationHistory;
+}
+
+function childMenu(child) {
+  return Menu.buildFromTemplate([
+    {
+      label: "Navegar",
+      submenu: [
+        {
+          label: "Voltar",
+          accelerator: "Alt+Left",
+          click: () => nav(child).canGoBack() && nav(child).goBack(),
+        },
+        {
+          label: "Avançar",
+          accelerator: "Alt+Right",
+          click: () => nav(child).canGoForward() && nav(child).goForward(),
+        },
+        { role: "reload", label: "Recarregar" },
+        { type: "separator" },
+        { label: "Cancelar e fechar", accelerator: "Esc", click: () => child.close() },
+      ],
+    },
+  ]);
+}
+
 function createWindow() {
+
   const win = new BrowserWindow({
     width: 1440,
     height: 900,
@@ -11,7 +39,7 @@ function createWindow() {
     minHeight: 700,
     backgroundColor: "#0B0B0C",
     title: "Conferência Registral",
-    autoHideMenuBar: true,
+    autoHideMenuBar: false,
     webPreferences: {
       contextIsolation: true,
       nodeIntegration: false,
@@ -26,15 +54,33 @@ function createWindow() {
       return {
         action: "allow",
         overrideBrowserWindowOptions: {
-          width: 520,
-          height: 720,
-          autoHideMenuBar: true,
+          width: 560,
+          height: 760,
+          autoHideMenuBar: false,
         },
       };
     }
     shell.openExternal(url);
     return { action: "deny" };
   });
+
+  // Janelas de login (Google/Apple) ganham menu próprio com "Voltar".
+  win.webContents.on("did-create-window", (child) => {
+    child.setMenu(childMenu(child));
+    child.webContents.on("before-input-event", (event, input) => {
+      if (input.type !== "keyDown") return;
+      const back = input.key === "Backspace" || (input.alt && input.key === "ArrowLeft");
+      const forward = input.alt && input.key === "ArrowRight";
+      if (back && child.webContents.navigationHistory.canGoBack()) {
+        child.webContents.navigationHistory.goBack();
+        event.preventDefault();
+      } else if (forward && child.webContents.navigationHistory.canGoForward()) {
+        child.webContents.navigationHistory.goForward();
+        event.preventDefault();
+      }
+    });
+  });
+
 
   win.webContents.on("did-fail-load", (_e, _code, description) => {
     win.loadURL(
@@ -67,6 +113,27 @@ const menu = Menu.buildFromTemplate([
       { role: "selectAll", label: "Selecionar tudo" },
     ],
   },
+  {
+    label: "Navegar",
+    submenu: [
+      {
+        label: "Voltar",
+        accelerator: "Alt+Left",
+        click: (_i, win) => win && nav(win).canGoBack() && nav(win).goBack(),
+      },
+      {
+        label: "Avançar",
+        accelerator: "Alt+Right",
+        click: (_i, win) => win && nav(win).canGoForward() && nav(win).goForward(),
+      },
+      { type: "separator" },
+      {
+        label: "Início",
+        accelerator: "Alt+Home",
+        click: (_i, win) => win && win.loadURL(APP_URL),
+      },
+    ],
+
   {
     label: "Exibir",
     submenu: [
