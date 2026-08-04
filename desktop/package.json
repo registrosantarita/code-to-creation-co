@@ -5,5 +5,9 @@
   "description": "Plataforma Inteligente de Conferencia Registral",
   "main": "main.cjs",
   "author": "Conferencia Registral",
-  "license": "UNLICENSED"
+  "license": "UNLICENSED",
+  "dependencies": {
+    "@electron/packager": "^20.1.1",
+    "electron": "^43.2.0"
+  }
 }
