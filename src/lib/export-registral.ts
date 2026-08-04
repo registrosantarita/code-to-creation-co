@@ -1,0 +1,359 @@
+/**
+ * Geração dos entregáveis da conferência:
+ *  - XLSX com a descrição conferida (layout de cartório);
+ *  - PDF do relatório completo da análise.
+ * Tudo executado no cliente, sem consumo de créditos de IA.
+ */
+import { utils, writeFile } from "xlsx";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
+import { degToDms, fmtNum, CLASSIFICACAO, SEVERIDADE, TIPO_COMPARACAO } from "./labels";
+
+export type VertexCoordRow = {
+  name: string;
+  lon: number | null;
+  lat: number | null;
+  alt: number | null;
+  north: number | null;
+  east: number | null;
+};
+
+export type SegmentRow = {
+  seq: number;
+  from_vertex: string | null;
+  to_vertex: string | null;
+  azimuth_deg: number | string | null;
+  distance_m: number | string | null;
+  altitude_from_m: number | string | null;
+  altitude_to_m: number | string | null;
+  confrontante: string | null;
+};
+
+export type ParcelExport = {
+  label: string | null;
+  area_m2: number | string | null;
+  declared_perimeter_m: number | string | null;
+  computed_perimeter_m: number | string | null;
+  vertex_count: number;
+  segments: SegmentRow[];
+  raw_extraction?: unknown;
+};
+
+const num = (v: number | string | null | undefined): number | null => {
+  if (v === null || v === undefined || v === "") return null;
+  const n = typeof v === "string" ? Number(v) : v;
+  return Number.isFinite(n) ? n : null;
+};
+
+/** Número em texto pt-BR, pronto para colar no sistema do cartório. */
+const br = (v: number | string | null | undefined, d = 2): string => {
+  const n = num(v);
+  return n === null
+    ? ""
+    : n.toLocaleString("pt-BR", { minimumFractionDigits: d, maximumFractionDigits: d });
+};
+
+const grau = (v: number | string | null | undefined): string => {
+  const n = num(v);
+  return n === null ? "" : degToDms(n);
+};
+
+export function getVertices(parcel: ParcelExport): VertexCoordRow[] {
+  const raw = parcel.raw_extraction as { vertices?: VertexCoordRow[] } | null;
+  return Array.isArray(raw?.vertices) ? raw!.vertices! : [];
+}
+
+/** Descrição SIGEF: vértices com coordenadas geodésicas (longitude/latitude). */
+export function isSigefGeodesico(parcel: ParcelExport): boolean {
+  return getVertices(parcel).some((v) => v.lat !== null && v.lon !== null);
+}
+
+function vertexIndex(parcel: ParcelExport): Map<string, VertexCoordRow> {
+  const map = new Map<string, VertexCoordRow>();
+  getVertices(parcel).forEach((v) => map.set(String(v.name).toUpperCase(), v));
+  return map;
+}
+
+function altitudeDe(s: SegmentRow, v: VertexCoordRow | undefined): string {
+  return br(s.altitude_from_m ?? v?.alt ?? null, 2);
+}
+
+export function buildDescricaoSheets(parcel: ParcelExport): {
+  sigef: boolean;
+  perimetro: (string | number)[][];
+  confrontacao: (string | number)[][] | null;
+} {
+  const idx = vertexIndex(parcel);
+  const segs = [...parcel.segments].sort((a, b) => a.seq - b.seq);
+  const sigef = isSigefGeodesico(parcel);
+
+  if (sigef) {
+    const perimetro: (string | number)[][] = [
+      ["DE", "LONGITUDE", "LATITUDE", "ALT (m.)", "PARA", "ÂNGULO", "DIST. (m)."],
+    ];
+    const confrontacao: (string | number)[][] = [["DE", "PARA", "CONFRONTAÇÃO"]];
+    segs.forEach((s) => {
+      const v = idx.get(String(s.from_vertex ?? "").toUpperCase());
+      perimetro.push([
+        s.from_vertex ?? "",
+        v?.lon === null || v?.lon === undefined ? "" : br(v.lon, 8),
+        v?.lat === null || v?.lat === undefined ? "" : br(v.lat, 8),
+        altitudeDe(s, v),
+        s.to_vertex ?? "",
+        grau(s.azimuth_deg),
+        br(s.distance_m, 3),
+      ]);
+      confrontacao.push([
+        s.from_vertex ?? "",
+        s.to_vertex ?? "",
+        s.confrontante ?? "",
+      ]);
+    });
+    return { sigef, perimetro, confrontacao };
+  }
+
+  const perimetro: (string | number)[][] = [
+    ["DE", "COORD. N(Y)", "COORD. E(X)", "PARA", "ÂNGULO", "DIST. (m).", "CONFRONTAÇÃO"],
+  ];
+  segs.forEach((s) => {
+    const v = idx.get(String(s.from_vertex ?? "").toUpperCase());
+    perimetro.push([
+      s.from_vertex ?? "",
+      v?.north === null || v?.north === undefined ? "" : br(v.north, 3),
+      v?.east === null || v?.east === undefined ? "" : br(v.east, 3),
+      s.to_vertex ?? "",
+      grau(s.azimuth_deg),
+      br(s.distance_m, 3),
+      s.confrontante ?? "",
+    ]);
+  });
+  return { sigef, perimetro, confrontacao: null };
+}
+
+function larguras(rows: (string | number)[][]): { wch: number }[] {
+  const cols = rows[0]?.length ?? 0;
+  return Array.from({ length: cols }, (_, c) => ({
+    wch: Math.min(
+      48,
+      Math.max(10, ...rows.map((r) => String(r[c] ?? "").length + 2)),
+    ),
+  }));
+}
+
+export function exportarDescricaoXlsx(
+  parcel: ParcelExport,
+  nomeArquivo: string,
+): { sigef: boolean; linhas: number } {
+  const { sigef, perimetro, confrontacao } = buildDescricaoSheets(parcel);
+  const wb = utils.book_new();
+
+  const wsPerim = utils.aoa_to_sheet(perimetro);
+  wsPerim["!cols"] = larguras(perimetro);
+  utils.book_append_sheet(
+    wb,
+    wsPerim,
+    sigef ? "Descrição perimétrica" : "Descrição",
+  );
+
+  if (confrontacao) {
+    const wsConf = utils.aoa_to_sheet(confrontacao);
+    wsConf["!cols"] = larguras(confrontacao);
+    utils.book_append_sheet(wb, wsConf, "Confrontação");
+  }
+
+  const resumo: (string | number)[][] = [
+    ["Elemento", "Valor"],
+    ["Identificação", parcel.label ?? "—"],
+    ["Área (m²)", br(parcel.area_m2, 2)],
+    ["Perímetro declarado (m)", br(parcel.declared_perimeter_m, 2)],
+    ["Perímetro calculado (m)", br(parcel.computed_perimeter_m, 2)],
+    ["Vértices", parcel.vertex_count],
+    ["Formato", sigef ? "Rural georreferenciado (SIGEF)" : "Coordenadas planas / descrição comum"],
+    ["Emissão", new Date().toLocaleString("pt-BR")],
+  ];
+  const wsResumo = utils.aoa_to_sheet(resumo);
+  wsResumo["!cols"] = larguras(resumo);
+  utils.book_append_sheet(wb, wsResumo, "Resumo");
+
+  writeFile(wb, nomeArquivo);
+  return { sigef, linhas: perimetro.length - 1 };
+}
+
+// ---------------------------------------------------------------------------
+// Relatório em PDF
+// ---------------------------------------------------------------------------
+
+export type RelatorioPdfInput = {
+  titulo: string;
+  tipo: string;
+  classificacao: string | null;
+  resumo: string | null;
+  emitidoEm: string;
+  documentoA: string;
+  documentoB: string;
+  tolerancias: Record<string, number | undefined>;
+  contagens: Record<string, number | undefined>;
+  achados: {
+    severity: string;
+    code: string;
+    title: string;
+    description: string;
+    evidence: unknown;
+  }[];
+};
+
+const ORDEM_SEV = ["critical", "moderate", "inconclusive", "informative"];
+
+export function exportarRelatorioPdf(
+  input: RelatorioPdfInput,
+  nomeArquivo: string,
+): void {
+  const doc = new jsPDF({ unit: "pt", format: "a4" });
+  const M = 48;
+  const W = doc.internal.pageSize.getWidth();
+  let y = M;
+
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(16);
+  doc.text("Relatório de conferência registral", M, y);
+  y += 20;
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(11);
+  doc.text(input.titulo, M, y);
+  y += 14;
+  doc.setFontSize(9);
+  doc.setTextColor(110);
+  doc.text(
+    `${input.tipo} • Emitido em ${input.emitidoEm}`,
+    M,
+    y,
+  );
+  doc.setTextColor(0);
+  y += 18;
+
+  const cls = input.classificacao
+    ? (CLASSIFICACAO[input.classificacao]?.label ?? input.classificacao)
+    : "Inconclusivo";
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(11);
+  doc.text(`Classificação: ${cls}`, M, y);
+  doc.setFont("helvetica", "normal");
+  y += 16;
+
+  if (input.resumo) {
+    doc.setFontSize(10);
+    const linhas = doc.splitTextToSize(input.resumo, W - 2 * M) as string[];
+    doc.text(linhas, M, y);
+    y += linhas.length * 13 + 6;
+  }
+
+  autoTable(doc, {
+    startY: y,
+    head: [["Documentos comparados", ""]],
+    body: [
+      ["Documento A", input.documentoA],
+      ["Documento B", input.documentoB],
+    ],
+    theme: "grid",
+    styles: { fontSize: 9, cellPadding: 5 },
+    headStyles: { fillColor: [24, 28, 38], textColor: 255 },
+    margin: { left: M, right: M },
+  });
+
+  autoTable(doc, {
+    startY: (doc as unknown as { lastAutoTable: { finalY: number } }).lastAutoTable.finalY + 16,
+    head: [["Tolerância", "Valor adotado"]],
+    body: [
+      ["Área", `${fmtNum(input.tolerancias["areaPct"] ?? null, 2)} %`],
+      ["Perímetro", `${fmtNum(input.tolerancias["perimeterPct"] ?? null, 2)} %`],
+      ["Distância", `${fmtNum(input.tolerancias["distanceM"] ?? null, 3)} m`],
+      ["Azimute", `${fmtNum(input.tolerancias["azimuthDeg"] ?? null, 4)} °`],
+      ["Altitude", `${fmtNum(input.tolerancias["altitudeM"] ?? null, 2)} m`],
+    ],
+    theme: "grid",
+    styles: { fontSize: 9, cellPadding: 5 },
+    headStyles: { fillColor: [24, 28, 38], textColor: 255 },
+    margin: { left: M, right: M },
+  });
+
+  autoTable(doc, {
+    startY: (doc as unknown as { lastAutoTable: { finalY: number } }).lastAutoTable.finalY + 16,
+    head: [["Críticos", "Moderados", "Informativos", "Inconclusivos"]],
+    body: [
+      [
+        String(input.contagens["critical"] ?? 0),
+        String(input.contagens["moderate"] ?? 0),
+        String(input.contagens["informative"] ?? 0),
+        String(input.contagens["inconclusive"] ?? 0),
+      ],
+    ],
+    theme: "grid",
+    styles: { fontSize: 9, cellPadding: 5, halign: "center" },
+    headStyles: { fillColor: [24, 28, 38], textColor: 255, halign: "center" },
+    margin: { left: M, right: M },
+  });
+
+  const achados = [...input.achados].sort(
+    (a, b) => ORDEM_SEV.indexOf(a.severity) - ORDEM_SEV.indexOf(b.severity),
+  );
+
+  autoTable(doc, {
+    startY: (doc as unknown as { lastAutoTable: { finalY: number } }).lastAutoTable.finalY + 24,
+    head: [["Severidade", "Código", "Achado", "Descrição"]],
+    body:
+      achados.length > 0
+        ? achados.map((f) => [
+            SEVERIDADE[f.severity]?.label ?? f.severity,
+            f.code,
+            f.title,
+            f.description,
+          ])
+        : [["—", "—", "Nenhum achado registrado", ""]],
+    theme: "striped",
+    styles: { fontSize: 8.5, cellPadding: 5, valign: "top", overflow: "linebreak" },
+    headStyles: { fillColor: [24, 28, 38], textColor: 255 },
+    columnStyles: {
+      0: { cellWidth: 62 },
+      1: { cellWidth: 92 },
+      2: { cellWidth: 120 },
+    },
+    margin: { left: M, right: M },
+  });
+
+  autoTable(doc, {
+    startY: (doc as unknown as { lastAutoTable: { finalY: number } }).lastAutoTable.finalY + 20,
+    head: [["Evidências técnicas registradas"]],
+    body:
+      achados.length > 0
+        ? achados.map((f) => [
+            `${f.code}: ${JSON.stringify(f.evidence)}`.slice(0, 1200),
+          ])
+        : [["Sem evidências associadas."]],
+    theme: "plain",
+    styles: { fontSize: 7.5, cellPadding: 4, overflow: "linebreak", textColor: 90 },
+    headStyles: { fontStyle: "bold", textColor: 30 },
+    margin: { left: M, right: M },
+  });
+
+  const total = doc.getNumberOfPages();
+  for (let p = 1; p <= total; p++) {
+    doc.setPage(p);
+    doc.setFontSize(7.5);
+    doc.setTextColor(120);
+    doc.text(
+      "Instrumento de apoio à decisão. Não substitui a qualificação jurídica e técnica do Oficial.",
+      M,
+      doc.internal.pageSize.getHeight() - 24,
+    );
+    doc.text(
+      `${p}/${total}`,
+      W - M,
+      doc.internal.pageSize.getHeight() - 24,
+      { align: "right" },
+    );
+  }
+
+  doc.save(nomeArquivo);
+}
+
+export { TIPO_COMPARACAO };
