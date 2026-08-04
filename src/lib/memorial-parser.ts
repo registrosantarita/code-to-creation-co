@@ -12,6 +12,8 @@ export type ParsedSegment = {
   bearing_text: string | null;
   azimuth_deg: number | null;
   distance_m: number | null;
+  altitude_from_m: number | null;
+  altitude_to_m: number | null;
   confrontante: string | null;
   raw_text: string;
 };
@@ -22,6 +24,9 @@ export type ParsedParcel = {
   declared_perimeter_m: number | null;
   computed_perimeter_m: number | null;
   vertex_count: number;
+  altitude_min_m: number | null;
+  altitude_max_m: number | null;
+  altitude_mean_m: number | null;
   confrontantes: string[];
   segments: ParsedSegment[];
   warnings: string[];
@@ -133,6 +138,8 @@ const VERTEX_SINGLE_RE =
   /(?:v[ée]rtice|ponto|marco|estaca)\s+([A-Z0-9][\w\-.]{0,12})/i;
 const DIST_RE = /(?:dist[âa]ncia|extens[ãa]o|medindo|mede|percorre)\s*(?:de|:)?\s*([\d.,]+)\s*(m|metros|km)\b/i;
 const DIST_FALLBACK_RE = /\b([\d.,]+)\s*(?:m|metros)\b/i;
+const ALT_RE =
+  /altitude[^0-9\-]{0,20}(-?[\d.,]+)\s*(?:m|metros)?/gi;
 const AZ_RE = /azimute[^0-9]{0,20}([^,;]{2,40})/i;
 const RUMO_RE =
   /rumo[^0-9A-Z]{0,15}([\d]{1,3}\s*(?:°|º|graus)[^A-Z]{0,20})\s*(NE|SE|SW|SO|NW|NO)/i;
@@ -209,6 +216,15 @@ export function parseMemorial(text: string): ParsedParcel {
     }
     if (azimuth !== null) azimuth = normalizeAzimuth(azimuth);
 
+    ALT_RE.lastIndex = 0;
+    const altitudes: number[] = [];
+    for (const m of chunk.matchAll(ALT_RE)) {
+      const v = parseNumber(m[1]!);
+      if (v !== null && Math.abs(v) < 9000) altitudes.push(v);
+    }
+    const altitudeFrom = altitudes.length > 0 ? altitudes[0]! : null;
+    const altitudeTo = altitudes.length > 1 ? altitudes[1]! : null;
+
     const conf = CONFRONT_RE.exec(chunk);
     const confrontante = conf ? cleanConfrontante(conf[1]!) : null;
 
@@ -221,6 +237,8 @@ export function parseMemorial(text: string): ParsedParcel {
       bearing_text: bearingText,
       azimuth_deg: azimuth,
       distance_m: distance,
+      altitude_from_m: altitudeFrom,
+      altitude_to_m: altitudeTo,
       confrontante,
       raw_text: chunk.slice(0, 600),
     });
@@ -254,6 +272,22 @@ export function parseMemorial(text: string): ParsedParcel {
     }
   });
 
+  // Altimetria: consolida as cotas identificadas nos vértices.
+  const altitudes = segments
+    .flatMap((s) => [s.altitude_from_m, s.altitude_to_m])
+    .filter((v): v is number => v !== null);
+  const altitudeMin = altitudes.length > 0 ? Math.min(...altitudes) : null;
+  const altitudeMax = altitudes.length > 0 ? Math.max(...altitudes) : null;
+  const altitudeMean =
+    altitudes.length > 0
+      ? Number((altitudes.reduce((a, v) => a + v, 0) / altitudes.length).toFixed(3))
+      : null;
+  if (segments.length > 0 && altitudes.length === 0) {
+    warnings.push(
+      "Nenhuma altitude (cota) foi identificada nos vértices; a comparação altimétrica ficará inconclusiva.",
+    );
+  }
+
   const missingAz = segments.filter((s) => s.azimuth_deg === null).length;
   if (segments.length > 0 && missingAz > 0) {
     warnings.push(
@@ -267,6 +301,9 @@ export function parseMemorial(text: string): ParsedParcel {
     declared_perimeter_m: declaredPerimeter,
     computed_perimeter_m: computedPerimeter > 0 ? computedPerimeter : null,
     vertex_count: vertices.size,
+    altitude_min_m: altitudeMin,
+    altitude_max_m: altitudeMax,
+    altitude_mean_m: altitudeMean,
     confrontantes,
     segments,
     warnings,
