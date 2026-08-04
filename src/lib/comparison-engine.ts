@@ -74,6 +74,85 @@ function angleDiff(a: number, b: number): number {
   return 180 - d;
 }
 
+export type SegmentPair = { ia: number; ib: number };
+export type Alignment = {
+  reversed: boolean;
+  offset: number;
+  pairs: SegmentPair[];
+  cost: number;
+};
+
+/**
+ * Determina a correspondência entre os segmentos de duas descrições.
+ * Testa caminhamento direto e invertido (contra-azimute) e todas as
+ * defasagens de vértice inicial, escolhendo a hipótese de menor custo.
+ */
+function alignSegments(
+  segsA: SegmentInput[],
+  segsB: SegmentInput[],
+  tol: Tolerances,
+): Alignment {
+  const n = Math.min(segsA.length, segsB.length);
+  const direct: Alignment = {
+    reversed: false,
+    offset: 0,
+    pairs: Array.from({ length: n }, (_, i) => ({ ia: i, ib: i })),
+    cost: 0,
+  };
+  if (n === 0) return direct;
+
+  const pairCost = (sa: SegmentInput, sb: SegmentInput, reversed: boolean) => {
+    let c = 0;
+    let known = false;
+    if (sa.distance_m !== null && sb.distance_m !== null) {
+      known = true;
+      c += Math.abs(sa.distance_m - sb.distance_m) / Math.max(tol.distanceM, 1e-6);
+    }
+    if (sa.azimuth_deg !== null && sb.azimuth_deg !== null) {
+      known = true;
+      const azB = reversed ? (sb.azimuth_deg + 180) % 360 : sb.azimuth_deg;
+      c += angleDiff(sa.azimuth_deg, azB) / Math.max(tol.azimuthDeg, 1e-6);
+    }
+    return known ? c : 50; // sem dados comparáveis: penalidade neutra
+  };
+
+  const build = (reversed: boolean, offset: number): Alignment => {
+    const pairs: SegmentPair[] = [];
+    for (let i = 0; i < n; i += 1) {
+      const ib = reversed
+        ? ((offset - i) % n + n) % n
+        : (i + offset) % n;
+      pairs.push({ ia: i, ib });
+    }
+    const cost = pairs.reduce(
+      (acc, p) => acc + pairCost(segsA[p.ia]!, segsB[p.ib]!, reversed),
+      0,
+    );
+    return { reversed, offset, pairs, cost };
+  };
+
+  // Só faz sentido testar rotações quando ambas descrevem o polígono fechado
+  // com o mesmo número de trechos.
+  const sameCount = segsA.length === segsB.length;
+  const candidates: Alignment[] = [build(false, 0)];
+  if (sameCount) {
+    for (let off = 0; off < n; off += 1) {
+      if (off !== 0) candidates.push(build(false, off));
+      candidates.push(build(true, off));
+    }
+  } else {
+    candidates.push(build(true, n - 1));
+  }
+
+  let best = candidates[0]!;
+  for (const c of candidates) {
+    // margem de 1% evita trocar de hipótese por ruído numérico
+    if (c.cost < best.cost * 0.99) best = c;
+  }
+  return best;
+}
+
+
 export function compareParcels(
   a: ParcelInput,
   b: ParcelInput,
