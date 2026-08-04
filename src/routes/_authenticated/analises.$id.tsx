@@ -74,6 +74,7 @@ function AnaliseDetalhe() {
   const comparar = useServerFn(runComparison);
 
   const [texto, setTexto] = useState("");
+  const [arquivoPendente, setArquivoPendente] = useState<File | null>(null);
   const [nomeTexto, setNomeTexto] = useState("");
   const [categoria, setCategoria] = useState("memorial");
   const [docA, setDocA] = useState("");
@@ -220,6 +221,7 @@ function AnaliseDetalhe() {
       return extrair({ data: { documentId: data.id } });
     },
     onSuccess: (res) => {
+      setArquivoPendente(null);
       refreshDocs();
       if (res.ok) {
         toast.success(`Extração concluída: ${res.segments} segmento(s).`);
