@@ -39,7 +39,7 @@ function createWindow() {
     minHeight: 700,
     backgroundColor: "#0B0B0C",
     title: "Conferência Registral",
-    autoHideMenuBar: true,
+    autoHideMenuBar: false,
     webPreferences: {
       contextIsolation: true,
       nodeIntegration: false,
