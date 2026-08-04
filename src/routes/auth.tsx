@@ -32,18 +32,37 @@ const credentials = z.object({
   password: z.string().min(8, "A senha deve ter ao menos 8 caracteres.").max(72),
 });
 
+function safeNext(value: unknown): string | null {
+  if (typeof value !== "string" || !value.startsWith("/") || value.startsWith("//")) return null;
+  return value;
+}
+
 function AuthPage() {
   const navigate = useNavigate();
+  const search = Route.useSearch();
+  const next = safeNext(search.next);
   const [loading, setLoading] = useState(false);
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [awaitingConfirm, setAwaitingConfirm] = useState(false);
 
+  const returnUrl = () =>
+    next ? `${window.location.origin}${next}` : window.location.origin;
+
+  const goBack = () => {
+    if (next) {
+      window.location.href = next;
+      return;
+    }
+    navigate({ to: "/painel", replace: true });
+  };
+
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
-      if (data.session) navigate({ to: "/painel", replace: true });
+      if (data.session) goBack();
     });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [navigate]);
 
   async function handleSignIn(e: React.FormEvent) {
@@ -60,7 +79,7 @@ function AuthPage() {
       toast.error("Não foi possível entrar: credenciais inválidas.");
       return;
     }
-    navigate({ to: "/painel", replace: true });
+    goBack();
   }
 
   async function handleSignUp(e: React.FormEvent) {
@@ -78,7 +97,7 @@ function AuthPage() {
     const { data, error } = await supabase.auth.signUp({
       ...parsed.data,
       options: {
-        emailRedirectTo: window.location.origin,
+        emailRedirectTo: returnUrl(),
         data: { full_name: fullName.trim() },
       },
     });
@@ -92,34 +111,35 @@ function AuthPage() {
       toast.success("Cadastro criado. Confirme o e-mail para acessar.");
       return;
     }
-    navigate({ to: "/painel", replace: true });
+    goBack();
   }
 
   async function handleGoogle() {
     const { lovable } = await import("@/integrations/lovable/index");
     const result = await lovable.auth.signInWithOAuth("google", {
-      redirect_uri: window.location.origin,
+      redirect_uri: returnUrl(),
     });
     if (result.error) {
       toast.error("Falha ao entrar com Google.");
       return;
     }
     if (result.redirected) return;
-    navigate({ to: "/painel", replace: true });
+    goBack();
   }
 
   async function handleApple() {
     const { lovable } = await import("@/integrations/lovable/index");
     const result = await lovable.auth.signInWithOAuth("apple", {
-      redirect_uri: window.location.origin,
+      redirect_uri: returnUrl(),
     });
     if (result.error) {
       toast.error("Falha ao entrar com Apple.");
       return;
     }
     if (result.redirected) return;
-    navigate({ to: "/painel", replace: true });
+    goBack();
   }
+
 
   return (
     <div className="grid min-h-screen lg:grid-cols-2">
