@@ -84,7 +84,14 @@ export function buildDescricaoSheets(parcel: ParcelExport): {
   confrontacao: (string | number)[][] | null;
 } {
   const idx = vertexIndex(parcel);
-  const segs = [...parcel.segments].sort((a, b) => a.seq - b.seq);
+  const segs = [...parcel.segments]
+    .filter(
+      (s) =>
+        (s.from_vertex ?? "") !== "" ||
+        (s.to_vertex ?? "") !== "" ||
+        num(s.azimuth_deg) !== null,
+    )
+    .sort((a, b) => a.seq - b.seq);
   const sigef = isSigefGeodesico(parcel);
 
   if (sigef) {
