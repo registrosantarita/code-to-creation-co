@@ -315,6 +315,35 @@ export function parseMemorial(text: string): ParsedParcel {
 
     if (from === null && distance === null && azimuth === null) return;
 
+    const coords = extractCoords(chunk);
+    if (
+      from &&
+      (coords.lat !== null ||
+        coords.lon !== null ||
+        coords.north !== null ||
+        coords.east !== null)
+    ) {
+      const key = from.toUpperCase();
+      const prev = coordMap.get(key);
+      coordMap.set(key, {
+        name: key,
+        lat: coords.lat ?? prev?.lat ?? null,
+        lon: coords.lon ?? prev?.lon ?? null,
+        north: coords.north ?? prev?.north ?? null,
+        east: coords.east ?? prev?.east ?? null,
+        alt: altitudeFrom ?? prev?.alt ?? null,
+      });
+    } else if (from && altitudeFrom !== null && !coordMap.has(from.toUpperCase())) {
+      coordMap.set(from.toUpperCase(), {
+        name: from.toUpperCase(),
+        lat: null,
+        lon: null,
+        north: null,
+        east: null,
+        alt: altitudeFrom,
+      });
+    }
+
     segments.push({
       seq: segments.length + 1,
       from_vertex: from,
@@ -328,6 +357,7 @@ export function parseMemorial(text: string): ParsedParcel {
       raw_text: chunk.slice(0, 600),
     });
   });
+
 
   if (segments.length === 0) {
     warnings.push(
