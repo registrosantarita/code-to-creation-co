@@ -18,6 +18,16 @@ export type ParsedSegment = {
   raw_text: string;
 };
 
+/** Coordenada de vértice: geodésica (SIGEF) e/ou plana (UTM N/E). */
+export type VertexCoord = {
+  name: string;
+  lon: number | null;
+  lat: number | null;
+  alt: number | null;
+  north: number | null;
+  east: number | null;
+};
+
 export type ParsedParcel = {
   label: string | null;
   area_m2: number | null;
@@ -29,8 +39,10 @@ export type ParsedParcel = {
   altitude_mean_m: number | null;
   confrontantes: string[];
   segments: ParsedSegment[];
+  vertices: VertexCoord[];
   warnings: string[];
 };
+
 
 /** Converte "1.234,56" ou "1234.56" em número. */
 export function parseNumber(raw: string): number | null {
