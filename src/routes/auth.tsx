@@ -108,6 +108,19 @@ function AuthPage() {
     navigate({ to: "/painel", replace: true });
   }
 
+  async function handleApple() {
+    const { lovable } = await import("@/integrations/lovable/index");
+    const result = await lovable.auth.signInWithOAuth("apple", {
+      redirect_uri: window.location.origin,
+    });
+    if (result.error) {
+      toast.error("Falha ao entrar com Apple.");
+      return;
+    }
+    if (result.redirected) return;
+    navigate({ to: "/painel", replace: true });
+  }
+
   return (
     <div className="grid min-h-screen lg:grid-cols-2">
       <aside className="hidden flex-col justify-between bg-ink p-12 text-ink-foreground lg:flex">
