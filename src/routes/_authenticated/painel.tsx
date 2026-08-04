@@ -182,7 +182,11 @@ function Painel() {
             Abra uma análise para enviar memoriais, extrair dados técnicos e
             comparar documentos com tolerâncias configuráveis.
           </p>
+          <Button className="mt-6" size="lg" onClick={() => setOpen(true)}>
+            Começar: criar análise e enviar arquivos
+          </Button>
         </div>
+
       ) : (
         <ul className="mt-10 grid gap-4 md:grid-cols-2">
           {analyses.map((a) => (
