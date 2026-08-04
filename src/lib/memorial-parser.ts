@@ -224,7 +224,7 @@ export function parseMemorial(text: string): ParsedParcel {
         altitudes.push({ valor: v, pos: m.index ?? 0 });
     }
     // Uma única cota depois do conector "até" pertence ao vértice de chegada.
-    const ateIdx = /\bat[ée]\b/i.exec(chunk)?.index ?? -1;
+    const ateIdx = /(?:^|\s)at[ée](?=\s)/i.exec(chunk)?.index ?? -1;
     let altitudeFrom: number | null = null;
     let altitudeTo: number | null = null;
     if (altitudes.length === 1) {
