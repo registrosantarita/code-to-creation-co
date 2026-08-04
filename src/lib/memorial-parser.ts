@@ -145,7 +145,7 @@ function splitSegments(text: string): string[] {
 }
 
 const VERTEX_PAIR_RE =
-  /(?:v[ée]rtice|ponto|marco|estaca)\s+([A-Z0-9][\w\-.]{0,12})[^.]{0,400}?(?:até|ao?|at[ée]\s+o)\s+(?:o\s+)?(?:v[ée]rtice|ponto|marco|estaca)\s+([A-Z0-9][\w\-.]{0,12})/i;
+  /(?:v[ée]rtice|ponto|marco|estaca)\s+([A-Z0-9][\w\-.]{0,12})[\s\S]{0,400}?(?:até|ao?|at[ée]\s+o)\s+(?:o\s+)?(?:v[ée]rtice|ponto|marco|estaca)\s+([A-Z0-9][\w\-.]{0,12})/i;
 const VERTEX_SINGLE_RE =
   /(?:v[ée]rtice|ponto|marco|estaca)\s+([A-Z0-9][\w\-.]{0,12})/i;
 const DIST_RE = /(?:dist[âa]ncia|extens[ãa]o|medindo|mede|percorre)\s*(?:de|:)?\s*([\d.,]+)\s*(m|metros|km)\b/i;
