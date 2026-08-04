@@ -174,12 +174,38 @@ export function compareParcels(
     });
   }
 
+  // --- Alinhamento de caminhamento (sentido e ponto de partida) ---
+  // Descrições podem percorrer o perímetro em sentidos opostos (horária x
+  // anti-horária) e/ou iniciar em vértices diferentes. Nesse caso, o mesmo
+  // trecho de divisa aparece com o CONTRA-AZIMUTE (azimute ± 180°).
+  const alignment = alignSegments(a.segments, b.segments, tol);
+  metrics["alignment_mode"] = alignment.reversed ? "invertido" : "direto";
+  metrics["alignment_offset"] = alignment.offset;
+
+  if (alignment.reversed || alignment.offset !== 0) {
+    findings.push({
+      severity: "informative",
+      code: "CAMINHAMENTO_AJUSTADO",
+      title: alignment.reversed
+        ? "Caminhamentos em sentidos opostos"
+        : "Vértice inicial distinto",
+      description: alignment.reversed
+        ? `As descrições percorrem o perímetro em sentidos contrários. A conferência foi feita por contra-azimute (azimute ± 180°)${alignment.offset ? `, com defasagem de ${alignment.offset} vértice(s) no ponto de partida` : ""}. Trata-se de equivalência técnica, não de divergência.`
+        : `As descrições iniciam em vértices diferentes (defasagem de ${alignment.offset} vértice(s)). A correspondência dos trechos foi ajustada antes da conferência.`,
+      evidence: {
+        invertido: alignment.reversed,
+        defasagem: alignment.offset,
+        pares: alignment.pairs.map((p) => ({ a: p.ia + 1, b: p.ib + 1 })),
+      },
+    });
+  }
+
   // --- Segmento a segmento ---
-  const n = Math.min(a.segments.length, b.segments.length);
+  const n = alignment.pairs.length;
   let divergentSegments = 0;
-  for (let i = 0; i < n; i += 1) {
-    const sa = a.segments[i]!;
-    const sb = b.segments[i]!;
+  for (const pair of alignment.pairs) {
+    const sa = a.segments[pair.ia]!;
+    const sb = b.segments[pair.ib]!;
     const problems: string[] = [];
 
     if (sa.distance_m !== null && sb.distance_m !== null) {
@@ -191,17 +217,29 @@ export function compareParcels(
       }
     }
     if (sa.azimuth_deg !== null && sb.azimuth_deg !== null) {
-      const d = angleDiff(sa.azimuth_deg, sb.azimuth_deg);
+      const azB = alignment.reversed
+        ? (sb.azimuth_deg + 180) % 360
+        : sb.azimuth_deg;
+      const d = angleDiff(sa.azimuth_deg, azB);
       if (d > tol.azimuthDeg) {
         problems.push(
-          `azimute ${fmt(sa.azimuth_deg, 4)}° x ${fmt(sb.azimuth_deg, 4)}° (Δ ${fmt(d, 4)}°)`,
+          alignment.reversed
+            ? `azimute ${fmt(sa.azimuth_deg, 4)}° x contra-azimute ${fmt(azB, 4)}° (original ${fmt(sb.azimuth_deg, 4)}°, Δ ${fmt(d, 4)}°)`
+            : `azimute ${fmt(sa.azimuth_deg, 4)}° x ${fmt(sb.azimuth_deg, 4)}° (Δ ${fmt(d, 4)}°)`,
         );
       }
     }
-    const altPairs: [number | null, number | null, string][] = [
-      [sa.altitude_from_m, sb.altitude_from_m, "vértice inicial"],
-      [sa.altitude_to_m, sb.altitude_to_m, "vértice final"],
-    ];
+    // Em caminhamento invertido, o vértice inicial de A corresponde ao
+    // vértice final de B (e vice-versa).
+    const altPairs: [number | null, number | null, string][] = alignment.reversed
+      ? [
+          [sa.altitude_from_m, sb.altitude_to_m, "vértice inicial"],
+          [sa.altitude_to_m, sb.altitude_from_m, "vértice final"],
+        ]
+      : [
+          [sa.altitude_from_m, sb.altitude_from_m, "vértice inicial"],
+          [sa.altitude_to_m, sb.altitude_to_m, "vértice final"],
+        ];
     altPairs.forEach(([va, vb, rotulo]) => {
       if (va === null || vb === null) return;
       const d = Math.abs(va - vb);
@@ -223,9 +261,16 @@ export function compareParcels(
       findings.push({
         severity: "critical",
         code: "SEGMENTO_DIVERGENTE",
-        title: `Segmento ${i + 1} divergente`,
-        description: `Trecho ${sa.from_vertex ?? "?"}→${sa.to_vertex ?? "?"}: ${problems.join("; ")}.`,
-        evidence: { seq: i + 1, a: sa, b: sb, problems },
+        title: `Segmento ${pair.ia + 1} divergente`,
+        description: `Trecho ${sa.from_vertex ?? "?"}→${sa.to_vertex ?? "?"} (correspondente ao segmento ${pair.ib + 1} de ${labels.b}): ${problems.join("; ")}.`,
+        evidence: {
+          seq_a: pair.ia + 1,
+          seq_b: pair.ib + 1,
+          invertido: alignment.reversed,
+          a: sa,
+          b: sb,
+          problems,
+        },
       });
     }
   }
@@ -235,10 +280,11 @@ export function compareParcels(
       severity: "informative",
       code: "SEGMENTOS_COMPATIVEIS",
       title: "Segmentos compatíveis",
-      description: `Os ${n} segmentos comparados estão dentro das tolerâncias (${tol.distanceM} m / ${tol.azimuthDeg}°).`,
-      evidence: { comparados: n },
+      description: `Os ${n} segmentos comparados estão dentro das tolerâncias (${tol.distanceM} m / ${tol.azimuthDeg}°)${alignment.reversed ? ", considerando o contra-azimute pelo caminhamento inverso" : ""}.`,
+      evidence: { comparados: n, invertido: alignment.reversed },
     });
   }
+
 
   // --- Altimetria (cotas dos vértices) ---
   const altA = a.altitude_mean_m;
