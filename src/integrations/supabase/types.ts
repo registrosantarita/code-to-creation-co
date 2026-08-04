@@ -465,6 +465,9 @@ export type Database = {
       }
       parcels: {
         Row: {
+          altitude_max_m: number | null
+          altitude_mean_m: number | null
+          altitude_min_m: number | null
           analysis_id: string
           area_m2: number | null
           computed_perimeter_m: number | null
@@ -478,6 +481,9 @@ export type Database = {
           vertex_count: number
         }
         Insert: {
+          altitude_max_m?: number | null
+          altitude_mean_m?: number | null
+          altitude_min_m?: number | null
           analysis_id: string
           area_m2?: number | null
           computed_perimeter_m?: number | null
@@ -491,6 +497,9 @@ export type Database = {
           vertex_count?: number
         }
         Update: {
+          altitude_max_m?: number | null
+          altitude_mean_m?: number | null
+          altitude_min_m?: number | null
           analysis_id?: string
           area_m2?: number | null
           computed_perimeter_m?: number | null
@@ -549,6 +558,8 @@ export type Database = {
       }
       segments: {
         Row: {
+          altitude_from_m: number | null
+          altitude_to_m: number | null
           analysis_id: string
           azimuth_deg: number | null
           bearing_text: string | null
@@ -563,6 +574,8 @@ export type Database = {
           to_vertex: string | null
         }
         Insert: {
+          altitude_from_m?: number | null
+          altitude_to_m?: number | null
           analysis_id: string
           azimuth_deg?: number | null
           bearing_text?: string | null
@@ -577,6 +590,8 @@ export type Database = {
           to_vertex?: string | null
         }
         Update: {
+          altitude_from_m?: number | null
+          altitude_to_m?: number | null
           analysis_id?: string
           azimuth_deg?: number | null
           bearing_text?: string | null
