@@ -3,6 +3,7 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import type { Json } from "@/integrations/supabase/types";
 import { z } from "zod";
 import { parseMemorial } from "./memorial-parser";
+import { isGeoExtension, parseGeometryText } from "./geo-parser";
 import {
   DEFAULT_TOLERANCES,
   compareParcels,
@@ -53,7 +54,20 @@ export const processDocument = createServerFn({ method: "POST" })
       return { ok: false as const, message: note ?? "Nenhum texto pôde ser extraído." };
     }
 
-    const parsed = parseMemorial(text);
+    const geo =
+      isGeoExtension(doc.file_extension) ||
+      text.trimStart().startsWith("<kml") ||
+      text.includes("<coordinates>")
+        ? parseGeometryText(text)
+        : null;
+
+    const parsed = geo ?? parseMemorial(text);
+    if (geo) {
+      parsed.warnings = [
+        "Geometria vetorial interpretada: azimutes e distâncias calculados sobre WGS-84.",
+        ...parsed.warnings,
+      ];
+    }
 
     await supabase.from("parcels").delete().eq("document_id", doc.id);
 

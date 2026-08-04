@@ -11,7 +11,17 @@ export function decodeText(bytes: ArrayBuffer): string {
   return new TextDecoder("utf-8").decode(new Uint8Array(bytes));
 }
 
-const TEXT_EXTENSIONS = ["txt", "csv", "md", "json", "xml", "kml"];
+const TEXT_EXTENSIONS = ["txt", "csv", "md", "json", "xml", "kml", "geojson"];
+
+const OCR_IMAGE_EXTENSIONS = ["png", "jpg", "jpeg", "webp", "tif", "tiff"];
+
+/** KMZ: pacote compactado contendo um ou mais arquivos KML. */
+export async function extractKmzText(bytes: ArrayBuffer): Promise<string> {
+  const { unzipSync, strFromU8 } = await import("fflate");
+  const files = unzipSync(new Uint8Array(bytes));
+  const name = Object.keys(files).find((f) => f.toLowerCase().endsWith(".kml"));
+  return name ? strFromU8(files[name]!) : "";
+}
 
 /** DOCX: descompacta o pacote OOXML e extrai o texto dos parágrafos. */
 export async function extractDocxText(bytes: ArrayBuffer): Promise<string> {
@@ -61,10 +71,26 @@ export async function extractTextFromFile(
   if (ext === "pdf") {
     const text = await extractPdfText(bytes);
     if (text.trim().length < 40) {
+      const { ocrDocument } = await import("./ocr.server");
+      const ocr = await ocrDocument(bytes, "pdf");
+      if (ocr.text.trim()) return ocr;
       return {
         text,
-        note: "O PDF parece ser digitalizado (sem camada de texto). Cole o texto do memorial manualmente para permitir a extração.",
+        note:
+          ocr.note ??
+          "O PDF parece ser digitalizado (sem camada de texto) e o OCR não retornou conteúdo. Cole o texto do memorial manualmente.",
       };
+    }
+    return { text };
+  }
+  if (OCR_IMAGE_EXTENSIONS.includes(ext)) {
+    const { ocrDocument } = await import("./ocr.server");
+    return await ocrDocument(bytes, ext);
+  }
+  if (ext === "kmz") {
+    const text = await extractKmzText(bytes);
+    if (!text.trim()) {
+      return { text: "", note: "Não foi possível localizar um KML dentro do arquivo KMZ." };
     }
     return { text };
   }

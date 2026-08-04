@@ -326,7 +326,7 @@ function AnaliseDetalhe() {
                   <Input
                     id="arquivo"
                     type="file"
-                    accept=".pdf,.txt,.csv,.md,.docx,.xlsx,.png,.jpg,.jpeg,.kml,.kmz,.dwg"
+                    accept=".pdf,.txt,.csv,.md,.docx,.xlsx,.png,.jpg,.jpeg,.tif,.tiff,.webp,.kml,.kmz,.geojson,.json,.dwg"
                     disabled={enviarArquivo.isPending}
                     onChange={(e) => {
                       const f = e.target.files?.[0];
@@ -334,6 +334,11 @@ function AnaliseDetalhe() {
                       e.target.value = "";
                     }}
                   />
+                  <p className="text-xs leading-relaxed text-muted-foreground">
+                    PDFs digitalizados e imagens passam por OCR assistido por IA.
+                    Arquivos KML, KMZ e GeoJSON têm o perímetro, os azimutes e a
+                    área calculados diretamente da geometria (WGS-84).
+                  </p>
                   {enviarArquivo.isPending && (
                     <p className="text-xs text-muted-foreground">
                       Enviando e extraindo...
