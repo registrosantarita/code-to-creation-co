@@ -108,6 +108,19 @@ function AuthPage() {
     navigate({ to: "/painel", replace: true });
   }
 
+  async function handleApple() {
+    const { lovable } = await import("@/integrations/lovable/index");
+    const result = await lovable.auth.signInWithOAuth("apple", {
+      redirect_uri: window.location.origin,
+    });
+    if (result.error) {
+      toast.error("Falha ao entrar com Apple.");
+      return;
+    }
+    if (result.redirected) return;
+    navigate({ to: "/painel", replace: true });
+  }
+
   return (
     <div className="grid min-h-screen lg:grid-cols-2">
       <aside className="hidden flex-col justify-between bg-ink p-12 text-ink-foreground lg:flex">
@@ -234,9 +247,14 @@ function AuthPage() {
                 <span className="eyebrow">ou</span>
                 <div className="h-px flex-1 bg-border" />
               </div>
-              <Button variant="outline" className="w-full" onClick={handleGoogle}>
-                Continuar com Google
-              </Button>
+              <div className="space-y-3">
+                <Button variant="outline" className="w-full" onClick={handleGoogle}>
+                  Continuar com Google
+                </Button>
+                <Button variant="outline" className="w-full" onClick={handleApple}>
+                  Continuar com Apple
+                </Button>
+              </div>
             </>
           )}
         </div>
