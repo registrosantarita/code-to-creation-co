@@ -39,9 +39,16 @@ function AuthenticatedLayout() {
             </div>
           </Link>
           <div className="flex items-center gap-3">
+            <Link
+              to="/creditos"
+              className="text-xs text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
+            >
+              Créditos
+            </Link>
             <span className="hidden text-xs text-muted-foreground sm:inline">
               {user.email}
             </span>
+
             <Button variant="outline" size="sm" onClick={signOut}>
               Sair
             </Button>
