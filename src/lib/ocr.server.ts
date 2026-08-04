@@ -28,7 +28,14 @@ const PROMPT =
   "e todos os números, azimutes (graus, minutos, segundos), distâncias, áreas e nomes de confrontantes " +
   "exatamente como aparecem. Não resuma, não comente e não traduza. Responda apenas com a transcrição.";
 
-export type OcrResult = { text: string; note?: string };
+export type OcrUsage = {
+  model: string;
+  promptTokens: number;
+  completionTokens: number;
+  totalTokens: number;
+};
+
+export type OcrResult = { text: string; note?: string; usage?: OcrUsage };
 
 export async function ocrDocument(
   bytes: ArrayBuffer,
@@ -79,13 +86,28 @@ export async function ocrDocument(
 
   const json = (await response.json()) as {
     choices?: { message?: { content?: string } }[];
+    model?: string;
+    usage?: {
+      prompt_tokens?: number;
+      completion_tokens?: number;
+      total_tokens?: number;
+    };
   };
   const text = json.choices?.[0]?.message?.content ?? "";
+  const prompt = json.usage?.prompt_tokens ?? 0;
+  const completion = json.usage?.completion_tokens ?? 0;
+  const usage: OcrUsage = {
+    model: json.model ?? "google/gemini-3.6-flash",
+    promptTokens: prompt,
+    completionTokens: completion,
+    totalTokens: json.usage?.total_tokens ?? prompt + completion,
+  };
   if (!text.trim()) {
-    return { text: "", note: "O OCR não identificou texto legível neste documento." };
+    return { text: "", note: "O OCR não identificou texto legível neste documento.", usage };
   }
   return {
     text,
+    usage,
     note: "Texto obtido por OCR assistido por IA. Confira a transcrição antes da qualificação.",
   };
 }

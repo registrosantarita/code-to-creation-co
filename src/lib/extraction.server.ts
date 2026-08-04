@@ -66,7 +66,11 @@ export async function extractSpreadsheetText(bytes: ArrayBuffer): Promise<string
 export async function extractTextFromFile(
   bytes: ArrayBuffer,
   extension: string,
-): Promise<{ text: string; note?: string }> {
+): Promise<{
+  text: string;
+  note?: string;
+  usage?: import("./ocr.server").OcrUsage;
+}> {
   const ext = extension.toLowerCase().replace(".", "");
   if (ext === "pdf") {
     const text = await extractPdfText(bytes);
@@ -76,6 +80,7 @@ export async function extractTextFromFile(
       if (ocr.text.trim()) return ocr;
       return {
         text,
+        usage: ocr.usage,
         note:
           ocr.note ??
           "O PDF parece ser digitalizado (sem camada de texto) e o OCR não retornou conteúdo. Cole o texto do memorial manualmente.",
