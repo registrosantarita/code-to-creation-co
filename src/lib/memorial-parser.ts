@@ -3,6 +3,8 @@
  * Puro, sem dependências — usado no servidor e no cliente.
  */
 
+import { normalizeMemorialText } from "./lexicon";
+
 export type ParsedSegment = {
   seq: number;
   from_vertex: string | null;
@@ -114,13 +116,13 @@ const AREA_RE =
   /área\s*(?:total|superficial|do\s+(?:imóvel|imovel|lote|terreno))?\s*(?:é|de|:|igual a)?\s*([\d.,]+)\s*(m²|m2|metros\s+quadrados|ha|hectares?|alqueires?)/i;
 const PERIM_RE =
   /per[ií]metro\s*(?:total)?\s*(?:é|de|:|igual a)?\s*([\d.,]+)\s*(m|metros)\b/i;
-const MATRICULA_RE = /matr[ií]cula\s*(?:n[ºo°.]*\s*)?([\d.\-/]+)/i;
+const MATRICULA_RE = /matr[ií]cula\s*(?:n[ºo°.]*\s*)?([\d.\-/]*\d)/i;
 
 /** Divide o corpo do memorial em trechos por vértice. */
 function splitSegments(text: string): string[] {
   const normalized = text.replace(/\s+/g, " ");
   const parts = normalized.split(
-    /(?=(?:deste|desse|daí|dai|do|partindo\s+do|segue(?:-se)?\s+do)?\s*(?:v[ée]rtice|ponto|marco|estaca)\s+[A-Z0-9][\w\-.]{0,12}\s*(?:,|\s)\s*(?:segue|deflete|confront|com\s+azimute|azimute|rumo|ruma|até|deste|distância))/i,
+    /(?<!at[ée]\s)(?<!at[ée]\s(?:o|a))(?<!at[ée]\s(?:o|a)\s)(?=(?:deste|desse|daí|dai|do|partindo\s+do|segue(?:-se)?\s+do)?\s*(?:v[ée]rtice|ponto|marco|estaca)\s+[A-Z0-9][\w\-.]{0,12}\s*(?:,|\s)\s*(?:segue|deflete|confront|com\s+azimute|azimute|rumo|ruma|até|deste|distância))/i,
   );
   return parts.map((p) => p.trim()).filter((p) => p.length > 15);
 }
@@ -139,7 +141,12 @@ const CONFRONT_RE =
 
 export function parseMemorial(text: string): ParsedParcel {
   const warnings: string[] = [];
-  const flat = text.replace(/\u00a0/g, " ");
+  const { text: flat, aplicadas } = normalizeMemorialText(text);
+  if (aplicadas.length > 0) {
+    warnings.push(
+      `Padronização léxica aplicada antes da extração (${aplicadas.length}): ${aplicadas.join("; ")}.`,
+    );
+  }
 
   let area: number | null = null;
   const areaMatch = AREA_RE.exec(flat);
