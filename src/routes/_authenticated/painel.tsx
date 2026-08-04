@@ -107,11 +107,17 @@ function Painel() {
         <div>
           <p className="eyebrow">Casos de conferência</p>
           <h1 className="mt-2 text-4xl">Minhas análises</h1>
+          <p className="mt-3 max-w-xl text-sm text-muted-foreground">
+            O envio de arquivos e a colagem de texto livre acontecem dentro de
+            uma análise. Crie ou abra um caso para enviar memoriais, plantas,
+            escrituras e KML/GeoJSON.
+          </p>
         </div>
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild>
-            <Button>Nova análise</Button>
+            <Button size="lg">Nova análise — enviar arquivos ou colar texto</Button>
           </DialogTrigger>
+
           <DialogContent>
             <DialogHeader>
               <DialogTitle className="font-display">Abrir nova análise</DialogTitle>
