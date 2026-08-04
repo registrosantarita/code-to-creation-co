@@ -147,12 +147,13 @@ function Relatorio() {
         </dl>
 
         <h3 className="mt-6 text-base">Tolerâncias adotadas</h3>
-        <dl className="mt-3 grid grid-cols-2 gap-4 md:grid-cols-4">
+        <dl className="mt-3 grid grid-cols-2 gap-4 md:grid-cols-5">
           {[
             ["Área", `${fmtNum(tol["areaPct"] ?? null, 2)} %`],
             ["Perímetro", `${fmtNum(tol["perimeterPct"] ?? null, 2)} %`],
             ["Distância", `${fmtNum(tol["distanceM"] ?? null, 3)} m`],
             ["Azimute", `${fmtNum(tol["azimuthDeg"] ?? null, 4)} °`],
+            ["Altitude", `${fmtNum(tol["altitudeM"] ?? null, 2)} m`],
           ].map(([k, v]) => (
             <div key={k}>
               <dt className="eyebrow">{k}</dt>

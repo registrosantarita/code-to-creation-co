@@ -6,7 +6,7 @@
 
 import type { ParsedParcel, ParsedSegment } from "./memorial-parser";
 
-export type LonLat = { lon: number; lat: number };
+export type LonLat = { lon: number; lat: number; alt: number | null };
 
 const R = 6378137; // raio equatorial WGS-84, em metros
 const rad = (d: number) => (d * Math.PI) / 180;
@@ -89,13 +89,24 @@ function buildParcel(
       bearing_text: `${azimuth.toFixed(4)}°`,
       azimuth_deg: Number(azimuth.toFixed(6)),
       distance_m: Number(distance.toFixed(3)),
+      altitude_from_m: a.alt ?? null,
+      altitude_to_m: b.alt ?? null,
       confrontante: null,
-      raw_text: `${vertexName(i)} → ${vertexName((i + 1) % ring.length)}: ${azimuth.toFixed(4)}° / ${distance.toFixed(3)} m`,
+      raw_text: `${vertexName(i)} → ${vertexName((i + 1) % ring.length)}: ${azimuth.toFixed(4)}° / ${distance.toFixed(3)} m${
+        a.alt === null || a.alt === undefined ? "" : ` / altitude ${a.alt.toFixed(2)} m`
+      }`,
     });
   }
 
   if (ring.length < 3) {
     warnings.push("A geometria possui menos de três vértices e não forma polígono.");
+  }
+
+  const alts = ring
+    .map((p) => (p.alt === null || p.alt === undefined ? null : p.alt))
+    .filter((v): v is number => v !== null);
+  if (alts.length === 0) {
+    warnings.push("A geometria não traz altitude (Z) nos vértices.");
   }
 
   return {
@@ -104,6 +115,12 @@ function buildParcel(
     declared_perimeter_m: null,
     computed_perimeter_m: Number(perimeter.toFixed(3)),
     vertex_count: ring.length,
+    altitude_min_m: alts.length > 0 ? Math.min(...alts) : null,
+    altitude_max_m: alts.length > 0 ? Math.max(...alts) : null,
+    altitude_mean_m:
+      alts.length > 0
+        ? Number((alts.reduce((s, v) => s + v, 0) / alts.length).toFixed(3))
+        : null,
     confrontantes: [],
     segments,
     warnings,
@@ -115,9 +132,13 @@ function parseKmlCoordinates(block: string): LonLat[] {
     .trim()
     .split(/\s+/)
     .map((tuple) => {
-      const [lon, lat] = tuple.split(",").map(Number);
+      const [lon, lat, alt] = tuple.split(",").map(Number);
       return Number.isFinite(lon) && Number.isFinite(lat)
-        ? ({ lon: lon as number, lat: lat as number } satisfies LonLat)
+        ? ({
+            lon: lon as number,
+            lat: lat as number,
+            alt: Number.isFinite(alt) ? (alt as number) : null,
+          } satisfies LonLat)
         : null;
     })
     .filter((p): p is LonLat => p !== null);
@@ -161,7 +182,11 @@ function ringsFromGeometry(geom: GeoJsonGeometry): LonLat[][] {
       ? arr
           .map((c) =>
             Array.isArray(c) && Number.isFinite(c[0]) && Number.isFinite(c[1])
-              ? ({ lon: Number(c[0]), lat: Number(c[1]) } satisfies LonLat)
+              ? ({
+                  lon: Number(c[0]),
+                  lat: Number(c[1]),
+                  alt: Number.isFinite(c[2]) ? Number(c[2]) : null,
+                } satisfies LonLat)
               : null,
           )
           .filter((p): p is LonLat => p !== null)

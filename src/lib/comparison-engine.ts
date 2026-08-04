@@ -16,6 +16,7 @@ export type Tolerances = {
   perimeterPct: number;
   distanceM: number;
   azimuthDeg: number;
+  altitudeM: number;
 };
 
 export const DEFAULT_TOLERANCES: Tolerances = {
@@ -23,6 +24,7 @@ export const DEFAULT_TOLERANCES: Tolerances = {
   perimeterPct: 1,
   distanceM: 0.05,
   azimuthDeg: 0.0834, // ~5'
+  altitudeM: 0.5, // cota altimétrica (SIGEF/nivelamento)
 };
 
 export type SegmentInput = {
@@ -31,6 +33,8 @@ export type SegmentInput = {
   to_vertex: string | null;
   azimuth_deg: number | null;
   distance_m: number | null;
+  altitude_from_m: number | null;
+  altitude_to_m: number | null;
   confrontante: string | null;
 };
 
@@ -40,6 +44,9 @@ export type ParcelInput = {
   declared_perimeter_m: number | null;
   computed_perimeter_m: number | null;
   vertex_count: number;
+  altitude_min_m: number | null;
+  altitude_max_m: number | null;
+  altitude_mean_m: number | null;
   confrontantes: string[];
   segments: SegmentInput[];
 };
@@ -191,6 +198,20 @@ export function compareParcels(
         );
       }
     }
+    const altPairs: [number | null, number | null, string][] = [
+      [sa.altitude_from_m, sb.altitude_from_m, "vértice inicial"],
+      [sa.altitude_to_m, sb.altitude_to_m, "vértice final"],
+    ];
+    altPairs.forEach(([va, vb, rotulo]) => {
+      if (va === null || vb === null) return;
+      const d = Math.abs(va - vb);
+      if (d > tol.altitudeM) {
+        problems.push(
+          `altitude do ${rotulo} ${fmt(va, 2)} m x ${fmt(vb, 2)} m (Δ ${fmt(d, 2)} m)`,
+        );
+      }
+    });
+
     if (sa.confrontante && sb.confrontante) {
       if (normalizeName(sa.confrontante) !== normalizeName(sb.confrontante)) {
         problems.push(`confrontante "${sa.confrontante}" x "${sb.confrontante}"`);
@@ -216,6 +237,55 @@ export function compareParcels(
       title: "Segmentos compatíveis",
       description: `Os ${n} segmentos comparados estão dentro das tolerâncias (${tol.distanceM} m / ${tol.azimuthDeg}°).`,
       evidence: { comparados: n },
+    });
+  }
+
+  // --- Altimetria (cotas dos vértices) ---
+  const altA = a.altitude_mean_m;
+  const altB = b.altitude_mean_m;
+  if (altA !== null && altB !== null) {
+    const diff = Math.abs(altA - altB);
+    metrics["altitude_mean_a_m"] = altA;
+    metrics["altitude_mean_b_m"] = altB;
+    metrics["altitude_diff_m"] = diff;
+    metrics["altitude_amplitude_a_m"] =
+      a.altitude_max_m !== null && a.altitude_min_m !== null
+        ? a.altitude_max_m - a.altitude_min_m
+        : null;
+    metrics["altitude_amplitude_b_m"] =
+      b.altitude_max_m !== null && b.altitude_min_m !== null
+        ? b.altitude_max_m - b.altitude_min_m
+        : null;
+    if (diff > tol.altitudeM) {
+      findings.push({
+        severity: diff > tol.altitudeM * 4 ? "critical" : "moderate",
+        code: "ALTITUDE_DIVERGENTE",
+        title: "Divergência altimétrica",
+        description: `A altitude média dos vértices de ${labels.a} (${fmt(altA)} m) diverge da de ${labels.b} (${fmt(altB)} m) em ${fmt(diff)} m, acima da tolerância de ${tol.altitudeM} m.`,
+        evidence: {
+          a: { min: a.altitude_min_m, max: a.altitude_max_m, media: altA },
+          b: { min: b.altitude_min_m, max: b.altitude_max_m, media: altB },
+          diff,
+          tolerance: tol.altitudeM,
+        },
+      });
+    } else {
+      findings.push({
+        severity: "informative",
+        code: "ALTITUDE_COMPATIVEL",
+        title: "Altimetria compatível",
+        description: `Altitude média de ${fmt(altA)} m x ${fmt(altB)} m (Δ ${fmt(diff)} m), dentro da tolerância de ${tol.altitudeM} m.`,
+        evidence: { a: altA, b: altB, diff },
+      });
+    }
+  } else if (altA !== null || altB !== null) {
+    findings.push({
+      severity: "inconclusive",
+      code: "ALTITUDE_AUSENTE",
+      title: "Altitude ausente em um dos documentos",
+      description:
+        "Apenas um dos documentos traz cotas altimétricas nos vértices; a conferência de altitude ficou inconclusiva.",
+      evidence: { a: altA, b: altB },
     });
   }
 

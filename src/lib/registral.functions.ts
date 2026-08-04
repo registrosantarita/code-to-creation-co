@@ -95,6 +95,9 @@ export const processDocument = createServerFn({ method: "POST" })
         declared_perimeter_m: parsed.declared_perimeter_m,
         computed_perimeter_m: parsed.computed_perimeter_m,
         vertex_count: parsed.vertex_count,
+        altitude_min_m: parsed.altitude_min_m,
+        altitude_max_m: parsed.altitude_max_m,
+        altitude_mean_m: parsed.altitude_mean_m,
         confrontantes: parsed.confrontantes,
         raw_extraction: { warnings: parsed.warnings },
       })
@@ -113,6 +116,8 @@ export const processDocument = createServerFn({ method: "POST" })
           bearing_text: s.bearing_text,
           azimuth_deg: s.azimuth_deg,
           distance_m: s.distance_m,
+          altitude_from_m: s.altitude_from_m,
+          altitude_to_m: s.altitude_to_m,
           confrontante: s.confrontante,
           raw_text: s.raw_text,
         })),
@@ -202,6 +207,7 @@ const CompareInput = z.object({
       perimeterPct: z.number().min(0).max(100),
       distanceM: z.number().min(0).max(1000),
       azimuthDeg: z.number().min(0).max(180),
+      altitudeM: z.number().min(0).max(10000),
     })
     .optional(),
 });
@@ -247,6 +253,12 @@ export const runComparison = createServerFn({ method: "POST" })
               ? null
               : Number(parcel.computed_perimeter_m),
           vertex_count: parcel.vertex_count,
+          altitude_min_m:
+            parcel.altitude_min_m === null ? null : Number(parcel.altitude_min_m),
+          altitude_max_m:
+            parcel.altitude_max_m === null ? null : Number(parcel.altitude_max_m),
+          altitude_mean_m:
+            parcel.altitude_mean_m === null ? null : Number(parcel.altitude_mean_m),
           confrontantes: parcel.confrontantes ?? [],
           segments: (segments ?? []).map((s) => ({
             seq: s.seq,
@@ -254,6 +266,10 @@ export const runComparison = createServerFn({ method: "POST" })
             to_vertex: s.to_vertex,
             azimuth_deg: s.azimuth_deg === null ? null : Number(s.azimuth_deg),
             distance_m: s.distance_m === null ? null : Number(s.distance_m),
+            altitude_from_m:
+              s.altitude_from_m === null ? null : Number(s.altitude_from_m),
+            altitude_to_m:
+              s.altitude_to_m === null ? null : Number(s.altitude_to_m),
             confrontante: s.confrontante,
           })),
         },

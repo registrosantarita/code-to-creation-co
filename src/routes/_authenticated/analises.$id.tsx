@@ -442,6 +442,18 @@ function AnaliseDetalhe() {
                                   `${fmtNum(parcel.computed_perimeter_m)} m`,
                                 ],
                                 ["Vértices", String(parcel.vertex_count)],
+                                [
+                                  "Altitude (mín–máx)",
+                                  parcel.altitude_min_m === null
+                                    ? "—"
+                                    : `${fmtNum(parcel.altitude_min_m, 2)} – ${fmtNum(parcel.altitude_max_m, 2)} m`,
+                                ],
+                                [
+                                  "Altitude média",
+                                  parcel.altitude_mean_m === null
+                                    ? "—"
+                                    : `${fmtNum(parcel.altitude_mean_m, 2)} m`,
+                                ],
                               ].map(([k, v]) => (
                                 <div key={k}>
                                   <dt className="eyebrow">{k}</dt>
@@ -463,6 +475,7 @@ function AnaliseDetalhe() {
                                         "Para",
                                         "Azimute",
                                         "Distância (m)",
+                                        "Altitude (m)",
                                         "Confrontante",
                                       ].map((h) => (
                                         <th
@@ -496,6 +509,12 @@ function AnaliseDetalhe() {
                                           </td>
                                           <td className="numeric py-2 pr-4">
                                             {fmtNum(s.distance_m, 3)}
+                                          </td>
+                                          <td className="numeric py-2 pr-4">
+                                            {s.altitude_from_m === null &&
+                                            s.altitude_to_m === null
+                                              ? "—"
+                                              : `${fmtNum(s.altitude_from_m, 2)} → ${fmtNum(s.altitude_to_m, 2)}`}
                                           </td>
                                           <td className="py-2 pr-4 text-muted-foreground">
                                             {s.confrontante ?? "—"}
@@ -594,6 +613,7 @@ function AnaliseDetalhe() {
                   ["perimeterPct", "Perímetro (%)", 0.01],
                   ["distanceM", "Distância (m)", 0.001],
                   ["azimuthDeg", "Azimute (°)", 0.0001],
+                  ["altitudeM", "Altitude (m)", 0.01],
                 ] as const
               ).map(([key, label, step]) => (
                 <div key={key} className="space-y-2">
