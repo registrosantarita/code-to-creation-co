@@ -58,6 +58,9 @@ const grau = (v: number | string | null | undefined): string => {
   return n === null ? "" : degToDms(n);
 };
 
+const vname = (v: string | null): string =>
+  (v ?? "").trim().replace(/[.,;]+$/, "").toUpperCase();
+
 export function getVertices(parcel: ParcelExport): VertexCoordRow[] {
   const raw = parcel.raw_extraction as { vertices?: VertexCoordRow[] } | null;
   return Array.isArray(raw?.vertices) ? raw!.vertices! : [];
@@ -100,19 +103,19 @@ export function buildDescricaoSheets(parcel: ParcelExport): {
     ];
     const confrontacao: (string | number)[][] = [["DE", "PARA", "CONFRONTAÇÃO"]];
     segs.forEach((s) => {
-      const v = idx.get(String(s.from_vertex ?? "").toUpperCase());
+      const v = idx.get(vname(s.from_vertex));
       perimetro.push([
-        s.from_vertex ?? "",
+        vname(s.from_vertex),
         v?.lon === null || v?.lon === undefined ? "" : br(v.lon, 8),
         v?.lat === null || v?.lat === undefined ? "" : br(v.lat, 8),
         altitudeDe(s, v),
-        s.to_vertex ?? "",
+        vname(s.to_vertex),
         grau(s.azimuth_deg),
         br(s.distance_m, 3),
       ]);
       confrontacao.push([
-        s.from_vertex ?? "",
-        s.to_vertex ?? "",
+        vname(s.from_vertex),
+        vname(s.to_vertex),
         s.confrontante ?? "",
       ]);
     });
@@ -123,12 +126,12 @@ export function buildDescricaoSheets(parcel: ParcelExport): {
     ["DE", "COORD. N(Y)", "COORD. E(X)", "PARA", "ÂNGULO", "DIST. (m).", "CONFRONTAÇÃO"],
   ];
   segs.forEach((s) => {
-    const v = idx.get(String(s.from_vertex ?? "").toUpperCase());
+    const v = idx.get(vname(s.from_vertex));
     perimetro.push([
-      s.from_vertex ?? "",
+      vname(s.from_vertex),
       v?.north === null || v?.north === undefined ? "" : br(v.north, 3),
       v?.east === null || v?.east === undefined ? "" : br(v.east, 3),
-      s.to_vertex ?? "",
+      vname(s.to_vertex),
       grau(s.azimuth_deg),
       br(s.distance_m, 3),
       s.confrontante ?? "",
