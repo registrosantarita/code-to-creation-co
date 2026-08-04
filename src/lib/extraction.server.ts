@@ -80,7 +80,7 @@ export async function extractTextFromFile(
       if (ocr.text.trim()) return ocr;
       return {
         text,
-        usage: ocr.usage,
+        ...(ocr.usage ? { usage: ocr.usage } : {}),
         note:
           ocr.note ??
           "O PDF parece ser digitalizado (sem camada de texto) e o OCR não retornou conteúdo. Cole o texto do memorial manualmente.",

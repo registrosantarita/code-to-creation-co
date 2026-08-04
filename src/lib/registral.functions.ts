@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import type { Json } from "@/integrations/supabase/types";
+import type { Database, Json } from "@/integrations/supabase/types";
+import type { SupabaseClient } from "@supabase/supabase-js";
 import { z } from "zod";
 import { parseMemorial } from "./memorial-parser";
 import { isGeoExtension, parseGeometryText } from "./geo-parser";
@@ -160,7 +161,7 @@ type ConsumoInput = {
 };
 
 async function registrarConsumo(
-  supabase: { from: (t: "ai_usage_events") => { insert: (v: unknown) => Promise<unknown> } },
+  supabase: SupabaseClient<Database>,
   input: ConsumoInput,
 ) {
   const { creditosDeTokens, estimarPaginas } = await import("./credit-estimator");
