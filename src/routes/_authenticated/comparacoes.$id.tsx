@@ -9,6 +9,8 @@ import {
   fmtNum,
 } from "@/lib/labels";
 import { Button } from "@/components/ui/button";
+import { exportarRelatorioPdf } from "@/lib/export-registral";
+
 
 export const Route = createFileRoute("/_authenticated/comparacoes/$id")({
   head: () => ({
