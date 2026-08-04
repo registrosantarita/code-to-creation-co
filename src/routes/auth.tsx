@@ -16,13 +16,13 @@ export const Route = createFileRoute("/auth")({
   }),
   head: () => ({
     meta: [
-      { title: "Acesso — Conferência Registral" },
+      { title: "Acesso — GeoConfronto" },
       {
         name: "description",
         content:
           "Entre ou cadastre-se para acessar as análises de conferência registral.",
       },
-      { property: "og:title", content: "Acesso — Conferência Registral" },
+      { property: "og:title", content: "Acesso — GeoConfronto" },
       {
         property: "og:description",
         content: "Área restrita da plataforma de conferência registral.",
@@ -151,7 +151,7 @@ function AuthPage() {
       <aside className="hidden flex-col justify-between bg-ink p-12 text-ink-foreground lg:flex">
         <Link to="/" className="flex items-center gap-3">
           <div className="h-8 w-8 border border-accent" aria-hidden />
-          <span className="font-display text-base">Conferência Registral</span>
+          <span className="font-display text-base">GeoConfronto</span>
         </Link>
         <div>
           <div className="rule-gold w-32" />

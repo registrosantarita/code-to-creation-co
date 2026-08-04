@@ -8,7 +8,7 @@ import { NavArrows } from "@/components/NavArrows";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Conferência Registral — Qualificação técnica assistida" },
+      { title: "GeoConfronto — Qualificação técnica assistida" },
       {
         name: "description",
         content:
@@ -16,7 +16,7 @@ export const Route = createFileRoute("/")({
       },
       {
         property: "og:title",
-        content: "Conferência Registral — Qualificação técnica assistida",
+        content: "GeoConfronto — Qualificação técnica assistida",
       },
       {
         property: "og:description",
@@ -89,7 +89,7 @@ function Index() {
 
             <div className="leading-tight">
               <p className="font-display text-base text-foreground">
-                Conferência Registral
+                GeoConfronto
               </p>
               <p className="eyebrow">Plataforma técnica e normativa</p>
             </div>
@@ -166,7 +166,7 @@ function Index() {
 
       <footer className="mx-auto max-w-6xl px-6 py-10">
         <p className="text-xs text-muted-foreground">
-          Plataforma Inteligente de Conferência Registral, Geométrica e
+          Plataforma Inteligente de GeoConfronto, Geométrica e
           Normativa — apoio à decisão, com trilha de auditoria integral.
         </p>
       </footer>

@@ -37,7 +37,7 @@ function AuthenticatedLayout() {
               <div className="h-7 w-7 border border-accent bg-ink" aria-hidden />
               <div className="leading-tight">
                 <p className="font-display text-sm text-foreground">
-                  Conferência Registral
+                  GeoConfronto
                 </p>
                 <p className="eyebrow hidden sm:block">Painel de análises</p>
               </div>

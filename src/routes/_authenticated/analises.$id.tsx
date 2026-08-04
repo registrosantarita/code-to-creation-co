@@ -41,13 +41,13 @@ import { EstimativaCreditosArquivo } from "@/components/EstimativaCreditos";
 export const Route = createFileRoute("/_authenticated/analises/$id")({
   head: () => ({
     meta: [
-      { title: "Análise — Conferência Registral" },
+      { title: "Análise — GeoConfronto" },
       {
         name: "description",
         content:
           "Documentos, extrações técnicas, comparações e trilha de auditoria da análise registral.",
       },
-      { property: "og:title", content: "Análise — Conferência Registral" },
+      { property: "og:title", content: "Análise — GeoConfronto" },
       {
         property: "og:description",
         content: "Detalhe do caso de conferência registral e geométrica.",
