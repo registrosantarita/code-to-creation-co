@@ -122,7 +122,7 @@ const MATRICULA_RE = /matr[ií]cula\s*(?:n[ºo°.]*\s*)?([\d.\-/]*\d)/i;
 function splitSegments(text: string): string[] {
   const normalized = text.replace(/\s+/g, " ");
   const parts = normalized.split(
-    /(?<!at[ée]\s)(?<!at[ée]\s(?:o|a)\s)(?=(?:deste|desse|daí|dai|do|partindo\s+do|segue(?:-se)?\s+do)?\s*(?:v[ée]rtice|ponto|marco|estaca)\s+[A-Z0-9][\w\-.]{0,12}\s*(?:,|\s)\s*(?:segue|deflete|confront|com\s+azimute|azimute|rumo|ruma|até|deste|distância))/i,
+    /(?<!at[ée]\s)(?<!at[ée]\s(?:o|a))(?<!at[ée]\s(?:o|a)\s)(?=(?:deste|desse|daí|dai|do|partindo\s+do|segue(?:-se)?\s+do)?\s*(?:v[ée]rtice|ponto|marco|estaca)\s+[A-Z0-9][\w\-.]{0,12}\s*(?:,|\s)\s*(?:segue|deflete|confront|com\s+azimute|azimute|rumo|ruma|até|deste|distância))/i,
   );
   return parts.map((p) => p.trim()).filter((p) => p.length > 15);
 }
