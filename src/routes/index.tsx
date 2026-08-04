@@ -45,7 +45,7 @@ const CAPACIDADES = [
   {
     titulo: "Comparação",
     texto:
-      "Memorial x memorial e divisa comum entre confrontantes, com tolerâncias técnicas configuráveis.",
+      "Memorial x memorial, memorial x planta, planta x planta, memorial x escritura/matrícula e divisa comum entre confrontantes, com tolerâncias técnicas configuráveis.",
   },
   {
     titulo: "Achados",

@@ -29,6 +29,9 @@ export const CATEGORIA_DOCUMENTO: Record<string, string> = {
 
 export const TIPO_COMPARACAO: Record<string, string> = {
   memorial_to_memorial: "Memorial x Memorial",
+  memorial_to_plan: "Memorial x Planta",
+  plan_to_plan: "Planta x Planta",
+  memorial_to_title: "Memorial x Escritura / Título",
   boundary_to_boundary: "Divisa x Divisa (confrontantes)",
   memorial_to_registry: "Memorial x Matrícula",
   custom: "Comparação personalizada",

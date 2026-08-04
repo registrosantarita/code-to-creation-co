@@ -197,6 +197,9 @@ const CompareInput = z.object({
   documentBId: z.string().uuid(),
   comparisonType: z.enum([
     "memorial_to_memorial",
+    "memorial_to_plan",
+    "plan_to_plan",
+    "memorial_to_title",
     "boundary_to_boundary",
     "memorial_to_registry",
     "custom",
