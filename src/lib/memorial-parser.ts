@@ -217,13 +217,24 @@ export function parseMemorial(text: string): ParsedParcel {
     if (azimuth !== null) azimuth = normalizeAzimuth(azimuth);
 
     ALT_RE.lastIndex = 0;
-    const altitudes: number[] = [];
+    const altitudes: { valor: number; pos: number }[] = [];
     for (const m of chunk.matchAll(ALT_RE)) {
       const v = parseNumber(m[1]!);
-      if (v !== null && Math.abs(v) < 9000) altitudes.push(v);
+      if (v !== null && Math.abs(v) < 9000)
+        altitudes.push({ valor: v, pos: m.index ?? 0 });
     }
-    const altitudeFrom = altitudes.length > 0 ? altitudes[0]! : null;
-    const altitudeTo = altitudes.length > 1 ? altitudes[1]! : null;
+    // Uma única cota depois do conector "até" pertence ao vértice de chegada.
+    const ateIdx = /\bat[ée]\b/i.exec(chunk)?.index ?? -1;
+    let altitudeFrom: number | null = null;
+    let altitudeTo: number | null = null;
+    if (altitudes.length === 1) {
+      const only = altitudes[0]!;
+      if (ateIdx >= 0 && only.pos > ateIdx) altitudeTo = only.valor;
+      else altitudeFrom = only.valor;
+    } else if (altitudes.length > 1) {
+      altitudeFrom = altitudes[0]!.valor;
+      altitudeTo = altitudes[altitudes.length - 1]!.valor;
+    }
 
     const conf = CONFRONT_RE.exec(chunk);
     const confrontante = conf ? cleanConfrontante(conf[1]!) : null;
