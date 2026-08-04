@@ -121,20 +121,16 @@ function Painel() {
             escrituras e KML/GeoJSON.
           </p>
         </div>
-        <Dialog open={open} onOpenChange={setOpen}>
-          <DialogTrigger asChild>
-            <Button size="lg">
-              <Plus className="mr-2 h-4 w-4" />
-              Nova análise
-            </Button>
-          </DialogTrigger>
+        <div className="flex flex-wrap items-center gap-3">
+          <Dialog open={open} onOpenChange={setOpen}>
+            <DialogTrigger asChild>
+              <Button size="lg">
+                <Plus className="mr-2 h-4 w-4" />
+                Nova análise
+              </Button>
+            </DialogTrigger>
 
-          <Button variant="outline" size="lg" onClick={signOut}>
-            <LogOut className="mr-2 h-4 w-4" />
-            Sair
-          </Button>
-
-          <DialogContent>
+            <DialogContent>
             <DialogHeader>
               <DialogTitle className="font-display">Abrir nova análise</DialogTitle>
               <DialogDescription>
