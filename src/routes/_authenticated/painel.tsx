@@ -187,6 +187,7 @@ function Painel() {
           Sair
         </Button>
       </div>
+      </div>
 
       <div className="rule-gold mt-8 w-24" />
 
