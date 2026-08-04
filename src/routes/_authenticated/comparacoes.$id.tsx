@@ -15,7 +15,7 @@ import { exportarRelatorioPdf } from "@/lib/export-registral";
 export const Route = createFileRoute("/_authenticated/comparacoes/$id")({
   head: () => ({
     meta: [
-      { title: "Relatório de comparação — Conferência Registral" },
+      { title: "Relatório de comparação — GeoConfronto" },
       {
         name: "description",
         content:
@@ -23,7 +23,7 @@ export const Route = createFileRoute("/_authenticated/comparacoes/$id")({
       },
       {
         property: "og:title",
-        content: "Relatório de comparação — Conferência Registral",
+        content: "Relatório de comparação — GeoConfronto",
       },
       {
         property: "og:description",

@@ -38,7 +38,7 @@ function createWindow() {
     minWidth: 1024,
     minHeight: 700,
     backgroundColor: "#0B0B0C",
-    title: "Conferência Registral",
+    title: "GeoConfronto",
     autoHideMenuBar: false,
     webPreferences: {
       contextIsolation: true,

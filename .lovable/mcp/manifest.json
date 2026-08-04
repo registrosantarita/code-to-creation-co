@@ -11,9 +11,9 @@
   },
   "mcp": {
     "server": {
-      "name": "plataforma-inteligente-de-conferencia-registral",
+      "name": "geoconfronto",
       "version": "0.1.0",
-      "title": "Plataforma Inteligente de Conferência Registral"
+      "title": "GeoConfronto"
     },
     "tools": [
       {

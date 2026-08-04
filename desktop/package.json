@@ -1,10 +1,10 @@
 {
-  "name": "conferencia-registral",
-  "productName": "Conferencia Registral",
+  "name": "geoconfronto",
+  "productName": "GeoConfronto",
   "version": "1.0.0",
-  "description": "Plataforma Inteligente de Conferencia Registral",
+  "description": "GeoConfronto — plataforma de conferência registral, geométrica e normativa",
   "main": "main.cjs",
-  "author": "Conferencia Registral",
+  "author": "GeoConfronto",
   "license": "UNLICENSED",
   "dependencies": {
     "@electron/packager": "^20.1.1",

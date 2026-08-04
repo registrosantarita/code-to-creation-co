@@ -24,13 +24,13 @@ import { STATUS_ANALISE } from "@/lib/labels";
 export const Route = createFileRoute("/_authenticated/painel")({
   head: () => ({
     meta: [
-      { title: "Painel de análises — Conferência Registral" },
+      { title: "Painel de análises — GeoConfronto" },
       {
         name: "description",
         content:
           "Acompanhe suas análises de conferência registral, documentos e comparações técnicas.",
       },
-      { property: "og:title", content: "Painel de análises — Conferência Registral" },
+      { property: "og:title", content: "Painel de análises — GeoConfronto" },
       {
         property: "og:description",
         content: "Gestão de casos de conferência registral e geométrica.",

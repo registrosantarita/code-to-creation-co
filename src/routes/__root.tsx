@@ -76,11 +76,11 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Conferência Registral — Qualificação técnica assistida" },
+      { title: "GeoConfronto — Qualificação técnica assistida" },
       {
         name: "description",
         content:
-          "Plataforma de conferência registral, geométrica e normativa: extração, normalização e comparação auditável de memoriais descritivos.",
+          "GeoConfronto — plataforma de conferência registral, geométrica e normativa: extração, normalização e comparação auditável de memoriais descritivos.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
