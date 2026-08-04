@@ -1,8 +1,8 @@
 {
-  "name": "conferencia-registral",
+  "name": "geoconfronto",
   "productName": "GeoConfronto",
   "version": "1.0.0",
-  "description": "Plataforma Inteligente de GeoConfronto",
+  "description": "GeoConfronto — plataforma de conferência registral, geométrica e normativa",
   "main": "main.cjs",
   "author": "GeoConfronto",
   "license": "UNLICENSED",
