@@ -166,8 +166,8 @@ function Index() {
 
       <footer className="mx-auto max-w-6xl px-6 py-10">
         <p className="text-xs text-muted-foreground">
-          Plataforma Inteligente de GeoConfronto, Geométrica e
-          Normativa — apoio à decisão, com trilha de auditoria integral.
+          GeoConfronto — plataforma de conferência registral, geométrica e
+          normativa — apoio à decisão, com trilha de auditoria integral.
         </p>
       </footer>
     </div>
