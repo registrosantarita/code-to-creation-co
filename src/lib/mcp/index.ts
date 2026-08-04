@@ -23,5 +23,6 @@ export default defineMcp({
     listarAchados,
     detalharComparacao,
     registrarNotaAchado,
-  ],
+  ] as unknown as Parameters<typeof defineMcp>[0]["tools"],
+
 });
