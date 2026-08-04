@@ -234,9 +234,14 @@ function AuthPage() {
                 <span className="eyebrow">ou</span>
                 <div className="h-px flex-1 bg-border" />
               </div>
-              <Button variant="outline" className="w-full" onClick={handleGoogle}>
-                Continuar com Google
-              </Button>
+              <div className="space-y-3">
+                <Button variant="outline" className="w-full" onClick={handleGoogle}>
+                  Continuar com Google
+                </Button>
+                <Button variant="outline" className="w-full" onClick={handleApple}>
+                  Continuar com Apple
+                </Button>
+              </div>
             </>
           )}
         </div>
