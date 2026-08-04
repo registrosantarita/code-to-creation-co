@@ -2,6 +2,8 @@ import { createFileRoute, Outlet, redirect, Link, useNavigate } from "@tanstack/
 import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
+import { NavArrows } from "@/components/NavArrows";
+
 
 export const Route = createFileRoute("/_authenticated")({
   ssr: false,
