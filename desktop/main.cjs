@@ -26,15 +26,33 @@ function createWindow() {
       return {
         action: "allow",
         overrideBrowserWindowOptions: {
-          width: 520,
-          height: 720,
-          autoHideMenuBar: true,
+          width: 560,
+          height: 760,
+          autoHideMenuBar: false,
         },
       };
     }
     shell.openExternal(url);
     return { action: "deny" };
   });
+
+  // Janelas de login (Google/Apple) ganham menu próprio com "Voltar".
+  win.webContents.on("did-create-window", (child) => {
+    child.setMenu(childMenu(child));
+    child.webContents.on("before-input-event", (event, input) => {
+      if (input.type !== "keyDown") return;
+      const back = input.key === "Backspace" || (input.alt && input.key === "ArrowLeft");
+      const forward = input.alt && input.key === "ArrowRight";
+      if (back && child.webContents.navigationHistory.canGoBack()) {
+        child.webContents.navigationHistory.goBack();
+        event.preventDefault();
+      } else if (forward && child.webContents.navigationHistory.canGoForward()) {
+        child.webContents.navigationHistory.goForward();
+        event.preventDefault();
+      }
+    });
+  });
+
 
   win.webContents.on("did-fail-load", (_e, _code, description) => {
     win.loadURL(
