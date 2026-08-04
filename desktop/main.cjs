@@ -133,7 +133,7 @@ const menu = Menu.buildFromTemplate([
         click: (_i, win) => win && win.loadURL(APP_URL),
       },
     ],
-
+  },
   {
     label: "Exibir",
     submenu: [
