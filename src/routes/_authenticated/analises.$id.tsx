@@ -17,6 +17,8 @@ import {
   fmtNum,
 } from "@/lib/labels";
 import { Button } from "@/components/ui/button";
+import { exportarDescricaoXlsx } from "@/lib/export-registral";
+
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
