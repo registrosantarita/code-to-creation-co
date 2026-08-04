@@ -8,6 +8,7 @@ import { isGeoExtension, parseGeometryText } from "./geo-parser";
 import {
   DEFAULT_TOLERANCES,
   compareParcels,
+  compareSharedBoundary,
   type ParcelInput,
   type Tolerances,
 } from "./comparison-engine";
@@ -287,10 +288,18 @@ export const runComparison = createServerFn({ method: "POST" })
       );
     }
 
-    const result = compareParcels(a.parcel, b.parcel, tol, {
-      a: a.label,
-      b: b.label,
-    });
+    // Divisa comum entre vizinhos: imóveis distintos, confere-se só o trecho
+    // compartilhado (sem área, perímetro total ou reciprocidade de confrontantes).
+    const result =
+      data.comparisonType === "boundary_to_boundary"
+        ? compareSharedBoundary(a.parcel, b.parcel, tol, {
+            a: a.label,
+            b: b.label,
+          })
+        : compareParcels(a.parcel, b.parcel, tol, {
+            a: a.label,
+            b: b.label,
+          });
 
     const { data: comparison, error } = await supabase
       .from("comparisons")

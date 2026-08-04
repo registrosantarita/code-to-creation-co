@@ -481,3 +481,280 @@ export function compareParcels(
 
   return { classification, summary, metrics, findings };
 }
+
+// ---------------------------------------------------------------------------
+// Modo "divisa comum entre vizinhos"
+// ---------------------------------------------------------------------------
+// Ao conferir dois memoriais de imóveis VIZINHOS, não faz sentido comparar área,
+// perímetro total, quantidade de vértices ou reciprocidade de confrontantes:
+// cada documento descreve um polígono distinto. O que se confere é a IDENTIDADE
+// GEOMÉTRICA DO TRECHO COMPARTILHADO — a linha divisória comum —, ignorando os
+// nomes dos vértices e admitindo caminhamentos em sentidos opostos
+// (contra-azimute).
+
+type Run = {
+  reversed: boolean;
+  startA: number;
+  startB: number;
+  length: number;
+  totalDistance: number;
+};
+
+/** Casamento frouxo, usado apenas para LOCALIZAR o trecho candidato. */
+function looseMatch(
+  sa: SegmentInput,
+  sb: SegmentInput,
+  tol: Tolerances,
+  reversed: boolean,
+): boolean {
+  if (sa.distance_m === null || sb.distance_m === null) return false;
+  const dDist = Math.abs(sa.distance_m - sb.distance_m);
+  const distLimit = Math.max(tol.distanceM * 10, sa.distance_m * 0.01);
+  if (dDist > distLimit) return false;
+  if (sa.azimuth_deg !== null && sb.azimuth_deg !== null) {
+    const azB = reversed ? (sb.azimuth_deg + 180) % 360 : sb.azimuth_deg;
+    if (angleDiff(sa.azimuth_deg, azB) > Math.max(tol.azimuthDeg * 20, 1)) return false;
+  }
+  return true;
+}
+
+function findSharedRun(
+  segsA: SegmentInput[],
+  segsB: SegmentInput[],
+  tol: Tolerances,
+): Run | null {
+  let best: Run | null = null;
+  for (const reversed of [false, true]) {
+    for (let ia = 0; ia < segsA.length; ia += 1) {
+      for (let ib = 0; ib < segsB.length; ib += 1) {
+        let k = 0;
+        let total = 0;
+        while (
+          ia + k < segsA.length &&
+          (reversed ? ib - k >= 0 : ib + k < segsB.length)
+        ) {
+          const sa = segsA[ia + k]!;
+          const sb = segsB[reversed ? ib - k : ib + k]!;
+          if (!looseMatch(sa, sb, tol, reversed)) break;
+          total += sa.distance_m ?? 0;
+          k += 1;
+        }
+        if (k === 0) continue;
+        const candidate: Run = {
+          reversed,
+          startA: ia,
+          startB: ib,
+          length: k,
+          totalDistance: total,
+        };
+        if (
+          !best ||
+          candidate.length > best.length ||
+          (candidate.length === best.length &&
+            candidate.totalDistance > best.totalDistance)
+        ) {
+          best = candidate;
+        }
+      }
+    }
+  }
+  return best;
+}
+
+export function compareSharedBoundary(
+  a: ParcelInput,
+  b: ParcelInput,
+  tol: Tolerances = DEFAULT_TOLERANCES,
+  labels: { a: string; b: string } = { a: "Documento A", b: "Documento B" },
+): ComparisonResult {
+  const findings: Finding[] = [];
+  const metrics: Record<string, unknown> = {
+    modo: "divisa_comum",
+    segments_a: a.segments.length,
+    segments_b: b.segments.length,
+  };
+
+  findings.push({
+    severity: "informative",
+    code: "MODO_DIVISA_COMUM",
+    title: "Conferência de divisa comum entre vizinhos",
+    description:
+      "Nesta modalidade não se comparam área, perímetro total, número de vértices nem reciprocidade de confrontantes: os imóveis são distintos. Confere-se exclusivamente a identidade geométrica do trecho de divisa compartilhado (distâncias, azimutes e cotas), ignorando os nomes atribuídos aos vértices por cada descrição.",
+    evidence: { segmentos_a: a.segments.length, segmentos_b: b.segments.length },
+  });
+
+  if (a.segments.length === 0 || b.segments.length === 0) {
+    return {
+      classification: "inconclusive",
+      summary:
+        "Não foi possível conferir a divisa comum: ao menos um dos documentos não teve segmentos extraídos.",
+      metrics,
+      findings: [
+        ...findings,
+        {
+          severity: "inconclusive",
+          code: "SEGMENTOS_AUSENTES",
+          title: "Segmentos não extraídos",
+          description:
+            "Ao menos um dos documentos não apresentou trechos de caminhamento passíveis de conferência.",
+          evidence: { a: a.segments.length, b: b.segments.length },
+        },
+      ],
+    };
+  }
+
+  const run = findSharedRun(a.segments, b.segments, tol);
+
+  if (!run) {
+    return {
+      classification: "incompatible",
+      summary:
+        "Nenhum trecho de divisa comum foi localizado entre as duas descrições dentro das tolerâncias adotadas.",
+      metrics: { ...metrics, shared_segments: 0 },
+      findings: [
+        ...findings,
+        {
+          severity: "critical",
+          code: "DIVISA_COMUM_NAO_LOCALIZADA",
+          title: "Divisa comum não localizada",
+          description: `Não há, entre ${labels.a} e ${labels.b}, sequência de trechos com distâncias e azimutes (ou contra-azimutes) compatíveis. A linha divisória descrita por um não corresponde à descrita pelo outro.`,
+          evidence: { tolerancias: tol },
+        },
+      ],
+    };
+  }
+
+  metrics["shared_segments"] = run.length;
+  metrics["shared_length_m"] = run.totalDistance;
+  metrics["alignment_mode"] = run.reversed ? "invertido" : "direto";
+  metrics["shared_start_a"] = run.startA + 1;
+  metrics["shared_start_b"] = run.startB + 1;
+
+  const pares: { a: number; b: number }[] = [];
+  let divergentes = 0;
+
+  for (let k = 0; k < run.length; k += 1) {
+    const ia = run.startA + k;
+    const ib = run.reversed ? run.startB - k : run.startB + k;
+    const sa = a.segments[ia]!;
+    const sb = b.segments[ib]!;
+    pares.push({ a: ia + 1, b: ib + 1 });
+    const problems: string[] = [];
+
+    if (sa.distance_m !== null && sb.distance_m !== null) {
+      const d = Math.abs(sa.distance_m - sb.distance_m);
+      if (d > tol.distanceM) {
+        problems.push(
+          `distância ${fmt(sa.distance_m, 3)} m x ${fmt(sb.distance_m, 3)} m (Δ ${fmt(d, 3)} m)`,
+        );
+      }
+    }
+    if (sa.azimuth_deg !== null && sb.azimuth_deg !== null) {
+      const azB = run.reversed ? (sb.azimuth_deg + 180) % 360 : sb.azimuth_deg;
+      const d = angleDiff(sa.azimuth_deg, azB);
+      if (d > tol.azimuthDeg) {
+        problems.push(
+          run.reversed
+            ? `azimute ${fmt(sa.azimuth_deg, 4)}° x contra-azimute ${fmt(azB, 4)}° (original ${fmt(sb.azimuth_deg, 4)}°, Δ ${fmt(d, 4)}°)`
+            : `azimute ${fmt(sa.azimuth_deg, 4)}° x ${fmt(sb.azimuth_deg, 4)}° (Δ ${fmt(d, 4)}°)`,
+        );
+      }
+    }
+    const altPairs: [number | null, number | null, string][] = run.reversed
+      ? [
+          [sa.altitude_from_m, sb.altitude_to_m, "vértice inicial"],
+          [sa.altitude_to_m, sb.altitude_from_m, "vértice final"],
+        ]
+      : [
+          [sa.altitude_from_m, sb.altitude_from_m, "vértice inicial"],
+          [sa.altitude_to_m, sb.altitude_to_m, "vértice final"],
+        ];
+    altPairs.forEach(([va, vb, rotulo]) => {
+      if (va === null || vb === null) return;
+      const d = Math.abs(va - vb);
+      if (d > tol.altitudeM) {
+        problems.push(
+          `altitude do ${rotulo} ${fmt(va, 2)} m x ${fmt(vb, 2)} m (Δ ${fmt(d, 2)} m)`,
+        );
+      }
+    });
+
+    if (problems.length > 0) {
+      divergentes += 1;
+      findings.push({
+        severity: "critical",
+        code: "DIVISA_COMUM_SEGMENTO_DIVERGENTE",
+        title: `Trecho ${ia + 1} da divisa comum divergente`,
+        description: `Trecho ${sa.from_vertex ?? "?"}→${sa.to_vertex ?? "?"} de ${labels.a}, correspondente ao trecho ${ib + 1} (${sb.from_vertex ?? "?"}→${sb.to_vertex ?? "?"}) de ${labels.b}: ${problems.join("; ")}.`,
+        evidence: { seq_a: ia + 1, seq_b: ib + 1, invertido: run.reversed, a: sa, b: sb, problems },
+      });
+    }
+  }
+
+  metrics["shared_pairs"] = pares;
+  metrics["divergent_segments"] = divergentes;
+
+  findings.push({
+    severity: "informative",
+    code: "DIVISA_COMUM_LOCALIZADA",
+    title: "Trecho de divisa comum identificado",
+    description: `Foram identificados ${run.length} trecho(s) contíguo(s) correspondentes, totalizando ${fmt(run.totalDistance, 3)} m de linha divisória comum. Correspondência: trecho ${run.startA + 1} de ${labels.a} ↔ trecho ${run.startB + 1} de ${labels.b}, em caminhamento ${run.reversed ? "invertido (conferido por contra-azimute)" : "no mesmo sentido"}. Os nomes dos vértices não foram considerados na conferência.`,
+    evidence: {
+      pares,
+      invertido: run.reversed,
+      extensao_m: run.totalDistance,
+      trechos: run.length,
+    },
+  });
+
+  // Trechos do documento A que não integram a divisa comum são apenas contexto.
+  const foraA = a.segments.length - run.length;
+  const foraB = b.segments.length - run.length;
+  if (foraA > 0 || foraB > 0) {
+    findings.push({
+      severity: "informative",
+      code: "TRECHOS_NAO_COMPARTILHADOS",
+      title: "Trechos fora da divisa comum",
+      description: `${foraA} trecho(s) de ${labels.a} e ${foraB} trecho(s) de ${labels.b} descrevem divisas com outros confrontantes e não integram a linha comum — não foram conferidos.`,
+      evidence: { fora_a: foraA, fora_b: foraB },
+    });
+  }
+
+  if (divergentes === 0 && run.length === 1) {
+    findings.push({
+      severity: "moderate",
+      code: "DIVISA_COMUM_TRECHO_UNICO",
+      title: "Divisa comum limitada a um único trecho",
+      description:
+        "Apenas um trecho correspondente foi localizado. Confirme se a divisa comum é realmente composta por uma única linha reta antes de concluir.",
+      evidence: { trechos: run.length },
+    });
+  }
+
+  const counts = {
+    critical: findings.filter((f) => f.severity === "critical").length,
+    moderate: findings.filter((f) => f.severity === "moderate").length,
+    informative: findings.filter((f) => f.severity === "informative").length,
+    inconclusive: findings.filter((f) => f.severity === "inconclusive").length,
+  };
+  metrics["counts"] = counts;
+
+  let classification: Classification;
+  if (counts.critical > 0) classification = "incompatible";
+  else if (counts.moderate > 0) classification = "compatible_with_remarks";
+  else classification = "compatible";
+
+  const summaryByClass: Record<Classification, string> = {
+    compatible: `A linha divisória comum é tecnicamente idêntica: ${run.length} trecho(s), ${fmt(run.totalDistance, 3)} m, dentro das tolerâncias adotadas${run.reversed ? " (caminhamentos em sentidos opostos, conferidos por contra-azimute)" : ""}.`,
+    compatible_with_remarks: `A divisa comum foi localizada (${run.length} trecho(s), ${fmt(run.totalDistance, 3)} m), mas há ressalvas que exigem verificação humana.`,
+    incompatible: `A divisa comum foi localizada (${run.length} trecho(s)), porém ${divergentes} trecho(s) apresentam divergência acima da tolerância. A identidade da linha não se sustenta sem retificação.`,
+    inconclusive: "Conferência inconclusiva.",
+  };
+
+  return {
+    classification,
+    summary: `${summaryByClass[classification]} Achados: ${counts.critical} crítico(s), ${counts.moderate} moderado(s), ${counts.informative} informativo(s).`,
+    metrics,
+    findings,
+  };
+}

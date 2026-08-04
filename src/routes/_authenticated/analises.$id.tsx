@@ -655,6 +655,13 @@ function AnaliseDetalhe() {
                     ))}
                   </SelectContent>
                 </Select>
+                {tipo === "boundary_to_boundary" ? (
+                  <p className="text-xs text-muted-foreground">
+                    Modo vizinhos: confere apenas o trecho de divisa compartilhado
+                    (distâncias, azimutes e cotas), ignorando nomes de vértices,
+                    área, perímetro total e reciprocidade de confrontantes.
+                  </p>
+                ) : null}
               </div>
             </div>
 
