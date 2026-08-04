@@ -156,8 +156,8 @@ type ConsumoInput = {
   fileName: string | null;
   fileExtension: string | null;
   fileSizeBytes: number | null;
-  usage?: { model: string; promptTokens: number; completionTokens: number; totalTokens: number };
-  note?: string;
+  usage?: { model: string; promptTokens: number; completionTokens: number; totalTokens: number } | undefined;
+  note?: string | undefined;
 };
 
 async function registrarConsumo(
