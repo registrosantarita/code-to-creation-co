@@ -421,6 +421,8 @@ export function parseMemorial(text: string): ParsedParcel {
     altitude_mean_m: altitudeMean,
     confrontantes,
     segments,
+    vertices: [...coordMap.values()],
     warnings,
+
   };
 }
