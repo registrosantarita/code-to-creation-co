@@ -72,7 +72,22 @@ export const DISTANCIA: RegraLexical = {
   ],
 };
 
+/** Sinônimos de altitude (cota / elevação / altura ortométrica). */
+export const ALTITUDE: RegraLexical = {
+  canonico: "altitude",
+  variantes: [
+    "altitudes?",
+    "alt\\.?(?=\\s*[:=]?\\s*-?\\d)",
+    "altura\\s+(?:ortom[ée]trica|geom[ée]trica|elipsoidal)",
+    "cotas?\\s+(?:altim[ée]trica|do\\s+v[ée]rtice|de\\s+n[íi]vel)",
+    "cota(?=\\s*[:=]?\\s*-?\\d)",
+    "eleva[çc][ãa]o(?=\\s*[:=]?\\s*-?\\d)",
+    "n[íi]vel\\s+altim[ée]trico",
+  ],
+};
+
 /** Sinônimos de confrontação. */
+
 export const CONFRONTACAO: RegraLexical = {
   canonico: "confrontando com",
   variantes: [
