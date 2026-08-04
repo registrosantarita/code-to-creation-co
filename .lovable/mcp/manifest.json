@@ -1,0 +1,172 @@
+{
+  "version": 1,
+  "sdk_version": "0.26.1",
+  "path": "/mcp",
+  "auth": {
+    "type": "oauth",
+    "issuer": "https://rwfcancoymnsacsnkfbs.supabase.co/auth/v1",
+    "accepted_audiences": [
+      "authenticated"
+    ]
+  },
+  "mcp": {
+    "server": {
+      "name": "plataforma-inteligente-de-conferencia-registral",
+      "version": "0.1.0",
+      "title": "Plataforma Inteligente de Conferência Registral"
+    },
+    "tools": [
+      {
+        "name": "listar_analises",
+        "title": "Listar análises",
+        "description": "Lista as análises de conferência registral acessíveis ao usuário autenticado, com status, objetivo e etiquetas.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "status": {
+              "type": "string",
+              "description": "Filtro opcional por status (ex.: em_andamento, concluida)."
+            },
+            "limite": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "description": "Máximo de registros (padrão 20)."
+            }
+          },
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "detalhar_analise",
+        "title": "Detalhar análise",
+        "description": "Retorna uma análise com seus documentos, imóveis extraídos e comparações, para leitura de contexto técnico.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "analise_id": {
+              "type": "string",
+              "format": "uuid",
+              "description": "Identificador da análise."
+            }
+          },
+          "required": [
+            "analise_id"
+          ],
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "listar_achados",
+        "title": "Listar achados",
+        "description": "Lista os achados (divergências) de uma análise, com código, severidade, descrição e evidências rastreáveis.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "analise_id": {
+              "type": "string",
+              "format": "uuid",
+              "description": "Identificador da análise."
+            },
+            "severidade": {
+              "type": "string",
+              "description": "Filtro opcional por severidade (ex.: critica, moderada, informativa)."
+            },
+            "apenas_nao_revisados": {
+              "type": "boolean",
+              "description": "Se verdadeiro, retorna apenas achados ainda não revisados."
+            }
+          },
+          "required": [
+            "analise_id"
+          ],
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "detalhar_comparacao",
+        "title": "Detalhar comparação",
+        "description": "Retorna uma comparação técnica com métricas quantitativas, tolerâncias aplicadas e os achados vinculados.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "comparacao_id": {
+              "type": "string",
+              "format": "uuid",
+              "description": "Identificador da comparação."
+            }
+          },
+          "required": [
+            "comparacao_id"
+          ],
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "registrar_nota_achado",
+        "title": "Registrar nota de qualificação em achado",
+        "description": "Registra a nota do Oficial em um achado e marca (ou desmarca) sua revisão. A decisão jurídica permanece do Oficial.",
+        "annotations": {
+          "readOnlyHint": false,
+          "destructiveHint": false,
+          "idempotentHint": true
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "achado_id": {
+              "type": "string",
+              "format": "uuid",
+              "description": "Identificador do achado."
+            },
+            "nota": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 4000,
+              "description": "Nota do revisor."
+            },
+            "revisado": {
+              "type": "boolean",
+              "description": "Marca o achado como revisado (padrão: verdadeiro)."
+            }
+          },
+          "required": [
+            "achado_id",
+            "nota"
+          ],
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      }
+    ]
+  }
+}
