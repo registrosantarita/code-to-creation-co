@@ -7,6 +7,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { NavArrows } from "@/components/NavArrows";
+
 
 export const Route = createFileRoute("/auth")({
   validateSearch: (s: Record<string, unknown>) => ({
@@ -166,12 +168,16 @@ function AuthPage() {
 
       <main className="flex items-center justify-center px-6 py-16">
         <div className="w-full max-w-sm">
-          <Link
-            to="/"
-            className="text-xs text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
-          >
-            ← Voltar ao início
-          </Link>
+          <div className="flex items-center gap-3">
+            <NavArrows showHome={false} />
+            <Link
+              to="/"
+              className="text-xs text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
+            >
+              Voltar ao início
+            </Link>
+          </div>
+
           <p className="eyebrow mt-6">Acesso à plataforma</p>
           <h2 className="mt-3 text-3xl">Entrar</h2>
 

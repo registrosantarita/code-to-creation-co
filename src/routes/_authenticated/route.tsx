@@ -2,6 +2,8 @@ import { createFileRoute, Outlet, redirect, Link, useNavigate } from "@tanstack/
 import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
+import { NavArrows } from "@/components/NavArrows";
+
 
 export const Route = createFileRoute("/_authenticated")({
   ssr: false,
@@ -29,15 +31,19 @@ function AuthenticatedLayout() {
     <div className="min-h-screen bg-background">
       <header className="sticky top-0 z-20 border-b border-border bg-card/95 backdrop-blur">
         <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-6 py-4">
-          <Link to="/painel" className="flex items-center gap-3">
-            <div className="h-7 w-7 border border-accent bg-ink" aria-hidden />
-            <div className="leading-tight">
-              <p className="font-display text-sm text-foreground">
-                Conferência Registral
-              </p>
-              <p className="eyebrow hidden sm:block">Painel de análises</p>
-            </div>
-          </Link>
+          <div className="flex items-center gap-4">
+            <NavArrows showHome={false} />
+            <Link to="/painel" className="flex items-center gap-3">
+              <div className="h-7 w-7 border border-accent bg-ink" aria-hidden />
+              <div className="leading-tight">
+                <p className="font-display text-sm text-foreground">
+                  Conferência Registral
+                </p>
+                <p className="eyebrow hidden sm:block">Painel de análises</p>
+              </div>
+            </Link>
+          </div>
+
           <div className="flex items-center gap-3">
             <Link
               to="/normas"
