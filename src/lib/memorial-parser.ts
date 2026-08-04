@@ -3,6 +3,8 @@
  * Puro, sem dependências — usado no servidor e no cliente.
  */
 
+import { normalizeMemorialText } from "./lexicon";
+
 export type ParsedSegment = {
   seq: number;
   from_vertex: string | null;
