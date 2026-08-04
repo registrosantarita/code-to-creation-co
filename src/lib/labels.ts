@@ -75,9 +75,17 @@ export function degToDms(value: number | string | null): string {
   if (value === null) return "—";
   const n = typeof value === "string" ? Number(value) : value;
   if (!Number.isFinite(n)) return "—";
-  const d = Math.floor(n);
+  let d = Math.floor(n);
   const mFloat = (n - d) * 60;
-  const m = Math.floor(mFloat);
-  const s = Math.round((mFloat - m) * 60);
+  let m = Math.floor(mFloat);
+  let s = Math.round((mFloat - m) * 60);
+  if (s === 60) {
+    s = 0;
+    m += 1;
+  }
+  if (m === 60) {
+    m = 0;
+    d += 1;
+  }
   return `${d}°${String(m).padStart(2, "0")}'${String(s).padStart(2, "0")}"`;
 }

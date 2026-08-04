@@ -99,7 +99,7 @@ export const processDocument = createServerFn({ method: "POST" })
         altitude_max_m: parsed.altitude_max_m,
         altitude_mean_m: parsed.altitude_mean_m,
         confrontantes: parsed.confrontantes,
-        raw_extraction: { warnings: parsed.warnings },
+        raw_extraction: { warnings: parsed.warnings, vertices: parsed.vertices },
       })
       .select("id")
       .single();

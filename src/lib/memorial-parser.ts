@@ -18,6 +18,16 @@ export type ParsedSegment = {
   raw_text: string;
 };
 
+/** Coordenada de vértice: geodésica (SIGEF) e/ou plana (UTM N/E). */
+export type VertexCoord = {
+  name: string;
+  lon: number | null;
+  lat: number | null;
+  alt: number | null;
+  north: number | null;
+  east: number | null;
+};
+
 export type ParsedParcel = {
   label: string | null;
   area_m2: number | null;
@@ -29,8 +39,10 @@ export type ParsedParcel = {
   altitude_mean_m: number | null;
   confrontantes: string[];
   segments: ParsedSegment[];
+  vertices: VertexCoord[];
   warnings: string[];
 };
+
 
 /** Converte "1.234,56" ou "1234.56" em número. */
 export function parseNumber(raw: string): number | null {
@@ -127,13 +139,13 @@ const MATRICULA_RE = /matr[ií]cula\s*(?:n[ºo°.]*\s*)?([\d.\-/]*\d)/i;
 function splitSegments(text: string): string[] {
   const normalized = text.replace(/\s+/g, " ");
   const parts = normalized.split(
-    /(?<!at[ée]\s)(?<!at[ée]\s(?:o|a))(?<!at[ée]\s(?:o|a)\s)(?=(?:deste|desse|daí|dai|do|partindo\s+do|segue(?:-se)?\s+do)?\s*(?:v[ée]rtice|ponto|marco|estaca)\s+[A-Z0-9][\w\-.]{0,12}\s*(?:,|\s)\s*(?:segue|deflete|confront|com\s+azimute|azimute|rumo|ruma|até|deste|distância))/i,
+    /(?<!at[ée]\s)(?<!at[ée]\s(?:o|a))(?<!at[ée]\s(?:o|a)\s)(?=(?:deste|desse|daí|dai|do|partindo\s+do|segue(?:-se)?\s+do)?\s*(?:v[ée]rtice|ponto|marco|estaca)\s+[A-Z0-9][\w\-.]{0,12}\s*(?:,|\s)\s*(?:segue|deflete|confront|com\s+azimute|azimute|rumo|ruma|até|deste|distância|de\s+coordenadas|coordenadas))/i,
   );
   return parts.map((p) => p.trim()).filter((p) => p.length > 15);
 }
 
 const VERTEX_PAIR_RE =
-  /(?:v[ée]rtice|ponto|marco|estaca)\s+([A-Z0-9][\w\-.]{0,12})[^.]{0,220}?(?:até|ao?|at[ée]\s+o)\s+(?:o\s+)?(?:v[ée]rtice|ponto|marco|estaca)\s+([A-Z0-9][\w\-.]{0,12})/i;
+  /(?:v[ée]rtice|ponto|marco|estaca)\s+([A-Z0-9][\w\-.]{0,12})[\s\S]{0,400}?(?:até|ao?|at[ée]\s+o)\s+(?:o\s+)?(?:v[ée]rtice|ponto|marco|estaca)\s+([A-Z0-9][\w\-.]{0,12})/i;
 const VERTEX_SINGLE_RE =
   /(?:v[ée]rtice|ponto|marco|estaca)\s+([A-Z0-9][\w\-.]{0,12})/i;
 const DIST_RE = /(?:dist[âa]ncia|extens[ãa]o|medindo|mede|percorre)\s*(?:de|:)?\s*([\d.,]+)\s*(m|metros|km)\b/i;
@@ -145,6 +157,66 @@ const RUMO_RE =
   /rumo[^0-9A-Z]{0,15}([\d]{1,3}\s*(?:°|º|graus)[^A-Z]{0,20})\s*(NE|SE|SW|SO|NW|NO)/i;
 const CONFRONT_RE =
   /confront(?:ando|a|ante|antes|ação)?\s*(?:-se)?\s*(?:com|:)\s*([^,;.]{2,140})/i;
+
+// --- Coordenadas de vértice -------------------------------------------------
+const UTM_NE_RE =
+  /\bN(?:orte)?\s*[:=]?\s*(\d{1,2}[.\s]?\d{3}[.\s]?\d{3}(?:[.,]\d+)?)\s*m?\b[\s,;]*(?:e\s*)?\bE(?:ste|Leste)?\s*[:=]?\s*(\d{3}[.\s]?\d{3}(?:[.,]\d+)?)/i;
+const UTM_EN_RE =
+  /\bE(?:ste|Leste)?\s*[:=]?\s*(\d{3}[.\s]?\d{3}(?:[.,]\d+)?)\s*m?\b[\s,;]*(?:e\s*)?\bN(?:orte)?\s*[:=]?\s*(\d{1,2}[.\s]?\d{3}[.\s]?\d{3}(?:[.,]\d+)?)/i;
+const LAT_RE =
+  /\blat(?:itude)?\s*[:=]?\s*(-?\d{1,3}\s*(?:[°ºo]\s*\d{1,2}\s*['′]\s*[\d.,]+\s*["″]?\s*[NSns]?|[.,]\d+)\s*[NSns]?)/i;
+const LON_RE =
+  /\blong?(?:itude)?\s*[:=]?\s*(-?\d{1,3}\s*(?:[°ºo]\s*\d{1,2}\s*['′]\s*[\d.,]+\s*["″]?\s*[EWOewo]?|[.,]\d+)\s*[EWOewo]?)/i;
+
+/** Converte "23°45'12,3\" S" ou "-23,7534" em grau decimal com sinal. */
+export function parseGeoCoord(raw: string): number | null {
+  const s = raw.trim();
+  const hemi = /([NSEWOnsewo])\s*$/.exec(s)?.[1]?.toUpperCase() ?? null;
+  const dms = /(-?\d{1,3})\s*[°ºo]\s*(\d{1,2})\s*['′]\s*([\d.,]+)/.exec(s);
+  let value: number | null = null;
+  if (dms) {
+    const d = Number(dms[1]);
+    const m = Number(dms[2]);
+    const sec = parseNumber(dms[3]!) ?? 0;
+    value = Math.abs(d) + m / 60 + sec / 3600;
+    if (d < 0) value = -value;
+  } else {
+    value = parseNumber(s.replace(/[^\d.,-]/g, ""));
+  }
+  if (value === null || !Number.isFinite(value)) return null;
+  if (hemi === "S" || hemi === "W" || hemi === "O") value = -Math.abs(value);
+  return Number(value.toFixed(8));
+}
+
+function extractCoords(chunk: string): {
+  lon: number | null;
+  lat: number | null;
+  north: number | null;
+  east: number | null;
+} {
+  let north: number | null = null;
+  let east: number | null = null;
+  const ne = UTM_NE_RE.exec(chunk);
+  if (ne) {
+    north = parseNumber(ne[1]!.replace(/\s/g, ""));
+    east = parseNumber(ne[2]!.replace(/\s/g, ""));
+  } else {
+    const en = UTM_EN_RE.exec(chunk);
+    if (en) {
+      east = parseNumber(en[1]!.replace(/\s/g, ""));
+      north = parseNumber(en[2]!.replace(/\s/g, ""));
+    }
+  }
+  const latM = LAT_RE.exec(chunk);
+  const lonM = LON_RE.exec(chunk);
+  return {
+    lat: latM ? parseGeoCoord(latM[1]!) : null,
+    lon: lonM ? parseGeoCoord(lonM[1]!) : null,
+    north,
+    east,
+  };
+}
+
 
 export function parseMemorial(text: string): ParsedParcel {
   const warnings: string[] = [];
@@ -177,6 +249,8 @@ export function parseMemorial(text: string): ParsedParcel {
 
   const chunks = splitSegments(flat);
   const segments: ParsedSegment[] = [];
+  const coordMap = new Map<string, VertexCoord>();
+
 
   chunks.forEach((chunk) => {
     const pair = VERTEX_PAIR_RE.exec(chunk);
@@ -241,6 +315,35 @@ export function parseMemorial(text: string): ParsedParcel {
 
     if (from === null && distance === null && azimuth === null) return;
 
+    const coords = extractCoords(chunk);
+    if (
+      from &&
+      (coords.lat !== null ||
+        coords.lon !== null ||
+        coords.north !== null ||
+        coords.east !== null)
+    ) {
+      const key = from.toUpperCase();
+      const prev = coordMap.get(key);
+      coordMap.set(key, {
+        name: key,
+        lat: coords.lat ?? prev?.lat ?? null,
+        lon: coords.lon ?? prev?.lon ?? null,
+        north: coords.north ?? prev?.north ?? null,
+        east: coords.east ?? prev?.east ?? null,
+        alt: altitudeFrom ?? prev?.alt ?? null,
+      });
+    } else if (from && altitudeFrom !== null && !coordMap.has(from.toUpperCase())) {
+      coordMap.set(from.toUpperCase(), {
+        name: from.toUpperCase(),
+        lat: null,
+        lon: null,
+        north: null,
+        east: null,
+        alt: altitudeFrom,
+      });
+    }
+
     segments.push({
       seq: segments.length + 1,
       from_vertex: from,
@@ -254,6 +357,7 @@ export function parseMemorial(text: string): ParsedParcel {
       raw_text: chunk.slice(0, 600),
     });
   });
+
 
   if (segments.length === 0) {
     warnings.push(
@@ -317,6 +421,8 @@ export function parseMemorial(text: string): ParsedParcel {
     altitude_mean_m: altitudeMean,
     confrontantes,
     segments,
+    vertices: [...coordMap.values()],
     warnings,
+
   };
 }
