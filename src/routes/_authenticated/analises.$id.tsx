@@ -334,6 +334,11 @@ function AnaliseDetalhe() {
                       e.target.value = "";
                     }}
                   />
+                  <p className="text-xs leading-relaxed text-muted-foreground">
+                    PDFs digitalizados e imagens passam por OCR assistido por IA.
+                    Arquivos KML, KMZ e GeoJSON têm o perímetro, os azimutes e a
+                    área calculados diretamente da geometria (WGS-84).
+                  </p>
                   {enviarArquivo.isPending && (
                     <p className="text-xs text-muted-foreground">
                       Enviando e extraindo...
