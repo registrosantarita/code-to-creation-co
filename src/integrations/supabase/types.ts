@@ -705,6 +705,9 @@ export type Database = {
         | "boundary_to_boundary"
         | "memorial_to_registry"
         | "custom"
+        | "memorial_to_plan"
+        | "plan_to_plan"
+        | "memorial_to_title"
       document_category:
         | "memorial"
         | "matricula"
@@ -884,6 +887,9 @@ export const Constants = {
         "boundary_to_boundary",
         "memorial_to_registry",
         "custom",
+        "memorial_to_plan",
+        "plan_to_plan",
+        "memorial_to_title",
       ],
       document_category: [
         "memorial",
