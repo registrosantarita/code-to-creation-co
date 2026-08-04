@@ -1,7 +1,7 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { processDocument, runComparison } from "@/lib/registral.functions";
@@ -267,6 +267,25 @@ function AnaliseDetalhe() {
   });
 
   const extraidos = (documents.data ?? []).filter((d) => d.status === "parsed");
+
+  const tipoSugerido = (() => {
+    const cat = (id: string) =>
+      extraidos.find((d) => d.id === id)?.document_category ?? "";
+    const a = cat(docA);
+    const b = cat(docB);
+    if (!a || !b) return null;
+    const par = [a, b].sort().join("|");
+    if (par === "memorial|memorial") return "memorial_to_memorial";
+    if (par === "memorial|planta") return "memorial_to_plan";
+    if (par === "planta|planta") return "plan_to_plan";
+    if (par === "matricula|memorial") return "memorial_to_registry";
+    if (par === "escritura|memorial") return "memorial_to_title";
+    return null;
+  })();
+
+  useEffect(() => {
+    if (tipoSugerido) setTipo(tipoSugerido);
+  }, [tipoSugerido]);
 
   return (
     <main className="mx-auto max-w-6xl px-6 py-10">
