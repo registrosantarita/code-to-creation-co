@@ -1,0 +1,9 @@
+{
+  "name": "conferencia-registral",
+  "productName": "Conferencia Registral",
+  "version": "1.0.0",
+  "description": "Plataforma Inteligente de Conferencia Registral",
+  "main": "main.cjs",
+  "author": "Conferencia Registral",
+  "license": "UNLICENSED"
+}
