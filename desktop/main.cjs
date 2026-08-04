@@ -114,6 +114,27 @@ const menu = Menu.buildFromTemplate([
     ],
   },
   {
+    label: "Navegar",
+    submenu: [
+      {
+        label: "Voltar",
+        accelerator: "Alt+Left",
+        click: (_i, win) => win && nav(win).canGoBack() && nav(win).goBack(),
+      },
+      {
+        label: "Avançar",
+        accelerator: "Alt+Right",
+        click: (_i, win) => win && nav(win).canGoForward() && nav(win).goForward(),
+      },
+      { type: "separator" },
+      {
+        label: "Início",
+        accelerator: "Alt+Home",
+        click: (_i, win) => win && win.loadURL(APP_URL),
+      },
+    ],
+
+  {
     label: "Exibir",
     submenu: [
       { role: "zoomIn", label: "Ampliar" },
