@@ -8,6 +8,7 @@ import { isGeoExtension, parseGeometryText } from "./geo-parser";
 import {
   DEFAULT_TOLERANCES,
   compareParcels,
+  compareSharedBoundary,
   type ParcelInput,
   type Tolerances,
 } from "./comparison-engine";
