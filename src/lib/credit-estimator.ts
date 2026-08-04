@@ -12,6 +12,16 @@
 
 export const CREDITOS_POR_PAGINA_OCR = 0.058;
 /** Fator de incerteza aplicado à faixa (páginas densas x páginas simples). */
+/**
+ * Créditos por token, derivado da mesma medição:
+ * 2.889 tokens (1.182 entrada + 1.707 saída) ≈ 0,058 crédito.
+ */
+export const CREDITOS_POR_TOKEN = 0.0000201;
+
+export function creditosDeTokens(totalTokens: number): number {
+  return Math.round(totalTokens * CREDITOS_POR_TOKEN * 100000) / 100000;
+}
+
 export const FATOR_MIN = 0.6;
 export const FATOR_MAX = 1.8;
 
