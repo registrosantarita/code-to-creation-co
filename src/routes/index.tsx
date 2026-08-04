@@ -82,7 +82,9 @@ function Index() {
       <header className="border-b border-border">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-5">
           <div className="flex items-center gap-3">
+            <NavArrows showHome={false} />
             <div className="h-8 w-8 border border-accent bg-ink" aria-hidden />
+
             <div className="leading-tight">
               <p className="font-display text-base text-foreground">
                 Conferência Registral
