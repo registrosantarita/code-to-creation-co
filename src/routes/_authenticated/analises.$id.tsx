@@ -326,7 +326,7 @@ function AnaliseDetalhe() {
                   <Input
                     id="arquivo"
                     type="file"
-                    accept=".pdf,.txt,.csv,.md,.docx,.xlsx,.png,.jpg,.jpeg,.kml,.kmz,.dwg"
+                    accept=".pdf,.txt,.csv,.md,.docx,.xlsx,.png,.jpg,.jpeg,.tif,.tiff,.webp,.kml,.kmz,.geojson,.json,.dwg"
                     disabled={enviarArquivo.isPending}
                     onChange={(e) => {
                       const f = e.target.files?.[0];
