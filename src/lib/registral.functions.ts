@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import type { Json } from "@/integrations/supabase/types";
+import type { Database, Json } from "@/integrations/supabase/types";
+import type { SupabaseClient } from "@supabase/supabase-js";
 import { z } from "zod";
 import { parseMemorial } from "./memorial-parser";
 import { isGeoExtension, parseGeometryText } from "./geo-parser";
@@ -28,6 +29,7 @@ export const processDocument = createServerFn({ method: "POST" })
 
     let text = doc.original_text ?? "";
     let note: string | undefined;
+    let usage: { model: string; promptTokens: number; completionTokens: number; totalTokens: number } | undefined;
 
     if (!text && doc.storage_path) {
       const { data: file, error: dlError } = await supabase.storage
@@ -41,7 +43,19 @@ export const processDocument = createServerFn({ method: "POST" })
       );
       text = result.text;
       note = result.note;
+      usage = result.usage;
     }
+
+    await registrarConsumo(supabase, {
+      analysisId: doc.analysis_id,
+      documentId: doc.id,
+      userId,
+      fileName: doc.file_name,
+      fileExtension: doc.file_extension,
+      fileSizeBytes: doc.file_size_bytes,
+      usage,
+      note,
+    });
 
     if (!text.trim()) {
       await supabase
@@ -134,6 +148,43 @@ export const processDocument = createServerFn({ method: "POST" })
       note,
     };
   });
+
+type ConsumoInput = {
+  analysisId: string;
+  documentId: string;
+  userId: string;
+  fileName: string | null;
+  fileExtension: string | null;
+  fileSizeBytes: number | null;
+  usage?: { model: string; promptTokens: number; completionTokens: number; totalTokens: number } | undefined;
+  note?: string | undefined;
+};
+
+async function registrarConsumo(
+  supabase: SupabaseClient<Database>,
+  input: ConsumoInput,
+) {
+  const { creditosDeTokens, estimarPaginas } = await import("./credit-estimator");
+  const ext = (input.fileExtension ?? "").toLowerCase().replace(".", "");
+  const ocrUsed = Boolean(input.usage);
+  await supabase.from("ai_usage_events").insert({
+    analysis_id: input.analysisId,
+    document_id: input.documentId,
+    user_id: input.userId,
+    operation: "extracao_documento",
+    model: input.usage?.model ?? "",
+    ocr_used: ocrUsed,
+    file_name: input.fileName,
+    file_extension: ext || null,
+    file_size_bytes: input.fileSizeBytes,
+    pages_estimated: ocrUsed ? estimarPaginas(ext, input.fileSizeBytes ?? 0) : 0,
+    prompt_tokens: input.usage?.promptTokens ?? 0,
+    completion_tokens: input.usage?.completionTokens ?? 0,
+    total_tokens: input.usage?.totalTokens ?? 0,
+    credits_estimated: ocrUsed ? creditosDeTokens(input.usage?.totalTokens ?? 0) : 0,
+    note: input.note ?? null,
+  });
+}
 
 const CompareInput = z.object({
   analysisId: z.string().uuid(),

@@ -14,6 +14,81 @@ export type Database = {
   }
   public: {
     Tables: {
+      ai_usage_events: {
+        Row: {
+          analysis_id: string | null
+          completion_tokens: number
+          created_at: string
+          credits_estimated: number
+          document_id: string | null
+          file_extension: string | null
+          file_name: string | null
+          file_size_bytes: number | null
+          id: string
+          model: string
+          note: string | null
+          ocr_used: boolean
+          operation: string
+          pages_estimated: number
+          prompt_tokens: number
+          total_tokens: number
+          user_id: string
+        }
+        Insert: {
+          analysis_id?: string | null
+          completion_tokens?: number
+          created_at?: string
+          credits_estimated?: number
+          document_id?: string | null
+          file_extension?: string | null
+          file_name?: string | null
+          file_size_bytes?: number | null
+          id?: string
+          model?: string
+          note?: string | null
+          ocr_used?: boolean
+          operation?: string
+          pages_estimated?: number
+          prompt_tokens?: number
+          total_tokens?: number
+          user_id: string
+        }
+        Update: {
+          analysis_id?: string | null
+          completion_tokens?: number
+          created_at?: string
+          credits_estimated?: number
+          document_id?: string | null
+          file_extension?: string | null
+          file_name?: string | null
+          file_size_bytes?: number | null
+          id?: string
+          model?: string
+          note?: string | null
+          ocr_used?: boolean
+          operation?: string
+          pages_estimated?: number
+          prompt_tokens?: number
+          total_tokens?: number
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_usage_events_analysis_id_fkey"
+            columns: ["analysis_id"]
+            isOneToOne: false
+            referencedRelation: "analyses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ai_usage_events_document_id_fkey"
+            columns: ["document_id"]
+            isOneToOne: false
+            referencedRelation: "documents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       analyses: {
         Row: {
           closed_at: string | null

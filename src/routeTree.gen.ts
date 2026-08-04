@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as AuthRouteImport } from './routes/auth'
+import { Route as AuthenticatedCreditosRouteImport } from './routes/_authenticated/creditos'
 import { Route as AuthenticatedPainelRouteImport } from './routes/_authenticated/painel'
 import { Route as AuthenticatedAnalisesIdRouteImport } from './routes/_authenticated/analises.$id'
 import { Route as AuthenticatedComparacoesIdRouteImport } from './routes/_authenticated/comparacoes.$id'
@@ -29,6 +30,11 @@ const AuthRoute = AuthRouteImport.update({
   id: '/auth',
   path: '/auth',
   getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedCreditosRoute = AuthenticatedCreditosRouteImport.update({
+  id: '/creditos',
+  path: '/creditos',
+  getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedPainelRoute = AuthenticatedPainelRouteImport.update({
   id: '/painel',
@@ -50,6 +56,7 @@ const AuthenticatedComparacoesIdRoute =
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/creditos': typeof AuthenticatedCreditosRoute
   '/painel': typeof AuthenticatedPainelRoute
   '/analises/$id': typeof AuthenticatedAnalisesIdRoute
   '/comparacoes/$id': typeof AuthenticatedComparacoesIdRoute
@@ -57,6 +64,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/creditos': typeof AuthenticatedCreditosRoute
   '/painel': typeof AuthenticatedPainelRoute
   '/analises/$id': typeof AuthenticatedAnalisesIdRoute
   '/comparacoes/$id': typeof AuthenticatedComparacoesIdRoute
@@ -66,20 +74,34 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
+  '/_authenticated/creditos': typeof AuthenticatedCreditosRoute
   '/_authenticated/painel': typeof AuthenticatedPainelRoute
   '/_authenticated/analises/$id': typeof AuthenticatedAnalisesIdRoute
   '/_authenticated/comparacoes/$id': typeof AuthenticatedComparacoesIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/auth' | '/painel' | '/analises/$id' | '/comparacoes/$id'
+  fullPaths:
+    | '/'
+    | '/auth'
+    | '/creditos'
+    | '/painel'
+    | '/analises/$id'
+    | '/comparacoes/$id'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/auth' | '/painel' | '/analises/$id' | '/comparacoes/$id'
+  to:
+    | '/'
+    | '/auth'
+    | '/creditos'
+    | '/painel'
+    | '/analises/$id'
+    | '/comparacoes/$id'
   id:
     | '__root__'
     | '/'
     | '/_authenticated'
     | '/auth'
+    | '/_authenticated/creditos'
     | '/_authenticated/painel'
     | '/_authenticated/analises/$id'
     | '/_authenticated/comparacoes/$id'
@@ -114,6 +136,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authenticated/creditos': {
+      id: '/_authenticated/creditos'
+      path: '/creditos'
+      fullPath: '/creditos'
+      preLoaderRoute: typeof AuthenticatedCreditosRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/painel': {
       id: '/_authenticated/painel'
       path: '/painel'
@@ -139,12 +168,14 @@ declare module '@tanstack/react-router' {
 }
 
 interface AuthenticatedRouteRouteChildren {
+  AuthenticatedCreditosRoute: typeof AuthenticatedCreditosRoute
   AuthenticatedPainelRoute: typeof AuthenticatedPainelRoute
   AuthenticatedAnalisesIdRoute: typeof AuthenticatedAnalisesIdRoute
   AuthenticatedComparacoesIdRoute: typeof AuthenticatedComparacoesIdRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
+  AuthenticatedCreditosRoute: AuthenticatedCreditosRoute,
   AuthenticatedPainelRoute: AuthenticatedPainelRoute,
   AuthenticatedAnalisesIdRoute: AuthenticatedAnalisesIdRoute,
   AuthenticatedComparacoesIdRoute: AuthenticatedComparacoesIdRoute,
