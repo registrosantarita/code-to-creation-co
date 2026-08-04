@@ -181,6 +181,11 @@ function Painel() {
             </DialogFooter>
           </DialogContent>
         </Dialog>
+
+        <Button variant="outline" size="lg" onClick={signOut}>
+          <LogOut className="mr-2 h-4 w-4" />
+          Sair
+        </Button>
       </div>
 
       <div className="rule-gold mt-8 w-24" />
