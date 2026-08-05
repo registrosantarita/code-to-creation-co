@@ -496,7 +496,7 @@ function AnaliseDetalhe() {
                                         "Para",
                                         "Azimute",
                                         "Distância (m)",
-                                        "Altitude (m)",
+                                        "Cota do vértice De (m)",
                                         "Confrontante",
                                       ].map((h) => (
                                         <th
@@ -532,10 +532,7 @@ function AnaliseDetalhe() {
                                             {fmtNum(s.distance_m, 3)}
                                           </td>
                                           <td className="numeric py-2 pr-4">
-                                            {s.altitude_from_m === null &&
-                                            s.altitude_to_m === null
-                                              ? "—"
-                                              : `${fmtNum(s.altitude_from_m, 2)} → ${fmtNum(s.altitude_to_m, 2)}`}
+                                            {fmtNum(s.altitude_from_m, 2)}
                                           </td>
                                           <td className="py-2 pr-4 text-muted-foreground">
                                             {s.confrontante ?? "—"}

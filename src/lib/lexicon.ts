@@ -250,10 +250,10 @@ export function normalizeMemorialText(text: string): {
     if (usou) aplicadas.push(`sinônimos → "${regra.canonico}"`);
   }
 
-  // Espaçamento e pontuação residual das abreviaturas expandidas.
+  // Pontuação residual das abreviaturas expandidas. Não colapsar espaços nem
+  // quebras: em memoriais tabulares, o espaçamento define as colunas.
   out = out
-    .replace(/\s{2,}/g, " ")
-    .replace(/\s+([,;.])/g, "$1")
+    .replace(/[\t ]+([,;.])/g, "$1")
     .replace(/°\s+'/g, "°")
     .replace(/'\s+"/g, "'");
 
