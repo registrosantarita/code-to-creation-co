@@ -255,9 +255,10 @@ function tableLabeledNumber(
       const nx = lines[j]!.trim();
       if (!nx) continue;
       const only =
-        /^[:|\s]*(-?\d[\d.,]*)\s*(m²|m2|metros\s+quadrados|ha|hectares?|alqueires?|km|m|metros)?\s*$/i.exec(
+        /^[:|\s]*(-?\d[\d.,]*)\s*(m²|m2|metros\s+quadrados|ha|hectares?|alqueires?|km|m|metros)?\b/i.exec(
           nx,
         );
+
       if (only) {
         const v = parseNumber(only[1]!);
         if (v !== null) return { value: v, context: `${line} ${nx}` };
