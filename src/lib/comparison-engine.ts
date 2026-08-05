@@ -695,7 +695,9 @@ export function compareSharedBoundary(
   metrics["shared_start_b"] = run.startB + 1;
 
   const pares: { a: number; b: number }[] = [];
+  const trechos: TrechoConferido[] = [];
   let divergentes = 0;
+
 
   for (let k = 0; k < run.length; k += 1) {
     const ia = run.startA + k;
