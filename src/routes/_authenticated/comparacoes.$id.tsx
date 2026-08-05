@@ -95,6 +95,11 @@ function Relatorio() {
   const tol = (c.tolerances ?? {}) as Record<string, number>;
   const metrics = (c.metrics ?? {}) as Record<string, unknown>;
   const counts = (metrics["counts"] ?? {}) as Record<string, number>;
+  const trechos = lerTrechos(metrics);
+  const extensaoConferida =
+    typeof metrics["extensao_conferida_m"] === "number"
+      ? (metrics["extensao_conferida_m"] as number)
+      : null;
   const nomeDoc = (docId: string | null) =>
     (docs.data ?? []).find((d) => d.id === docId)?.file_name ?? "Documento";
 
