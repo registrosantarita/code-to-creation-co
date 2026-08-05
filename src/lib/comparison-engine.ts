@@ -745,6 +745,8 @@ export function compareSharedBoundary(
       }
     });
 
+    trechos.push(montarTrecho(ia + 1, ib + 1, sa, sb, run.reversed, problems));
+
     if (problems.length > 0) {
       divergentes += 1;
       findings.push({
@@ -758,7 +760,12 @@ export function compareSharedBoundary(
   }
 
   metrics["shared_pairs"] = pares;
+  metrics["trechos"] = trechos;
+  metrics["trechos_conformes"] = trechos.filter((t) => t.ok).length;
+  metrics["extensao_conferida_m"] = run.totalDistance;
   metrics["divergent_segments"] = divergentes;
+
+
 
   findings.push({
     severity: "informative",
