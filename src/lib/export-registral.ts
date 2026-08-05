@@ -203,6 +203,22 @@ export type RelatorioPdfInput = {
   documentoB: string;
   tolerancias: Record<string, number | undefined>;
   contagens: Record<string, number | undefined>;
+  trechos?: {
+    seq_a: number;
+    seq_b: number;
+    de_a: string | null;
+    ate_a: string | null;
+    de_b: string | null;
+    ate_b: string | null;
+    distancia_a: number | null;
+    distancia_b: number | null;
+    azimute_a: number | null;
+    azimute_b: number | null;
+    invertido: boolean;
+    ok: boolean;
+    problemas: string[];
+  }[];
+  extensaoConferidaM?: number | null;
   achados: {
     severity: string;
     code: string;
@@ -302,6 +318,59 @@ export function exportarRelatorioPdf(
     headStyles: { fillColor: [24, 28, 38], textColor: 255, halign: "center" },
     margin: { left: M, right: M },
   });
+
+  const trechos = input.trechos ?? [];
+  if (trechos.length > 0) {
+    const primeiro = trechos[0]!;
+    const ultimo = trechos[trechos.length - 1]!;
+    const extensao =
+      input.extensaoConferidaM ??
+      trechos.reduce((acc, t) => acc + (t.distancia_a ?? 0), 0);
+    const yTop =
+      (doc as unknown as { lastAutoTable: { finalY: number } }).lastAutoTable.finalY + 22;
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(11);
+    doc.text("Conferência trecho a trecho", M, yTop);
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(9);
+    doc.setTextColor(110);
+    doc.text(
+      `Trecho total conferido: ${primeiro.de_a ?? "?"} → ${ultimo.ate_a ?? "?"} • ${trechos.length} trecho(s) • ${fmtNum(extensao, 3)} m • ${trechos.filter((t) => t.ok).length} conforme(s)${primeiro.invertido ? " • conferido por contra-azimute" : ""}`,
+      M,
+      yTop + 13,
+    );
+    doc.setTextColor(0);
+
+    autoTable(doc, {
+      startY: yTop + 24,
+      head: [["#", "Trecho (A)", "Correspondente (B)", "Dist. A/B (m)", "Azim. A/B (°)", "Situação"]],
+      body: trechos.map((t) => [
+        String(t.seq_a),
+        `${t.de_a ?? "?"} - ${t.ate_a ?? "?"}`,
+        `${t.de_b ?? "?"} - ${t.ate_b ?? "?"}`,
+        `${fmtNum(t.distancia_a, 3)} / ${fmtNum(t.distancia_b, 3)}`,
+        `${fmtNum(t.azimute_a, 4)} / ${fmtNum(t.azimute_b, 4)}`,
+        t.ok ? "OK — correto" : `X — ${t.problemas.join("; ")}`,
+      ]),
+      theme: "grid",
+      styles: { fontSize: 8, cellPadding: 4, overflow: "linebreak", valign: "top" },
+      headStyles: { fillColor: [24, 28, 38], textColor: 255 },
+      columnStyles: {
+        0: { cellWidth: 22 },
+        3: { cellWidth: 84, halign: "right" },
+        4: { cellWidth: 84, halign: "right" },
+      },
+      didParseCell: (data) => {
+        if (data.section === "body" && data.column.index === 5) {
+          const ok = trechos[data.row.index]?.ok;
+          data.cell.styles.textColor = ok ? [22, 101, 52] : [153, 27, 27];
+          data.cell.styles.fontStyle = "bold";
+        }
+      },
+      margin: { left: M, right: M },
+    });
+  }
+
 
   const achados = [...input.achados].sort(
     (a, b) => ORDEM_SEV.indexOf(a.severity) - ORDEM_SEV.indexOf(b.severity),

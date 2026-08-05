@@ -66,6 +66,53 @@ export type ComparisonResult = {
   findings: Finding[];
 };
 
+/** Linha da conferência trecho a trecho exibida no relatório e na tela. */
+export type TrechoConferido = {
+  seq_a: number;
+  seq_b: number;
+  de_a: string | null;
+  ate_a: string | null;
+  de_b: string | null;
+  ate_b: string | null;
+  distancia_a: number | null;
+  distancia_b: number | null;
+  azimute_a: number | null;
+  azimute_b: number | null;
+  invertido: boolean;
+  ok: boolean;
+  problemas: string[];
+};
+
+function montarTrecho(
+  seqA: number,
+  seqB: number,
+  sa: SegmentInput,
+  sb: SegmentInput,
+  invertido: boolean,
+  problemas: string[],
+): TrechoConferido {
+  return {
+    seq_a: seqA,
+    seq_b: seqB,
+    de_a: sa.from_vertex,
+    ate_a: sa.to_vertex,
+    de_b: invertido ? sb.to_vertex : sb.from_vertex,
+    ate_b: invertido ? sb.from_vertex : sb.to_vertex,
+    distancia_a: sa.distance_m,
+    distancia_b: sb.distance_m,
+    azimute_a: sa.azimuth_deg,
+    azimute_b:
+      sb.azimuth_deg === null
+        ? null
+        : invertido
+          ? (sb.azimuth_deg + 180) % 360
+          : sb.azimuth_deg,
+    invertido,
+    ok: problemas.length === 0,
+    problemas,
+  };
+}
+
 const fmt = (n: number, d = 2) =>
   n.toLocaleString("pt-BR", { minimumFractionDigits: d, maximumFractionDigits: d });
 
@@ -288,6 +335,7 @@ export function compareParcels(
   // --- Segmento a segmento ---
   const n = alignment.pairs.length;
   let divergentSegments = 0;
+  const trechos: TrechoConferido[] = [];
   for (const pair of alignment.pairs) {
     const sa = a.segments[pair.ia]!;
     const sb = b.segments[pair.ib]!;
@@ -341,6 +389,10 @@ export function compareParcels(
       }
     }
 
+    trechos.push(
+      montarTrecho(pair.ia + 1, pair.ib + 1, sa, sb, alignment.reversed, problems),
+    );
+
     if (problems.length > 0) {
       divergentSegments += 1;
       findings.push({
@@ -359,6 +411,12 @@ export function compareParcels(
       });
     }
   }
+  metrics["trechos"] = trechos;
+  metrics["trechos_conformes"] = trechos.filter((t) => t.ok).length;
+  metrics["extensao_conferida_m"] = trechos.reduce(
+    (acc, t) => acc + (t.distancia_a ?? 0),
+    0,
+  );
   metrics["divergent_segments"] = divergentSegments;
   if (n > 0 && divergentSegments === 0) {
     findings.push({
@@ -637,7 +695,9 @@ export function compareSharedBoundary(
   metrics["shared_start_b"] = run.startB + 1;
 
   const pares: { a: number; b: number }[] = [];
+  const trechos: TrechoConferido[] = [];
   let divergentes = 0;
+
 
   for (let k = 0; k < run.length; k += 1) {
     const ia = run.startA + k;
@@ -685,6 +745,8 @@ export function compareSharedBoundary(
       }
     });
 
+    trechos.push(montarTrecho(ia + 1, ib + 1, sa, sb, run.reversed, problems));
+
     if (problems.length > 0) {
       divergentes += 1;
       findings.push({
@@ -698,7 +760,12 @@ export function compareSharedBoundary(
   }
 
   metrics["shared_pairs"] = pares;
+  metrics["trechos"] = trechos;
+  metrics["trechos_conformes"] = trechos.filter((t) => t.ok).length;
+  metrics["extensao_conferida_m"] = run.totalDistance;
   metrics["divergent_segments"] = divergentes;
+
+
 
   findings.push({
     severity: "informative",

@@ -10,6 +10,7 @@ import {
 } from "@/lib/labels";
 import { Button } from "@/components/ui/button";
 import { exportarRelatorioPdf } from "@/lib/export-registral";
+import { TrechosConferidos, lerTrechos } from "@/components/TrechosConferidos";
 
 
 export const Route = createFileRoute("/_authenticated/comparacoes/$id")({
@@ -94,6 +95,11 @@ function Relatorio() {
   const tol = (c.tolerances ?? {}) as Record<string, number>;
   const metrics = (c.metrics ?? {}) as Record<string, unknown>;
   const counts = (metrics["counts"] ?? {}) as Record<string, number>;
+  const trechos = lerTrechos(metrics);
+  const extensaoConferida =
+    typeof metrics["extensao_conferida_m"] === "number"
+      ? (metrics["extensao_conferida_m"] as number)
+      : null;
   const nomeDoc = (docId: string | null) =>
     (docs.data ?? []).find((d) => d.id === docId)?.file_name ?? "Documento";
 
@@ -126,6 +132,8 @@ function Relatorio() {
                   documentoB: nomeDoc(c.document_b_id),
                   tolerancias: tol,
                   contagens: counts,
+                  trechos,
+                  extensaoConferidaM: extensaoConferida,
                   achados: ordenados.map((f) => ({
                     severity: f.severity,
                     code: f.code,
@@ -210,6 +218,15 @@ function Relatorio() {
           ))}
         </dl>
       </section>
+
+      <TrechosConferidos
+        trechos={trechos}
+        extensaoM={extensaoConferida}
+        labelA={nomeDoc(c.document_a_id)}
+        labelB={nomeDoc(c.document_b_id)}
+      />
+
+
 
       <section className="mt-10">
         <h2 className="text-2xl">Achados</h2>
