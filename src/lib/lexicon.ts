@@ -21,19 +21,19 @@ export const VERTICE: RegraLexical = {
     "v[ée]rtices?",
     "v[ée]rt\\.?",
     "vt\\.?",
-    "v\\.?(?=\\s*[A-Z0-9])",
+    "v\\.\\s*(?=[0-9]|[A-Z]{1,3}[\\-.0-9])",
     "pontos?",
     "pto\\.?",
     "pt\\.?",
-    "p\\.(?=\\s*[A-Z0-9])",
+    "p\\.\\s*(?=[0-9]|[A-Z]{1,3}[\\-.0-9])",
     "marcos?",
     "marco\\s+geod[ée]sico",
     "mc\\.?",
     "estacas?",
-    "est\\.(?=\\s*[A-Z0-9])",
+    "est\\.\\s*(?=[0-9]|[A-Z]{1,3}[\\-.0-9])",
     "piquetes?",
     "pique\\.?",
-    "vante",
+
   ],
 };
 
