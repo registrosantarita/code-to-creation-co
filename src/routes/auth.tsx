@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { z } from "zod";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import logoAsset from "@/assets/geoconfronto-logo.png.asset.json";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -150,7 +151,11 @@ function AuthPage() {
     <div className="grid min-h-screen lg:grid-cols-2">
       <aside className="hidden flex-col justify-between bg-ink p-12 text-ink-foreground lg:flex">
         <Link to="/" className="flex items-center gap-3">
-          <div className="h-8 w-8 border border-accent" aria-hidden />
+          <img
+            src={logoAsset.url}
+            alt="GeoConfronto"
+            className="h-9 w-9 object-contain"
+          />
           <span className="font-display text-base">GeoConfronto</span>
         </Link>
         <div>

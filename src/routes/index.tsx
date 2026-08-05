@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { NavArrows } from "@/components/NavArrows";
+import logoAsset from "@/assets/geoconfronto-logo.png.asset.json";
 
 
 export const Route = createFileRoute("/")({
@@ -85,7 +86,11 @@ function Index() {
         <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-5">
           <div className="flex items-center gap-3">
             <NavArrows showHome={false} />
-            <div className="h-8 w-8 border border-accent bg-ink" aria-hidden />
+            <img
+              src={logoAsset.url}
+              alt="GeoConfronto"
+              className="h-9 w-9 object-contain"
+            />
 
             <div className="leading-tight">
               <p className="font-display text-base text-foreground">
