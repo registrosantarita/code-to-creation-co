@@ -288,6 +288,7 @@ export function compareParcels(
   // --- Segmento a segmento ---
   const n = alignment.pairs.length;
   let divergentSegments = 0;
+  const trechos: TrechoConferido[] = [];
   for (const pair of alignment.pairs) {
     const sa = a.segments[pair.ia]!;
     const sb = b.segments[pair.ib]!;
