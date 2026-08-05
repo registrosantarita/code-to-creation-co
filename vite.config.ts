@@ -6,6 +6,7 @@
 // You can pass additional config via defineConfig({ vite: { ... }, etc... }) if needed.
 import { defineConfig } from "@lovable.dev/vite-tanstack-config";
 import { mcpPlugin } from "@lovable.dev/mcp-js/stacks/tanstack/vite";
+import { VitePWA } from "vite-plugin-pwa";
 
 export default defineConfig({
   tanstackStart: {
@@ -14,6 +15,48 @@ export default defineConfig({
     server: { entry: "server" },
   },
   vite: {
-    plugins: [mcpPlugin()],
+    plugins: [
+      mcpPlugin(),
+      VitePWA({
+        strategies: "generateSW",
+        registerType: "autoUpdate",
+        injectRegister: null,
+        filename: "sw.js",
+        manifest: false,
+        manifestFilename: "manifest.webmanifest",
+        devOptions: { enabled: false },
+        workbox: {
+          globPatterns: ["**/*.{js,css,woff,woff2}"],
+          navigateFallbackDenylist: [/^\/~oauth/, /^\/api\//, /^\/mcp/, /^\/\.mcp/],
+          navigateFallback: null,
+          runtimeCaching: [
+            {
+              urlPattern: ({ request }) => request.mode === "navigate",
+              handler: "NetworkFirst",
+              options: {
+                cacheName: "geoconfronto-html",
+                networkTimeoutSeconds: 5,
+                expiration: { maxEntries: 30, maxAgeSeconds: 60 * 60 * 24 },
+              },
+            },
+            {
+              urlPattern: ({ url, request, sameOrigin }) =>
+                sameOrigin &&
+                !url.pathname.startsWith("/api") &&
+                (request.destination === "script" ||
+                  request.destination === "style" ||
+                  request.destination === "font" ||
+                  request.destination === "image"),
+              handler: "CacheFirst",
+              options: {
+                cacheName: "geoconfronto-assets",
+                expiration: { maxEntries: 120, maxAgeSeconds: 60 * 60 * 24 * 30 },
+              },
+            },
+          ],
+        },
+      }),
+    ],
   },
 });
+
