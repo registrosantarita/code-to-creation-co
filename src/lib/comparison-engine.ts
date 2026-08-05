@@ -70,8 +70,7 @@ const fmt = (n: number, d = 2) =>
   n.toLocaleString("pt-BR", { minimumFractionDigits: d, maximumFractionDigits: d });
 
 function angleDiff(a: number, b: number): number {
-  const d = Math.abs(((a - b) % 360 + 540) % 360 - 180);
-  return 180 - d;
+  return Math.abs(((a - b) % 360 + 540) % 360 - 180);
 }
 
 export type SegmentPair = { ia: number; ib: number };
