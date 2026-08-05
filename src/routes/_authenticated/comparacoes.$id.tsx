@@ -10,6 +10,7 @@ import {
 } from "@/lib/labels";
 import { Button } from "@/components/ui/button";
 import { exportarRelatorioPdf } from "@/lib/export-registral";
+import { TrechosConferidos, lerTrechos } from "@/components/TrechosConferidos";
 
 
 export const Route = createFileRoute("/_authenticated/comparacoes/$id")({
