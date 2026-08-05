@@ -230,43 +230,96 @@ const AREA_LABEL_RE =
 const PERIM_LABEL_RE =
   /per[ií]metro[^\n:]{0,60}?:\s*([\d.,]+)\s*(km|m|metros)?/i;
 
-/** Área em m², aceitando unidade no rótulo — "Área Total (hectare): 20,1409". */
-function extractArea(flat: string): number | null {
-  const direct = AREA_RE.exec(flat);
-  let value: number | null = null;
-  let unit = "";
-  if (direct) {
-    value = parseNumber(direct[1]!);
-    unit = direct[2]!.toLowerCase();
-  } else {
-    const labeled = AREA_LABEL_RE.exec(flat);
-    if (!labeled) return null;
-    value = parseNumber(labeled[1]!);
-    unit = (labeled[2] ?? "").toLowerCase();
-    if (!unit) {
-      // unidade declarada no próprio rótulo, ex.: "Área Total (hectare):"
-      const label = flat.slice(Math.max(0, labeled.index), labeled.index + 90).toLowerCase();
-      if (/\b(ha|hectares?)\b/.test(label)) unit = "ha";
-      else if (/alqueire/.test(label)) unit = "alqueire";
-      else unit = "m2";
+/**
+ * Lê um valor numérico rotulado em layout de TABELA:
+ * - "Área total (ha)   20,1409"       (mesma linha, sem dois-pontos)
+ * - "Área total (ha) | 20,1409"       (colunas separadas por pipe/tab)
+ * - "Perímetro (m)\n2.031,45"         (rótulo numa linha, valor na seguinte)
+ */
+function tableLabeledNumber(
+  raw: string,
+  labelRe: RegExp,
+): { value: number | null; context: string } {
+  const lines = raw.split(/\r?\n/);
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i]!;
+    const m = labelRe.exec(line);
+    if (!m) continue;
+    const rest = line.slice((m.index ?? 0) + m[0].length);
+    const inline = /(-?\d[\d.,]*)/.exec(rest);
+    if (inline) {
+      const v = parseNumber(inline[1]!);
+      if (v !== null) return { value: v, context: line };
+    }
+    for (let j = i + 1; j <= Math.min(i + 2, lines.length - 1); j++) {
+      const nx = lines[j]!.trim();
+      if (!nx) continue;
+      const only =
+        /^[:|\s]*(-?\d[\d.,]*)\s*(m²|m2|metros\s+quadrados|ha|hectares?|alqueires?|km|m|metros)?\b/i.exec(
+          nx,
+        );
+
+      if (only) {
+        const v = parseNumber(only[1]!);
+        if (v !== null) return { value: v, context: `${line} ${nx}` };
+      }
+      break;
     }
   }
-  if (value === null) return null;
+  return { value: null, context: "" };
+}
+
+function areaUnitFrom(context: string): string {
+  const c = context.toLowerCase();
+  if (/alqueire/.test(c)) return "alqueire";
+  if (/\bha\b|hectare/.test(c)) return "ha";
+  return "m2";
+}
+
+function applyAreaUnit(value: number, unit: string): number {
   if (unit.startsWith("ha") || unit.startsWith("hectare")) return value * 10000;
   if (unit.startsWith("alqueire")) return value * 24200;
   return value;
 }
 
-/** Perímetro declarado em metros, aceitando unidade no rótulo. */
-function extractPerimeter(flat: string): number | null {
+/** Área em m², em texto corrido ou tabela — "Área Total (hectare): 20,1409". */
+function extractArea(flat: string, raw = flat): number | null {
+  const direct = AREA_RE.exec(flat);
+  if (direct) {
+    const v = parseNumber(direct[1]!);
+    return v === null ? null : applyAreaUnit(v, direct[2]!.toLowerCase());
+  }
+  const labeled = AREA_LABEL_RE.exec(flat);
+  if (labeled) {
+    const v = parseNumber(labeled[1]!);
+    if (v !== null) {
+      const unit =
+        (labeled[2] ?? "").toLowerCase() ||
+        areaUnitFrom(flat.slice(Math.max(0, labeled.index), labeled.index + 90));
+      return applyAreaUnit(v, unit);
+    }
+  }
+  const table = tableLabeledNumber(raw, /[áa]rea(?:\s+(?:total|superficial|do\s+\S+))?\s*(?:\([^)]*\))?/i);
+  if (table.value === null) return null;
+  return applyAreaUnit(table.value, areaUnitFrom(table.context));
+}
+
+/** Perímetro declarado em metros, em texto corrido ou tabela. */
+function extractPerimeter(flat: string, raw = flat): number | null {
   const direct = PERIM_RE.exec(flat);
   if (direct) return parseNumber(direct[1]!);
   const labeled = PERIM_LABEL_RE.exec(flat);
-  if (!labeled) return null;
-  const value = parseNumber(labeled[1]!);
-  if (value === null) return null;
-  return (labeled[2] ?? "").toLowerCase() === "km" ? value * 1000 : value;
+  if (labeled) {
+    const value = parseNumber(labeled[1]!);
+    if (value !== null)
+      return (labeled[2] ?? "").toLowerCase() === "km" ? value * 1000 : value;
+  }
+  const table = tableLabeledNumber(raw, /per[ií]metro(?:\s+total)?\s*(?:\([^)]*\))?/i);
+  if (table.value === null) return null;
+  return /\bkm\b/i.test(table.context) ? table.value * 1000 : table.value;
 }
+
+
 
 type StructuredParse = {
   segments: ParsedSegment[];
@@ -325,6 +378,300 @@ function parseSigefTable(rawText: string): StructuredParse | null {
   });
   return { segments, coords };
 }
+
+// --- Tabelas genéricas de grandezas ----------------------------------------
+// Suporta planilhas/tabelas de PDF com cabeçalho, em qualquer ordem de colunas,
+// separadas por pipe, tabulação, ponto-e-vírgula ou espaçamento.
+
+type ColKind =
+  | "vertex"
+  | "vante"
+  | "lon"
+  | "lat"
+  | "alt"
+  | "north"
+  | "east"
+  | "azimuth"
+  | "distance"
+  | "confrontante"
+  | "ignore";
+
+const HEADER_KINDS: { re: RegExp; kind: ColKind }[] = [
+  { re: /confront|lindeir|vizinh/i, kind: "confrontante" },
+  { re: /vante|seguinte|pr[óo]ximo|para\s+o\s+v[ée]rtice|v[ée]rtice\s+final/i, kind: "vante" },
+  { re: /v[ée]rtice|esta[çc][ãa]o|ponto|marco|estaca|c[óo]digo/i, kind: "vertex" },
+  { re: /longitude|\blon\b|\blong\b/i, kind: "lon" },
+  { re: /latitude|\blat\b/i, kind: "lat" },
+  { re: /altitude|altura|cota|\balt\b|\bh\s*\(m\)/i, kind: "alt" },
+  { re: /norte|\bn\s*\(m\)|^n$/i, kind: "north" },
+  { re: /este|leste|\be\s*\(m\)|^e$/i, kind: "east" },
+  { re: /azimute|rumo|dire[çc][ãa]o/i, kind: "azimuth" },
+  { re: /dist[âa]ncia|extens[ãa]o|comprimento|medida/i, kind: "distance" },
+];
+
+const DMS_TOKEN_RE = new RegExp(
+  String.raw`-?\d{1,3}\s*[°ºo]\s*\d{1,2}\s*['′]\s*(?:[\d.,]+\s*["″]?)?\s*[NSEWOnsewo]?`,
+  "g",
+);
+
+/** Divide a linha em células, preservando tokens em grau/minuto/segundo. */
+function tokenizeRow(line: string): string[] {
+  const dms: string[] = [];
+  const masked = line.replace(DMS_TOKEN_RE, (m) => {
+    dms.push(m.trim());
+    return `\u0001${dms.length - 1}\u0001`;
+  });
+  const explicit = /[|;\t]|\s{2,}/.test(masked);
+  const parts = masked
+    .split(explicit ? /\s*[|;\t]\s*|\s{2,}/ : /\s+/)
+    .map((p) => p.trim())
+    .filter((p) => p.length > 0);
+  return parts.map((p) =>
+    p.replace(/\u0001(\d+)\u0001/g, (_, i: string) => dms[Number(i)] ?? ""),
+  );
+}
+
+function headerKinds(line: string): ColKind[] | null {
+  const cells = tokenizeRow(line);
+  if (cells.length < 3) return null;
+  const kinds = cells.map<ColKind>((c) => {
+    for (const h of HEADER_KINDS) if (h.re.test(c)) return h.kind;
+    return "ignore";
+  });
+  // Colunas duplicadas: a 2ª coluna de vértice é o vértice de vante.
+  let vistoVertex = false;
+  const temVante = kinds.includes("vante");
+  for (let i = 0; i < kinds.length; i++) {
+    if (kinds[i] !== "vertex") continue;
+    if (!vistoVertex) vistoVertex = true;
+    else kinds[i] = temVante ? "ignore" : "vante";
+  }
+  const useful = kinds.filter((k) => k !== "ignore").length;
+  return useful >= 3 ? kinds : null;
+
+}
+
+const isCode = (t: string) => /[A-Za-z]/.test(t) && t.length <= 24;
+
+/** Linhas de rótulo/metadados que nunca são linhas de dados de vértice. */
+const META_LINE_RE =
+  /[áa]rea|per[íi]metro|matr[íi]cula|im[óo]vel|munic[íi]p|comarca|propriet|respons|t[ée]cnic|cart[óo]rio|data\b|zona|datum|escala|fl\.|folha|registro|c[óo]digo\s+do/i;
+
+/** Código de vértice plausível: contém dígito ou é uma sigla curta. */
+const isVertexCode = (t: string) =>
+  isCode(t) && (/\d/.test(t) || t.replace(/[^A-Za-z]/g, "").length <= 3);
+
+
+type TableRow = {
+  vertex: string | null;
+  vante: string | null;
+  lon: number | null;
+  lat: number | null;
+  alt: number | null;
+  north: number | null;
+  east: number | null;
+  azimuth: number | null;
+  bearing_text: string | null;
+  distance: number | null;
+  confrontante: string | null;
+  raw: string;
+};
+
+function rowFromKinds(cells: string[], kinds: ColKind[], raw: string): TableRow | null {
+  const row: TableRow = {
+    vertex: null, vante: null, lon: null, lat: null, alt: null,
+    north: null, east: null, azimuth: null, bearing_text: null,
+    distance: null, confrontante: null, raw,
+  };
+  kinds.forEach((kind, i) => {
+    const cell = cells[i];
+    if (!cell) return;
+    switch (kind) {
+      case "vertex": row.vertex = cell; break;
+      case "vante": row.vante = cell; break;
+      case "lon": row.lon = parseGeoCoord(cell); break;
+      case "lat": row.lat = parseGeoCoord(cell); break;
+      case "alt": row.alt = parseNumber(cell.replace(/[^\d.,-]/g, "")); break;
+      case "north": row.north = parseNumber(cell.replace(/[^\d.,-]/g, "")); break;
+      case "east": row.east = parseNumber(cell.replace(/[^\d.,-]/g, "")); break;
+      case "azimuth": {
+        row.bearing_text = cell;
+        const quad = /(NE|SE|SW|SO|NW|NO)/i.exec(cell);
+        const ang = parseAzimuthText(cell);
+        row.azimuth =
+          ang === null
+            ? null
+            : quad
+              ? (bearingToAzimuth(ang, quad[1]!) ?? null)
+              : ang;
+        if (row.azimuth !== null) row.azimuth = normalizeAzimuth(row.azimuth);
+        break;
+      }
+      case "distance": row.distance = parseNumber(cell.replace(/[^\d.,-]/g, "")); break;
+      case "confrontante": row.confrontante = cleanConfrontante(cell); break;
+      default: break;
+    }
+  });
+  if (!row.vertex || !isCode(row.vertex)) return null;
+  const hasData =
+    row.lat !== null || row.lon !== null || row.north !== null ||
+    row.east !== null || row.alt !== null || row.distance !== null ||
+    row.azimuth !== null;
+  return hasData ? row : null;
+}
+
+/** Linha de tabela sem cabeçalho: infere colunas pelo tipo de cada célula. */
+function rowByHeuristics(cells: string[], raw: string): TableRow | null {
+  if (cells.length < 3) return null;
+  if (META_LINE_RE.test(raw)) return null;
+
+  const row: TableRow = {
+    vertex: null, vante: null, lon: null, lat: null, alt: null,
+    north: null, east: null, azimuth: null, bearing_text: null,
+    distance: null, confrontante: null, raw,
+  };
+  const geoDms: string[] = [];
+  const plainNums: number[] = [];
+  const codes: string[] = [];
+  let azCell: string | null = null;
+
+  for (const cell of cells) {
+    if (/[°ºo]\s*\d{1,2}\s*['′]/.test(cell)) {
+      if (/[NSEWOnsewo]\s*$/.test(cell)) geoDms.push(cell);
+      else if (azCell === null) azCell = cell;
+      else geoDms.push(cell);
+      continue;
+    }
+    const num = parseNumber(cell.replace(/[^\d.,-]/g, ""));
+    if (num !== null && /^[^A-Za-z]*$/.test(cell)) plainNums.push(num);
+    else if (isCode(cell)) codes.push(cell);
+  }
+
+  if (geoDms.length >= 2) {
+    const lonRaw = geoDms.find((c) => /[EWOewo]\s*$/.test(c)) ?? geoDms[0]!;
+    const latRaw = geoDms.find((c) => /[NSns]\s*$/.test(c)) ?? geoDms[1]!;
+    row.lon = parseGeoCoord(lonRaw);
+    row.lat = parseGeoCoord(latRaw);
+  }
+  for (const n of plainNums) {
+    const abs = Math.abs(n);
+    if (abs >= 1_000_000 && row.north === null) row.north = n;
+    else if (abs >= 100_000 && abs < 1_000_000 && row.east === null) row.east = n;
+    else if (row.alt === null && abs <= 9000) row.alt = n;
+    else if (row.distance === null && abs <= 100_000) row.distance = n;
+  }
+  if (azCell) {
+    row.bearing_text = azCell;
+    const ang = parseAzimuthText(azCell);
+    if (ang !== null) row.azimuth = normalizeAzimuth(ang);
+  }
+  row.vertex = codes.find(isVertexCode) ?? null;
+  row.vante = codes.filter(isVertexCode)[1] ?? null;
+  if (!row.vertex) return null;
+
+  const hasData =
+    row.lat !== null || row.lon !== null || row.north !== null ||
+    row.east !== null || row.alt !== null;
+  return hasData ? row : null;
+}
+
+const R_EARTH = 6378137;
+
+/** Azimute e distância entre dois vértices a partir das coordenadas. */
+function geometryBetween(
+  a: VertexCoord,
+  b: VertexCoord,
+): { azimuth: number | null; distance: number | null } {
+  if (a.north !== null && a.east !== null && b.north !== null && b.east !== null) {
+    const dn = b.north - a.north;
+    const de = b.east - a.east;
+    const distance = Math.hypot(dn, de);
+    const azimuth = normalizeAzimuth((Math.atan2(de, dn) * 180) / Math.PI);
+    return { azimuth: Number(azimuth.toFixed(6)), distance: Number(distance.toFixed(3)) };
+  }
+  if (a.lat !== null && a.lon !== null && b.lat !== null && b.lon !== null) {
+    const rad = Math.PI / 180;
+    const φ1 = a.lat * rad;
+    const φ2 = b.lat * rad;
+    const dλ = (b.lon - a.lon) * rad;
+    const dφ = φ2 - φ1;
+    const x = dλ * Math.cos((φ1 + φ2) / 2);
+    const distance = Math.hypot(dφ, x) * R_EARTH;
+    const y = Math.sin(dλ) * Math.cos(φ2);
+    const xb = Math.cos(φ1) * Math.sin(φ2) - Math.sin(φ1) * Math.cos(φ2) * Math.cos(dλ);
+    const azimuth = normalizeAzimuth((Math.atan2(y, xb) * 180) / Math.PI);
+    return { azimuth: Number(azimuth.toFixed(6)), distance: Number(distance.toFixed(3)) };
+  }
+  return { azimuth: null, distance: null };
+}
+
+/**
+ * Tabela de grandezas (com ou sem cabeçalho): lê vértices, coordenadas
+ * geodésicas ou UTM, altitude, azimute, distância e confrontante.
+ * Quando a tabela só traz coordenadas, azimute e distância são calculados.
+ */
+function parseMeasureTable(rawText: string): StructuredParse | null {
+  const lines = rawText.split(/\r?\n/);
+  let kinds: ColKind[] | null = null;
+  const rows: TableRow[] = [];
+
+  for (const rawLine of lines) {
+    const line = rawLine.trim();
+    if (line.length < 8) continue;
+    const maybeHeader = headerKinds(line);
+    if (maybeHeader && !/\d{1,3}\s*[°ºo]/.test(line)) {
+      kinds = maybeHeader;
+      continue;
+    }
+    const cells = tokenizeRow(line);
+    const row = kinds
+      ? (rowFromKinds(cells, kinds, line) ?? rowByHeuristics(cells, line))
+      : rowByHeuristics(cells, line);
+    if (row) rows.push(row);
+  }
+
+  if (rows.length < 3) return null;
+
+  const coords = new Map<string, VertexCoord>();
+  for (const r of rows) {
+    const key = r.vertex!.toUpperCase();
+    const prev = coords.get(key);
+    coords.set(key, {
+      name: key,
+      lon: r.lon ?? prev?.lon ?? null,
+      lat: r.lat ?? prev?.lat ?? null,
+      alt: r.alt ?? prev?.alt ?? null,
+      north: r.north ?? prev?.north ?? null,
+      east: r.east ?? prev?.east ?? null,
+    });
+  }
+
+  const segments: ParsedSegment[] = [];
+  rows.forEach((r, i) => {
+    const from = r.vertex!;
+    const to = r.vante ?? rows[(i + 1) % rows.length]!.vertex!;
+    if (!to || to.toUpperCase() === from.toUpperCase()) return;
+    const a = coords.get(from.toUpperCase())!;
+    const b = coords.get(to.toUpperCase());
+    const derived = b ? geometryBetween(a, b) : { azimuth: null, distance: null };
+    segments.push({
+      seq: segments.length + 1,
+      from_vertex: from,
+      to_vertex: to,
+      bearing_text: r.bearing_text,
+      azimuth_deg: r.azimuth ?? derived.azimuth,
+      distance_m: r.distance ?? derived.distance,
+      altitude_from_m: a.alt,
+      altitude_to_m: b?.alt ?? null,
+      confrontante: r.confrontante,
+      raw_text: r.raw.slice(0, 600),
+    });
+  });
+
+  return segments.length >= 3 ? { segments, coords } : null;
+}
+
+
 
 /** Memorial em prosa: "108°57' e 18,57 m até o vértice X, (Longitude: ..., Latitude: ... e Altitude: ...)". */
 const PROSE_SEG_RE = new RegExp(
@@ -416,18 +763,54 @@ export function parseMemorial(text: string): ParsedParcel {
   }
   const flat = repairLineBreaks(normalizado);
 
-  const area = extractArea(flat);
+  const area = extractArea(flat, normalizado);
   if (area === null) warnings.push("Área não localizada no texto.");
 
-  const declaredPerimeter = extractPerimeter(flat);
+  const declaredPerimeter = extractPerimeter(flat, normalizado);
   if (declaredPerimeter === null) warnings.push("Perímetro declarado não localizado.");
 
   const matricula = MATRICULA_RE.exec(flat);
 
-  const structured = parseSigefTable(normalizado) ?? parseProseSegments(flat);
+  const tableParse = parseMeasureTable(normalizado);
+  const structured =
+    parseSigefTable(normalizado) ?? parseProseSegments(flat) ?? tableParse;
+
   const segments: ParsedSegment[] = structured?.segments ?? [];
   const coordMap = structured?.coords ?? new Map<string, VertexCoord>();
   const chunks = structured ? [] : splitSegments(flat);
+
+  // Complementa grandezas ausentes com o que estiver em tabela anexa
+  // (ex.: memorial em prosa acompanhado de tabela de coordenadas/altitudes).
+  if (tableParse && structured && structured !== tableParse) {
+    tableParse.coords.forEach((v, key) => {
+      const prev = coordMap.get(key);
+      coordMap.set(key, {
+        name: key,
+        lon: prev?.lon ?? v.lon,
+        lat: prev?.lat ?? v.lat,
+        alt: prev?.alt ?? v.alt,
+        north: prev?.north ?? v.north,
+        east: prev?.east ?? v.east,
+      });
+    });
+    segments.forEach((s) => {
+      if (s.altitude_from_m === null && s.from_vertex)
+        s.altitude_from_m = coordMap.get(s.from_vertex.toUpperCase())?.alt ?? null;
+      if (s.altitude_to_m === null && s.to_vertex)
+        s.altitude_to_m = coordMap.get(s.to_vertex.toUpperCase())?.alt ?? null;
+      if (s.azimuth_deg === null || s.distance_m === null) {
+        const a = s.from_vertex ? coordMap.get(s.from_vertex.toUpperCase()) : undefined;
+        const b = s.to_vertex ? coordMap.get(s.to_vertex.toUpperCase()) : undefined;
+        if (a && b) {
+          const g = geometryBetween(a, b);
+          if (s.azimuth_deg === null) s.azimuth_deg = g.azimuth;
+          if (s.distance_m === null) s.distance_m = g.distance;
+        }
+      }
+    });
+  }
+
+
 
 
 
