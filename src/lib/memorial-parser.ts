@@ -784,13 +784,17 @@ export function parseMemorial(text: string): ParsedParcel {
   if (tableParse && structured && structured !== tableParse) {
     tableParse.coords.forEach((v, key) => {
       const prev = coordMap.get(key);
+      // Uma tabela complementar só pode enriquecer vértices já reconhecidos
+      // pelo parser principal. Isso evita transformar números da prosa
+      // (distância, azimute etc.) em vértices/cotas espúrios.
+      if (!prev) return;
       coordMap.set(key, {
         name: key,
-        lon: prev?.lon ?? v.lon,
-        lat: prev?.lat ?? v.lat,
-        alt: prev?.alt ?? v.alt,
-        north: prev?.north ?? v.north,
-        east: prev?.east ?? v.east,
+        lon: prev.lon ?? v.lon,
+        lat: prev.lat ?? v.lat,
+        alt: prev.alt ?? v.alt,
+        north: prev.north ?? v.north,
+        east: prev.east ?? v.east,
       });
     });
     segments.forEach((s) => {
@@ -920,6 +924,32 @@ export function parseMemorial(text: string): ParsedParcel {
     });
   });
 
+  // A altitude é atributo do vértice, não do segmento. Consolida uma única
+  // cota por código e replica esse mesmo valor nas referências de entrada e
+  // saída, impedindo que um vértice receba duas altitudes distintas.
+  const altitudeByVertex = new Map<string, number>();
+  coordMap.forEach((coord, key) => {
+    if (coord.alt !== null) altitudeByVertex.set(key.toUpperCase(), coord.alt);
+  });
+  for (const segment of segments) {
+    if (segment.from_vertex && segment.altitude_from_m !== null) {
+      const key = segment.from_vertex.toUpperCase();
+      if (!altitudeByVertex.has(key)) altitudeByVertex.set(key, segment.altitude_from_m);
+    }
+    if (segment.to_vertex && segment.altitude_to_m !== null) {
+      const key = segment.to_vertex.toUpperCase();
+      if (!altitudeByVertex.has(key)) altitudeByVertex.set(key, segment.altitude_to_m);
+    }
+  }
+  for (const segment of segments) {
+    segment.altitude_from_m = segment.from_vertex
+      ? (altitudeByVertex.get(segment.from_vertex.toUpperCase()) ?? null)
+      : null;
+    segment.altitude_to_m = segment.to_vertex
+      ? (altitudeByVertex.get(segment.to_vertex.toUpperCase()) ?? null)
+      : null;
+  }
+
 
   if (segments.length === 0) {
     warnings.push(
@@ -949,10 +979,8 @@ export function parseMemorial(text: string): ParsedParcel {
     }
   });
 
-  // Altimetria: consolida as cotas identificadas nos vértices.
-  const altitudes = segments
-    .flatMap((s) => [s.altitude_from_m, s.altitude_to_m])
-    .filter((v): v is number => v !== null);
+  // Altimetria: cada vértice participa uma única vez das estatísticas.
+  const altitudes = [...altitudeByVertex.values()];
   const altitudeMin = altitudes.length > 0 ? Math.min(...altitudes) : null;
   const altitudeMax = altitudes.length > 0 ? Math.max(...altitudes) : null;
   const altitudeMean =

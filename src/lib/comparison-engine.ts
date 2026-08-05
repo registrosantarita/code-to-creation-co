@@ -69,9 +69,15 @@ export type ComparisonResult = {
 const fmt = (n: number, d = 2) =>
   n.toLocaleString("pt-BR", { minimumFractionDigits: d, maximumFractionDigits: d });
 
+/** Identidade textual do confrontante, sem referências registrais acessórias. */
+function normalizeConfrontante(value: string): string {
+  return normalizeName(
+    value.replace(/\s*[-|,]?\s*(?:cns|matr[íi]cula)\b[\s\S]*$/i, ""),
+  );
+}
+
 function angleDiff(a: number, b: number): number {
-  const d = Math.abs(((a - b) % 360 + 540) % 360 - 180);
-  return 180 - d;
+  return Math.abs(((a - b) % 360 + 540) % 360 - 180);
 }
 
 export type SegmentPair = { ia: number; ib: number };
@@ -330,7 +336,7 @@ export function compareParcels(
     });
 
     if (sa.confrontante && sb.confrontante) {
-      if (normalizeName(sa.confrontante) !== normalizeName(sb.confrontante)) {
+      if (normalizeConfrontante(sa.confrontante) !== normalizeConfrontante(sb.confrontante)) {
         problems.push(`confrontante "${sa.confrontante}" x "${sb.confrontante}"`);
       }
     }
@@ -415,8 +421,8 @@ export function compareParcels(
   }
 
   // --- Confrontantes (reciprocidade) ---
-  const setA = new Map(a.confrontantes.map((c) => [normalizeName(c), c]));
-  const setB = new Map(b.confrontantes.map((c) => [normalizeName(c), c]));
+  const setA = new Map(a.confrontantes.map((c) => [normalizeConfrontante(c), c]));
+  const setB = new Map(b.confrontantes.map((c) => [normalizeConfrontante(c), c]));
   const onlyA = [...setA].filter(([k]) => !setB.has(k)).map(([, v]) => v);
   const onlyB = [...setB].filter(([k]) => !setA.has(k)).map(([, v]) => v);
   metrics["confrontantes_only_a"] = onlyA;
