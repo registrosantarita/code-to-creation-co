@@ -80,9 +80,10 @@ export function TrechosConferidos({ trechos, extensaoM, labelA, labelB }: Props)
                   <div className="flex flex-col items-center gap-1">
                     {t.ok ? (
                       <Check
-                        className="h-5 w-5 text-[hsl(var(--tone-ok,142_60%_38%))]"
+                        className="h-5 w-5 text-success"
                         aria-label="Trecho correto"
                       />
+
                     ) : (
                       <X
                         className="h-5 w-5 text-destructive"
