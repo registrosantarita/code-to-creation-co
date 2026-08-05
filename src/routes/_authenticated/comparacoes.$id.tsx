@@ -132,6 +132,8 @@ function Relatorio() {
                   documentoB: nomeDoc(c.document_b_id),
                   tolerancias: tol,
                   contagens: counts,
+                  trechos,
+                  extensaoConferidaM: extensaoConferida,
                   achados: ordenados.map((f) => ({
                     severity: f.severity,
                     code: f.code,
