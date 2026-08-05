@@ -382,7 +382,10 @@ function parseProseSegments(flat: string): StructuredParse | null {
   PROSE_SEG_RE.lastIndex = 0;
   for (const m of flat.matchAll(PROSE_SEG_RE)) {
     const [, azRaw, distRaw, to, lonRaw, latRaw, altRaw] = m;
-    const alt = registrar(to!, lonRaw!, latRaw!, altRaw);
+    const alt =
+      lonRaw && latRaw
+        ? registrar(to!, lonRaw, latRaw, altRaw)
+        : (coords.get(to!.toUpperCase())?.alt ?? null);
     const az = parseAzimuthText(azRaw!);
     segments.push({
       seq: segments.length + 1,
