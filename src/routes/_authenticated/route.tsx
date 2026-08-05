@@ -34,7 +34,11 @@ function AuthenticatedLayout() {
           <div className="flex items-center gap-4">
             <NavArrows showHome={false} />
             <Link to="/painel" className="flex items-center gap-3">
-              <div className="h-7 w-7 border border-accent bg-ink" aria-hidden />
+              <img
+                src={logoAsset.url}
+                alt="GeoConfronto"
+                className="h-8 w-8 object-contain"
+              />
               <div className="leading-tight">
                 <p className="font-display text-sm text-foreground">
                   GeoConfronto
