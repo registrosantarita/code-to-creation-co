@@ -66,6 +66,53 @@ export type ComparisonResult = {
   findings: Finding[];
 };
 
+/** Linha da conferência trecho a trecho exibida no relatório e na tela. */
+export type TrechoConferido = {
+  seq_a: number;
+  seq_b: number;
+  de_a: string | null;
+  ate_a: string | null;
+  de_b: string | null;
+  ate_b: string | null;
+  distancia_a: number | null;
+  distancia_b: number | null;
+  azimute_a: number | null;
+  azimute_b: number | null;
+  invertido: boolean;
+  ok: boolean;
+  problemas: string[];
+};
+
+function montarTrecho(
+  seqA: number,
+  seqB: number,
+  sa: SegmentInput,
+  sb: SegmentInput,
+  invertido: boolean,
+  problemas: string[],
+): TrechoConferido {
+  return {
+    seq_a: seqA,
+    seq_b: seqB,
+    de_a: sa.from_vertex,
+    ate_a: sa.to_vertex,
+    de_b: invertido ? sb.to_vertex : sb.from_vertex,
+    ate_b: invertido ? sb.from_vertex : sb.to_vertex,
+    distancia_a: sa.distance_m,
+    distancia_b: sb.distance_m,
+    azimute_a: sa.azimuth_deg,
+    azimute_b:
+      sb.azimuth_deg === null
+        ? null
+        : invertido
+          ? (sb.azimuth_deg + 180) % 360
+          : sb.azimuth_deg,
+    invertido,
+    ok: problemas.length === 0,
+    problemas,
+  };
+}
+
 const fmt = (n: number, d = 2) =>
   n.toLocaleString("pt-BR", { minimumFractionDigits: d, maximumFractionDigits: d });
 
