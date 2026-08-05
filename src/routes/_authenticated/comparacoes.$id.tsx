@@ -217,6 +217,15 @@ function Relatorio() {
         </dl>
       </section>
 
+      <TrechosConferidos
+        trechos={trechos}
+        extensaoM={extensaoConferida}
+        labelA={nomeDoc(c.document_a_id)}
+        labelB={nomeDoc(c.document_b_id)}
+      />
+
+
+
       <section className="mt-10">
         <h2 className="text-2xl">Achados</h2>
         <ul className="mt-5 space-y-4">
