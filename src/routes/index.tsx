@@ -83,20 +83,22 @@ function Index() {
   return (
     <div className="min-h-screen bg-background">
       <header className="border-b border-border">
-        <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-5">
-          <div className="flex items-center gap-3">
+        <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-8">
+          <div className="flex items-center gap-4">
             <NavArrows showHome={false} />
             <img
               src={logoAsset.url}
               alt="GeoConfronto"
-              className="h-9 w-9 object-contain"
+              className="h-16 w-16 object-contain"
             />
 
             <div className="leading-tight">
-              <p className="font-display text-base text-foreground">
+              <p className="font-display text-2xl text-foreground md:text-3xl">
                 GeoConfronto
               </p>
-              <p className="eyebrow">Plataforma técnica e normativa</p>
+              <p className="mt-0.5 text-xs italic text-muted-foreground">
+                desenvolvido por Abrahão Jesus de Souza
+              </p>
             </div>
           </div>
           {signedIn ? (
