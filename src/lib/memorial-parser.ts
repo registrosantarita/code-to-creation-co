@@ -784,13 +784,17 @@ export function parseMemorial(text: string): ParsedParcel {
   if (tableParse && structured && structured !== tableParse) {
     tableParse.coords.forEach((v, key) => {
       const prev = coordMap.get(key);
+      // Uma tabela complementar só pode enriquecer vértices já reconhecidos
+      // pelo parser principal. Isso evita transformar números da prosa
+      // (distância, azimute etc.) em vértices/cotas espúrios.
+      if (!prev) return;
       coordMap.set(key, {
         name: key,
-        lon: prev?.lon ?? v.lon,
-        lat: prev?.lat ?? v.lat,
-        alt: prev?.alt ?? v.alt,
-        north: prev?.north ?? v.north,
-        east: prev?.east ?? v.east,
+        lon: prev.lon ?? v.lon,
+        lat: prev.lat ?? v.lat,
+        alt: prev.alt ?? v.alt,
+        north: prev.north ?? v.north,
+        east: prev.east ?? v.east,
       });
     });
     segments.forEach((s) => {
