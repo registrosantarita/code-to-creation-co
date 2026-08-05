@@ -342,6 +342,10 @@ export function compareParcels(
       }
     }
 
+    trechos.push(
+      montarTrecho(pair.ia + 1, pair.ib + 1, sa, sb, alignment.reversed, problems),
+    );
+
     if (problems.length > 0) {
       divergentSegments += 1;
       findings.push({
@@ -360,6 +364,12 @@ export function compareParcels(
       });
     }
   }
+  metrics["trechos"] = trechos;
+  metrics["trechos_conformes"] = trechos.filter((t) => t.ok).length;
+  metrics["extensao_conferida_m"] = trechos.reduce(
+    (acc, t) => acc + (t.distancia_a ?? 0),
+    0,
+  );
   metrics["divergent_segments"] = divergentSegments;
   if (n > 0 && divergentSegments === 0) {
     findings.push({
