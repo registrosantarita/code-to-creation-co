@@ -217,39 +217,218 @@ function extractCoords(chunk: string): {
   };
 }
 
+/** Reconstitui hifenizações e sinais quebrados por fim de linha do PDF. */
+function repairLineBreaks(text: string): string {
+  return text
+    .replace(/\s+/g, " ")
+    .replace(/([A-Za-z0-9])-\s+(?=[A-Za-z0-9])/g, "$1-")
+    .replace(/([(:,]\s*)-\s+(?=\d)/g, "$1-");
+}
+
+const AREA_LABEL_RE =
+  /[áa]rea[^\n:]{0,80}?:\s*([\d.,]+)\s*(m²|m2|metros\s+quadrados|ha|hectares?|alqueires?)?/i;
+const PERIM_LABEL_RE =
+  /per[ií]metro[^\n:]{0,60}?:\s*([\d.,]+)\s*(km|m|metros)?/i;
+
+/** Área em m², aceitando unidade no rótulo — "Área Total (hectare): 20,1409". */
+function extractArea(flat: string): number | null {
+  const direct = AREA_RE.exec(flat);
+  let value: number | null = null;
+  let unit = "";
+  if (direct) {
+    value = parseNumber(direct[1]!);
+    unit = direct[2]!.toLowerCase();
+  } else {
+    const labeled = AREA_LABEL_RE.exec(flat);
+    if (!labeled) return null;
+    value = parseNumber(labeled[1]!);
+    unit = (labeled[2] ?? "").toLowerCase();
+    if (!unit) {
+      // unidade declarada no próprio rótulo, ex.: "Área Total (hectare):"
+      const label = flat.slice(Math.max(0, labeled.index), labeled.index + 90).toLowerCase();
+      if (/\b(ha|hectares?)\b/.test(label)) unit = "ha";
+      else if (/alqueire/.test(label)) unit = "alqueire";
+      else unit = "m2";
+    }
+  }
+  if (value === null) return null;
+  if (unit.startsWith("ha") || unit.startsWith("hectare")) return value * 10000;
+  if (unit.startsWith("alqueire")) return value * 24200;
+  return value;
+}
+
+/** Perímetro declarado em metros, aceitando unidade no rótulo. */
+function extractPerimeter(flat: string): number | null {
+  const direct = PERIM_RE.exec(flat);
+  if (direct) return parseNumber(direct[1]!);
+  const labeled = PERIM_LABEL_RE.exec(flat);
+  if (!labeled) return null;
+  const value = parseNumber(labeled[1]!);
+  if (value === null) return null;
+  return (labeled[2] ?? "").toLowerCase() === "km" ? value * 1000 : value;
+}
+
+type StructuredParse = {
+  segments: ParsedSegment[];
+  coords: Map<string, VertexCoord>;
+};
+
+const COORD_DMS = String.raw`-?\d{1,3}\s*[°ºo]\s*\d{1,2}\s*['′]\s*[\d.,]+\s*["″]?`;
+
+/** Memorial SIGEF/INCRA em tabela: código, long, lat, altitude, vante, azimute, distância. */
+const SIGEF_ROW_RE = new RegExp(
+  String.raw`^\s*([A-Z0-9][\w\-.]{2,20})\s+(${COORD_DMS})\s+(${COORD_DMS})\s+(-?[\d.,]+)\s+([A-Z0-9][\w\-.]{2,20})\s+(\d{1,3}\s*[°ºo]\s*\d{1,2}\s*['′]?(?:\s*[\d.,]+\s*["″])?)\s+([\d.,]+)\s*(.*)$`,
+  "i",
+);
+
+function parseSigefTable(rawText: string): StructuredParse | null {
+  const segments: ParsedSegment[] = [];
+  const coords = new Map<string, VertexCoord>();
+  const altByVertex = new Map<string, number | null>();
+
+  for (const line of rawText.split(/\r?\n/)) {
+    const m = SIGEF_ROW_RE.exec(line.trim());
+    if (!m) continue;
+    const [, from, lonRaw, latRaw, altRaw, to, azRaw, distRaw, tail] = m;
+    const key = from!.toUpperCase();
+    const alt = parseNumber(altRaw!);
+    altByVertex.set(key, alt);
+    coords.set(key, {
+      name: key,
+      lon: parseGeoCoord(lonRaw!),
+      lat: parseGeoCoord(latRaw!),
+      alt,
+      north: null,
+      east: null,
+    });
+    const az = parseAzimuthText(azRaw!);
+    const confrontante = tail
+      ? cleanConfrontante(tail.split("|").pop()!.trim())
+      : null;
+    segments.push({
+      seq: segments.length + 1,
+      from_vertex: from!,
+      to_vertex: to!,
+      bearing_text: azRaw!.trim(),
+      azimuth_deg: az === null ? null : normalizeAzimuth(az),
+      distance_m: parseNumber(distRaw!),
+      altitude_from_m: alt,
+      altitude_to_m: null,
+      confrontante,
+      raw_text: line.trim().slice(0, 600),
+    });
+  }
+
+  if (segments.length < 3) return null;
+  segments.forEach((s) => {
+    if (s.to_vertex) s.altitude_to_m = altByVertex.get(s.to_vertex.toUpperCase()) ?? null;
+  });
+  return { segments, coords };
+}
+
+/** Memorial em prosa: "108°57' e 18,57 m até o vértice X, (Longitude: ..., Latitude: ... e Altitude: ...)". */
+const PROSE_SEG_RE = new RegExp(
+  String.raw`(\d{1,3}\s*[°ºo]\s*\d{1,2}\s*['′]?(?:\s*[\d.,]+\s*["″])?)\s*(?:e|,)\s*([\d.,]+)\s*(?:m|metros)\s*at[ée]\s+(?:o\s+)?(?:v[ée]rtice|ponto|marco|estaca)\s+([A-Z0-9][\w\-.]{1,20})\s*,?\s*(?:\(\s*Longitude\s*:?\s*(${COORD_DMS})\s*,?\s*Latitude\s*:?\s*(${COORD_DMS})(?:\s*(?:e|,)\s*Altitude\s*:?\s*(-?[\d.,]+))?)?`,
+  "gi",
+);
+const PROSE_START_RE = new RegExp(
+  String.raw`(?:v[ée]rtice|ponto|marco|estaca)\s+([A-Z0-9][\w\-.]{1,20})\s*,?\s*(?:de\s+coordenadas\s*)?\(\s*Longitude\s*:?\s*(${COORD_DMS})\s*,?\s*Latitude\s*:?\s*(${COORD_DMS})(?:\s*(?:e|,)\s*Altitude\s*:?\s*(-?[\d.,]+))?`,
+  "i",
+);
+const PROSE_CONFRONT_RE = /confront(?:ando|a|ante|antes|ação)?\s*(?:-se)?\s*(?:com|:)\s*([^:;]{2,140}?)(?:,\s*com\s+os\s+seguintes|;|\.|:)/gi;
+
+function parseProseSegments(flat: string): StructuredParse | null {
+  const start = PROSE_START_RE.exec(flat);
+  if (!start) return null;
+
+  const confrontos: { pos: number; nome: string | null }[] = [];
+  PROSE_CONFRONT_RE.lastIndex = 0;
+  for (const c of flat.matchAll(PROSE_CONFRONT_RE)) {
+    confrontos.push({ pos: c.index ?? 0, nome: cleanConfrontante(c[1]!) });
+  }
+  const confrontanteEm = (pos: number): string | null => {
+    let atual: string | null = null;
+    for (const c of confrontos) {
+      if (c.pos <= pos) atual = c.nome;
+      else break;
+    }
+    return atual;
+  };
+
+  const coords = new Map<string, VertexCoord>();
+  const registrar = (
+    name: string,
+    lonRaw: string,
+    latRaw: string,
+    altRaw: string | undefined,
+  ): number | null => {
+    const key = name.toUpperCase();
+    const alt = altRaw ? parseNumber(altRaw) : null;
+    coords.set(key, {
+      name: key,
+      lon: parseGeoCoord(lonRaw),
+      lat: parseGeoCoord(latRaw),
+      alt,
+      north: null,
+      east: null,
+    });
+    return alt;
+  };
+
+  let prevName = start[1]!;
+  let prevAlt = registrar(prevName, start[2]!, start[3]!, start[4]);
+
+  const segments: ParsedSegment[] = [];
+  PROSE_SEG_RE.lastIndex = 0;
+  for (const m of flat.matchAll(PROSE_SEG_RE)) {
+    const [, azRaw, distRaw, to, lonRaw, latRaw, altRaw] = m;
+    const alt =
+      lonRaw && latRaw
+        ? registrar(to!, lonRaw, latRaw, altRaw)
+        : (coords.get(to!.toUpperCase())?.alt ?? null);
+    const az = parseAzimuthText(azRaw!);
+    segments.push({
+      seq: segments.length + 1,
+      from_vertex: prevName,
+      to_vertex: to!,
+      bearing_text: azRaw!.trim(),
+      azimuth_deg: az === null ? null : normalizeAzimuth(az),
+      distance_m: parseNumber(distRaw!),
+      altitude_from_m: prevAlt,
+      altitude_to_m: alt,
+      confrontante: confrontanteEm(m.index ?? 0),
+      raw_text: m[0]!.slice(0, 600),
+    });
+    prevName = to!;
+    prevAlt = alt;
+  }
+
+  return segments.length >= 3 ? { segments, coords } : null;
+}
 
 export function parseMemorial(text: string): ParsedParcel {
   const warnings: string[] = [];
-  const { text: flat, aplicadas } = normalizeMemorialText(text);
+  const { text: normalizado, aplicadas } = normalizeMemorialText(text);
   if (aplicadas.length > 0) {
     warnings.push(
       `Padronização léxica aplicada antes da extração (${aplicadas.length}): ${aplicadas.join("; ")}.`,
     );
   }
+  const flat = repairLineBreaks(normalizado);
 
-  let area: number | null = null;
-  const areaMatch = AREA_RE.exec(flat);
-  if (areaMatch) {
-    const value = parseNumber(areaMatch[1]!);
-    const unit = areaMatch[2]!.toLowerCase();
-    if (value !== null) {
-      if (unit.startsWith("ha")) area = value * 10000;
-      else if (unit.startsWith("alqueire")) area = value * 24200;
-      else area = value;
-    }
-  } else {
-    warnings.push("Área não localizada no texto.");
-  }
+  const area = extractArea(flat);
+  if (area === null) warnings.push("Área não localizada no texto.");
 
-  const perimMatch = PERIM_RE.exec(flat);
-  const declaredPerimeter = perimMatch ? parseNumber(perimMatch[1]!) : null;
-  if (!perimMatch) warnings.push("Perímetro declarado não localizado.");
+  const declaredPerimeter = extractPerimeter(flat);
+  if (declaredPerimeter === null) warnings.push("Perímetro declarado não localizado.");
 
   const matricula = MATRICULA_RE.exec(flat);
 
-  const chunks = splitSegments(flat);
-  const segments: ParsedSegment[] = [];
-  const coordMap = new Map<string, VertexCoord>();
+  const structured = parseSigefTable(normalizado) ?? parseProseSegments(flat);
+  const segments: ParsedSegment[] = structured?.segments ?? [];
+  const coordMap = structured?.coords ?? new Map<string, VertexCoord>();
+  const chunks = structured ? [] : splitSegments(flat);
+
 
 
   chunks.forEach((chunk) => {
