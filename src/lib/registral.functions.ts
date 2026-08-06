@@ -4,7 +4,8 @@ import type { Database, Json } from "@/integrations/supabase/types";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { z } from "zod";
 import { parseMemorial } from "./memorial-parser";
-import { isGeoExtension, parseGeometryText } from "./geo-parser";
+import { isGeoExtension } from "./geo-parser";
+import { parseParcelas } from "./multi-parcel";
 import {
   DEFAULT_TOLERANCES,
   compareParcels,
@@ -135,7 +136,7 @@ export const processDocument = createServerFn({ method: "POST" })
       }
     }
 
-    const avisos = [...new Set(parcelas.flatMap((p) => p.warnings))];
+    const avisos: string[] = [...new Set(parcelas.flatMap((p) => p.warnings))];
     const totalSegmentos = parcelas.reduce((acc, p) => acc + p.segments.length, 0);
 
     await supabase
