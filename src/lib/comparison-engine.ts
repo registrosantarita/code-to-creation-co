@@ -21,12 +21,13 @@ export type Tolerances = {
 };
 
 export const DEFAULT_TOLERANCES: Tolerances = {
-  areaPct: 0.5,
-  perimeterPct: 1,
-  distanceM: 0.05,
-  azimuthDeg: 0.0834, // ~5'
-  altitudeM: 0.5, // cota altimétrica (SIGEF/nivelamento)
+  areaPct: 0,
+  perimeterPct: 0,
+  distanceM: 0,
+  azimuthDeg: 0,
+  altitudeM: 0,
 };
+
 
 export type SegmentInput = {
   seq: number;
