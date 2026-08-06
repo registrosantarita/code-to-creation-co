@@ -275,6 +275,13 @@ function AnaliseDetalhe() {
 
   const extraidos = (documents.data ?? []).filter((d) => d.status === "parsed");
 
+  /** Polígonos (parcelas) extraídos de um documento, na ordem de leitura. */
+  function poligonosDe(documentId: string) {
+    return (parcels.data ?? [])
+      .filter((p) => p.document_id === documentId)
+      .sort((a, b) => String(a.created_at).localeCompare(String(b.created_at)));
+  }
+
   const tipoSugerido = (() => {
     const cat = (id: string) =>
       extraidos.find((d) => d.id === id)?.document_category ?? "";
