@@ -82,6 +82,8 @@ export type TrechoConferido = {
   invertido: boolean;
   ok: boolean;
   problemas: string[];
+  confrontante_a?: string | null;
+  confrontante_b?: string | null;
 };
 
 function montarTrecho(
@@ -111,8 +113,11 @@ function montarTrecho(
     invertido,
     ok: problemas.length === 0,
     problemas,
+    confrontante_a: sa.confrontante ?? null,
+    confrontante_b: sb.confrontante ?? null,
   };
 }
+
 
 const fmt = (n: number, d = 2) =>
   n.toLocaleString("pt-BR", { minimumFractionDigits: d, maximumFractionDigits: d });
