@@ -781,6 +781,12 @@ export function compareSharedBoundary(
   metrics["extensao_conferida_m"] = run.totalDistance;
   metrics["divergent_segments"] = divergentes;
 
+  findings.push(
+    ...findingsAltitudeZero(a, labels.a),
+    ...findingsAltitudeZero(b, labels.b),
+  );
+
+
 
 
   findings.push({
