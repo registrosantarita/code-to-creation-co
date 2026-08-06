@@ -3,6 +3,7 @@
  * Cada achado é rastreável até a evidência de origem.
  */
 import { normalizeName } from "./memorial-parser";
+import { degToDms, fmtMedida } from "./labels";
 
 export type Severity = "critical" | "moderate" | "informative" | "inconclusive";
 export type Classification =
