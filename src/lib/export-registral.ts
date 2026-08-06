@@ -323,7 +323,7 @@ export function exportarRelatorioPdf(
     doc.setFontSize(9);
     doc.setTextColor(110);
     doc.text(
-      `Trecho total conferido: ${primeiro.de_a ?? "?"} → ${ultimo.ate_a ?? "?"} • ${trechos.length} trecho(s) • ${fmtNum(extensao, 3)} m • ${trechos.filter((t) => t.ok).length} conforme(s)${primeiro.invertido ? " • conferido por contra-azimute" : ""}`,
+      `Trecho total conferido: ${primeiro.de_a ?? "?"} → ${ultimo.ate_a ?? "?"} • ${trechos.length} trecho(s) • ${fmtMedida(extensao)} m • ${trechos.filter((t) => t.ok).length} conforme(s)${primeiro.invertido ? " • conferido por contra-azimute" : ""}`,
       M,
       yTop + 13,
     );
@@ -331,13 +331,13 @@ export function exportarRelatorioPdf(
 
     autoTable(doc, {
       startY: yTop + 24,
-      head: [["#", "Trecho (A)", "Correspondente (B)", "Dist. A/B (m)", "Azim. A/B (°)", "Situação"]],
+      head: [["#", "Trecho (A)", "Correspondente (B)", "Dist. A/B (m)", "Azimute A/B", "Situação"]],
       body: trechos.map((t) => [
         String(t.seq_a),
         `${t.de_a ?? "?"} - ${t.ate_a ?? "?"}`,
         `${t.de_b ?? "?"} - ${t.ate_b ?? "?"}`,
-        `${fmtNum(t.distancia_a, 3)} / ${fmtNum(t.distancia_b, 3)}`,
-        `${fmtNum(t.azimute_a, 4)} / ${fmtNum(t.azimute_b, 4)}`,
+        `${fmtMedida(t.distancia_a)} / ${fmtMedida(t.distancia_b)}`,
+        `${degToDms(t.azimute_a)} / ${degToDms(t.azimute_b)}`,
         t.ok ? "OK — correto" : `X — ${t.problemas.join("; ")}`,
       ]),
       theme: "grid",
@@ -346,7 +346,7 @@ export function exportarRelatorioPdf(
       columnStyles: {
         0: { cellWidth: 22 },
         3: { cellWidth: 84, halign: "right" },
-        4: { cellWidth: 84, halign: "right" },
+        4: { cellWidth: 92, halign: "right" },
       },
       didParseCell: (data) => {
         if (data.section === "body" && data.column.index === 5) {
@@ -357,7 +357,53 @@ export function exportarRelatorioPdf(
       },
       margin: { left: M, right: M },
     });
+
+    const confrontacoes = agruparConfrontantes(trechos);
+    if (confrontacoes.length > 0) {
+      const yConf =
+        (doc as unknown as { lastAutoTable: { finalY: number } }).lastAutoTable.finalY + 22;
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(11);
+      doc.text("Imóveis confrontantes", M, yConf);
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(9);
+      doc.setTextColor(110);
+      doc.text(
+        "Caminhamento resumido por confrontação: do vértice inicial ao final de cada divisa comum.",
+        M,
+        yConf + 13,
+      );
+      doc.setTextColor(0);
+
+      autoTable(doc, {
+        startY: yConf + 24,
+        head: [["Confrontação", "Caminhamento", "Trechos", "Extensão (m)", "Situação"]],
+        body: confrontacoes.map((g) => [
+          g.confrontante,
+          `${g.de} → ${g.ate}`,
+          String(g.trechos),
+          fmtMedida(g.extensao_m),
+          g.ok ? "OK — correto" : `X — ${g.problemas.join("; ")}`,
+        ]),
+        theme: "grid",
+        styles: { fontSize: 8, cellPadding: 4, overflow: "linebreak", valign: "top" },
+        headStyles: { fillColor: [24, 28, 38], textColor: 255 },
+        columnStyles: {
+          2: { cellWidth: 44, halign: "right" },
+          3: { cellWidth: 68, halign: "right" },
+        },
+        didParseCell: (data) => {
+          if (data.section === "body" && data.column.index === 4) {
+            const ok = confrontacoes[data.row.index]?.ok;
+            data.cell.styles.textColor = ok ? [22, 101, 52] : [153, 27, 27];
+            data.cell.styles.fontStyle = "bold";
+          }
+        },
+        margin: { left: M, right: M },
+      });
+    }
   }
+
 
 
   const achados = [...input.achados].sort(
