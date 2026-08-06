@@ -69,62 +69,74 @@ export const processDocument = createServerFn({ method: "POST" })
       return { ok: false as const, message: note ?? "Nenhum texto pôde ser extraído." };
     }
 
-    const geo =
+    const ehGeometria =
       isGeoExtension(doc.file_extension) ||
       text.trimStart().startsWith("<kml") ||
-      text.includes("<coordinates>")
-        ? parseGeometryText(text)
-        : null;
+      text.includes("<coordinates>");
 
-    const parsed = geo ?? parseMemorial(text);
-    if (geo) {
-      parsed.warnings = [
-        "Geometria vetorial interpretada: azimutes e distâncias calculados sobre WGS-84.",
-        ...parsed.warnings,
-      ];
+    const parcelas = parseParcelas(text, ehGeometria);
+    if (parcelas.length === 0) {
+      await supabase
+        .from("documents")
+        .update({ status: "failed", error_message: "Nenhum polígono reconhecido." })
+        .eq("id", doc.id);
+      return { ok: false as const, message: "Nenhum polígono reconhecido." };
+    }
+    if (ehGeometria) {
+      parcelas.forEach((p) => {
+        p.warnings = [
+          "Geometria vetorial interpretada: azimutes e distâncias calculados sobre WGS-84.",
+          ...p.warnings,
+        ];
+      });
     }
 
     await supabase.from("parcels").delete().eq("document_id", doc.id);
 
-    const { data: parcel, error: parcelError } = await supabase
-      .from("parcels")
-      .insert({
-        document_id: doc.id,
-        analysis_id: doc.analysis_id,
-        label: parsed.label,
-        area_m2: parsed.area_m2,
-        declared_perimeter_m: parsed.declared_perimeter_m,
-        computed_perimeter_m: parsed.computed_perimeter_m,
-        vertex_count: parsed.vertex_count,
-        altitude_min_m: parsed.altitude_min_m,
-        altitude_max_m: parsed.altitude_max_m,
-        altitude_mean_m: parsed.altitude_mean_m,
-        confrontantes: parsed.confrontantes,
-        raw_extraction: { warnings: parsed.warnings, vertices: parsed.vertices },
-      })
-      .select("id")
-      .single();
-    if (parcelError || !parcel) throw new Error("Falha ao registrar a extração.");
-
-    if (parsed.segments.length > 0) {
-      const { error: segError } = await supabase.from("segments").insert(
-        parsed.segments.map((s) => ({
-          parcel_id: parcel.id,
+    for (const parsed of parcelas) {
+      const { data: parcel, error: parcelError } = await supabase
+        .from("parcels")
+        .insert({
+          document_id: doc.id,
           analysis_id: doc.analysis_id,
-          seq: s.seq,
-          from_vertex: s.from_vertex,
-          to_vertex: s.to_vertex,
-          bearing_text: s.bearing_text,
-          azimuth_deg: s.azimuth_deg,
-          distance_m: s.distance_m,
-          altitude_from_m: s.altitude_from_m,
-          altitude_to_m: s.altitude_to_m,
-          confrontante: s.confrontante,
-          raw_text: s.raw_text,
-        })),
-      );
-      if (segError) throw new Error("Falha ao registrar os segmentos.");
+          label: parsed.label,
+          area_m2: parsed.area_m2,
+          declared_perimeter_m: parsed.declared_perimeter_m,
+          computed_perimeter_m: parsed.computed_perimeter_m,
+          vertex_count: parsed.vertex_count,
+          altitude_min_m: parsed.altitude_min_m,
+          altitude_max_m: parsed.altitude_max_m,
+          altitude_mean_m: parsed.altitude_mean_m,
+          confrontantes: parsed.confrontantes,
+          raw_extraction: { warnings: parsed.warnings, vertices: parsed.vertices },
+        })
+        .select("id")
+        .single();
+      if (parcelError || !parcel) throw new Error("Falha ao registrar a extração.");
+
+      if (parsed.segments.length > 0) {
+        const { error: segError } = await supabase.from("segments").insert(
+          parsed.segments.map((s) => ({
+            parcel_id: parcel.id,
+            analysis_id: doc.analysis_id,
+            seq: s.seq,
+            from_vertex: s.from_vertex,
+            to_vertex: s.to_vertex,
+            bearing_text: s.bearing_text,
+            azimuth_deg: s.azimuth_deg,
+            distance_m: s.distance_m,
+            altitude_from_m: s.altitude_from_m,
+            altitude_to_m: s.altitude_to_m,
+            confrontante: s.confrontante,
+            raw_text: s.raw_text,
+          })),
+        );
+        if (segError) throw new Error("Falha ao registrar os segmentos.");
+      }
     }
+
+    const avisos = [...new Set(parcelas.flatMap((p) => p.warnings))];
+    const totalSegmentos = parcelas.reduce((acc, p) => acc + p.segments.length, 0);
 
     await supabase
       .from("documents")
@@ -141,19 +153,22 @@ export const processDocument = createServerFn({ method: "POST" })
       entity_id: doc.id,
       action: "extract",
       metadata: {
-        segmentos: parsed.segments.length,
-        area_m2: parsed.area_m2,
-        avisos: parsed.warnings,
+        poligonos: parcelas.length,
+        segmentos: totalSegmentos,
+        area_m2: parcelas[0]?.area_m2 ?? null,
+        avisos,
       },
     });
 
     return {
       ok: true as const,
-      segments: parsed.segments.length,
-      warnings: parsed.warnings,
+      segments: totalSegmentos,
+      parcels: parcelas.length,
+      warnings: avisos,
       note,
     };
   });
+
 
 type ConsumoInput = {
   analysisId: string;
