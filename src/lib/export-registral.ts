@@ -205,21 +205,7 @@ export type RelatorioPdfInput = {
   documentoB: string;
   tolerancias: Record<string, number | undefined>;
   contagens: Record<string, number | undefined>;
-  trechos?: {
-    seq_a: number;
-    seq_b: number;
-    de_a: string | null;
-    ate_a: string | null;
-    de_b: string | null;
-    ate_b: string | null;
-    distancia_a: number | null;
-    distancia_b: number | null;
-    azimute_a: number | null;
-    azimute_b: number | null;
-    invertido: boolean;
-    ok: boolean;
-    problemas: string[];
-  }[];
+  trechos?: TrechoConferido[];
   extensaoConferidaM?: number | null;
   achados: {
     severity: string;
