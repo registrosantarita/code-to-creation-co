@@ -243,7 +243,11 @@ export const runComparison = createServerFn({ method: "POST" })
     const { supabase, userId } = context;
     const tol: Tolerances = data.tolerances ?? DEFAULT_TOLERANCES;
 
-    async function loadParcel(documentId: string): Promise<{
+    async function loadParcel(
+      documentId: string,
+      parcelId?: string,
+      excluirParcelId?: string,
+    ): Promise<{
       parcel: ParcelInput;
       label: string;
     } | null> {
@@ -252,19 +256,24 @@ export const runComparison = createServerFn({ method: "POST" })
         .select("id, file_name, source_type")
         .eq("id", documentId)
         .single();
-      const { data: parcel } = await supabase
+      let query = supabase
         .from("parcels")
         .select("*")
         .eq("document_id", documentId)
-        .maybeSingle();
+        .order("created_at");
+      if (parcelId) query = query.eq("id", parcelId);
+      else if (excluirParcelId) query = query.neq("id", excluirParcelId);
+      const { data: parcelas } = await query.limit(1);
+      const parcel = parcelas?.[0];
       if (!parcel) return null;
       const { data: segments } = await supabase
         .from("segments")
         .select("*")
         .eq("parcel_id", parcel.id)
         .order("seq");
+      const nomeDoc = doc?.file_name ?? "Texto colado";
       return {
-        label: doc?.file_name ?? "Texto colado",
+        label: parcel.label ? `${nomeDoc} — ${parcel.label}` : nomeDoc,
         parcel: {
           label: parcel.label,
           area_m2: parcel.area_m2 === null ? null : Number(parcel.area_m2),
@@ -300,13 +309,28 @@ export const runComparison = createServerFn({ method: "POST" })
       };
     }
 
-    const a = await loadParcel(data.documentAId);
-    const b = await loadParcel(data.documentBId);
+    const mesmoDocumento = data.documentAId === data.documentBId;
+    if (mesmoDocumento && data.comparisonType !== "boundary_to_boundary") {
+      throw new Error(
+        "Comparar um documento com ele mesmo só é possível no modo divisa comum entre vizinhos.",
+      );
+    }
+    if (mesmoDocumento && data.parcelAId && data.parcelAId === data.parcelBId) {
+      throw new Error("Selecione dois polígonos distintos do documento.");
+    }
+
+    const a = await loadParcel(data.documentAId, data.parcelAId);
+    const b = await loadParcel(
+      data.documentBId,
+      data.parcelBId,
+      mesmoDocumento ? (data.parcelAId ?? a?.parcel.label ? undefined : undefined) : undefined,
+    );
     if (!a || !b) {
       throw new Error(
         "Ambos os documentos precisam ter extração concluída antes da comparação.",
       );
     }
+
 
     // Divisa comum entre vizinhos: imóveis distintos, confere-se só o trecho
     // compartilhado (sem área, perímetro total ou reciprocidade de confrontantes).
