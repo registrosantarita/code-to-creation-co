@@ -7,7 +7,9 @@
 import { utils, writeFile } from "xlsx";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
-import { degToDms, fmtNum, CLASSIFICACAO, SEVERIDADE, TIPO_COMPARACAO } from "./labels";
+import { degToDms, fmtNum, fmtMedida, CLASSIFICACAO, SEVERIDADE, TIPO_COMPARACAO } from "./labels";
+import { agruparConfrontantes } from "./confrontantes";
+import type { TrechoConferido } from "./comparison-engine";
 
 export type VertexCoordRow = {
   name: string;
