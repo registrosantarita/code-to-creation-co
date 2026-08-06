@@ -444,6 +444,12 @@ function AnaliseDetalhe() {
                           <span className="eyebrow">
                             {CATEGORIA_DOCUMENTO[d.document_category]}
                           </span>
+                          {poligonosDe(d.id).length > 1 && (
+                            <span className="eyebrow">
+                              {poligonosDe(d.id).length} polígonos
+                            </span>
+                          )}
+
                           <span
                             className={`ml-auto rounded-sm border px-2 py-0.5 text-[11px] ${
                               d.status === "parsed"
