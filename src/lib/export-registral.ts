@@ -80,7 +80,7 @@ function vertexIndex(parcel: ParcelExport): Map<string, VertexCoordRow> {
 }
 
 function altitudeDe(s: SegmentRow, v: VertexCoordRow | undefined): string {
-  return br(s.altitude_from_m ?? v?.alt ?? null, 2);
+  return fmtMedida(s.altitude_from_m ?? v?.alt ?? null);
 }
 
 export function buildDescricaoSheets(parcel: ParcelExport): {
@@ -113,7 +113,7 @@ export function buildDescricaoSheets(parcel: ParcelExport): {
         altitudeDe(s, v),
         vname(s.to_vertex),
         grau(s.azimuth_deg),
-        br(s.distance_m, 3),
+        fmtMedida(s.distance_m),
       ]);
       confrontacao.push([
         vname(s.from_vertex),
@@ -135,7 +135,7 @@ export function buildDescricaoSheets(parcel: ParcelExport): {
       v?.east === null || v?.east === undefined ? "" : br(v.east, 3),
       vname(s.to_vertex),
       grau(s.azimuth_deg),
-      br(s.distance_m, 3),
+      fmtMedida(s.distance_m),
       s.confrontante ?? "",
     ]);
   });
@@ -176,9 +176,9 @@ export function exportarDescricaoXlsx(
   const resumo: (string | number)[][] = [
     ["Elemento", "Valor"],
     ["Identificação", parcel.label ?? "—"],
-    ["Área (m²)", br(parcel.area_m2, 2)],
-    ["Perímetro declarado (m)", br(parcel.declared_perimeter_m, 2)],
-    ["Perímetro calculado (m)", br(parcel.computed_perimeter_m, 2)],
+    ["Área (m²)", fmtMedida(parcel.area_m2)],
+    ["Perímetro declarado (m)", fmtMedida(parcel.declared_perimeter_m)],
+    ["Perímetro calculado (m)", fmtMedida(parcel.computed_perimeter_m)],
     ["Vértices", parcel.vertex_count],
     ["Formato", sigef ? "Rural georreferenciado (SIGEF)" : "Coordenadas planas / descrição comum"],
     ["Emissão", new Date().toLocaleString("pt-BR")],
