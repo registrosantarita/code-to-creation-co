@@ -486,6 +486,13 @@ export function compareParcels(
     });
   }
 
+  findings.push(
+    ...findingsAltitudeZero(a, labels.a),
+    ...findingsAltitudeZero(b, labels.b),
+  );
+
+
+
   // --- Confrontantes (reciprocidade) ---
   const setA = new Map(a.confrontantes.map((c) => [normalizeConfrontante(c), c]));
   const setB = new Map(b.confrontantes.map((c) => [normalizeConfrontante(c), c]));
