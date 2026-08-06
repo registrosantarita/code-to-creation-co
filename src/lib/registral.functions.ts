@@ -3,8 +3,8 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import type { Database, Json } from "@/integrations/supabase/types";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { z } from "zod";
-import { parseMemorial } from "./memorial-parser";
-import { isGeoExtension, parseGeometryText } from "./geo-parser";
+import { isGeoExtension } from "./geo-parser";
+import { parseParcelas } from "./multi-parcel";
 import {
   DEFAULT_TOLERANCES,
   compareParcels,
@@ -69,62 +69,74 @@ export const processDocument = createServerFn({ method: "POST" })
       return { ok: false as const, message: note ?? "Nenhum texto pôde ser extraído." };
     }
 
-    const geo =
+    const ehGeometria =
       isGeoExtension(doc.file_extension) ||
       text.trimStart().startsWith("<kml") ||
-      text.includes("<coordinates>")
-        ? parseGeometryText(text)
-        : null;
+      text.includes("<coordinates>");
 
-    const parsed = geo ?? parseMemorial(text);
-    if (geo) {
-      parsed.warnings = [
-        "Geometria vetorial interpretada: azimutes e distâncias calculados sobre WGS-84.",
-        ...parsed.warnings,
-      ];
+    const parcelas = parseParcelas(text, ehGeometria);
+    if (parcelas.length === 0) {
+      await supabase
+        .from("documents")
+        .update({ status: "failed", error_message: "Nenhum polígono reconhecido." })
+        .eq("id", doc.id);
+      return { ok: false as const, message: "Nenhum polígono reconhecido." };
+    }
+    if (ehGeometria) {
+      parcelas.forEach((p) => {
+        p.warnings = [
+          "Geometria vetorial interpretada: azimutes e distâncias calculados sobre WGS-84.",
+          ...p.warnings,
+        ];
+      });
     }
 
     await supabase.from("parcels").delete().eq("document_id", doc.id);
 
-    const { data: parcel, error: parcelError } = await supabase
-      .from("parcels")
-      .insert({
-        document_id: doc.id,
-        analysis_id: doc.analysis_id,
-        label: parsed.label,
-        area_m2: parsed.area_m2,
-        declared_perimeter_m: parsed.declared_perimeter_m,
-        computed_perimeter_m: parsed.computed_perimeter_m,
-        vertex_count: parsed.vertex_count,
-        altitude_min_m: parsed.altitude_min_m,
-        altitude_max_m: parsed.altitude_max_m,
-        altitude_mean_m: parsed.altitude_mean_m,
-        confrontantes: parsed.confrontantes,
-        raw_extraction: { warnings: parsed.warnings, vertices: parsed.vertices },
-      })
-      .select("id")
-      .single();
-    if (parcelError || !parcel) throw new Error("Falha ao registrar a extração.");
-
-    if (parsed.segments.length > 0) {
-      const { error: segError } = await supabase.from("segments").insert(
-        parsed.segments.map((s) => ({
-          parcel_id: parcel.id,
+    for (const parsed of parcelas) {
+      const { data: parcel, error: parcelError } = await supabase
+        .from("parcels")
+        .insert({
+          document_id: doc.id,
           analysis_id: doc.analysis_id,
-          seq: s.seq,
-          from_vertex: s.from_vertex,
-          to_vertex: s.to_vertex,
-          bearing_text: s.bearing_text,
-          azimuth_deg: s.azimuth_deg,
-          distance_m: s.distance_m,
-          altitude_from_m: s.altitude_from_m,
-          altitude_to_m: s.altitude_to_m,
-          confrontante: s.confrontante,
-          raw_text: s.raw_text,
-        })),
-      );
-      if (segError) throw new Error("Falha ao registrar os segmentos.");
+          label: parsed.label,
+          area_m2: parsed.area_m2,
+          declared_perimeter_m: parsed.declared_perimeter_m,
+          computed_perimeter_m: parsed.computed_perimeter_m,
+          vertex_count: parsed.vertex_count,
+          altitude_min_m: parsed.altitude_min_m,
+          altitude_max_m: parsed.altitude_max_m,
+          altitude_mean_m: parsed.altitude_mean_m,
+          confrontantes: parsed.confrontantes,
+          raw_extraction: { warnings: parsed.warnings, vertices: parsed.vertices },
+        })
+        .select("id")
+        .single();
+      if (parcelError || !parcel) throw new Error("Falha ao registrar a extração.");
+
+      if (parsed.segments.length > 0) {
+        const { error: segError } = await supabase.from("segments").insert(
+          parsed.segments.map((s) => ({
+            parcel_id: parcel.id,
+            analysis_id: doc.analysis_id,
+            seq: s.seq,
+            from_vertex: s.from_vertex,
+            to_vertex: s.to_vertex,
+            bearing_text: s.bearing_text,
+            azimuth_deg: s.azimuth_deg,
+            distance_m: s.distance_m,
+            altitude_from_m: s.altitude_from_m,
+            altitude_to_m: s.altitude_to_m,
+            confrontante: s.confrontante,
+            raw_text: s.raw_text,
+          })),
+        );
+        if (segError) throw new Error("Falha ao registrar os segmentos.");
+      }
     }
+
+    const avisos: string[] = [...new Set(parcelas.flatMap((p) => p.warnings))];
+    const totalSegmentos = parcelas.reduce((acc, p) => acc + p.segments.length, 0);
 
     await supabase
       .from("documents")
@@ -141,19 +153,22 @@ export const processDocument = createServerFn({ method: "POST" })
       entity_id: doc.id,
       action: "extract",
       metadata: {
-        segmentos: parsed.segments.length,
-        area_m2: parsed.area_m2,
-        avisos: parsed.warnings,
+        poligonos: parcelas.length,
+        segmentos: totalSegmentos,
+        area_m2: parcelas[0]?.area_m2 ?? null,
+        avisos,
       },
     });
 
     return {
       ok: true as const,
-      segments: parsed.segments.length,
-      warnings: parsed.warnings,
+      segments: totalSegmentos,
+      parcels: parcelas.length,
+      warnings: avisos,
       note,
     };
   });
+
 
 type ConsumoInput = {
   analysisId: string;
@@ -196,6 +211,11 @@ const CompareInput = z.object({
   analysisId: z.string().uuid(),
   documentAId: z.string().uuid(),
   documentBId: z.string().uuid(),
+  // Polígonos específicos: obrigatório quando o mesmo documento descreve
+  // vários imóveis (divisa comum conferida dentro de um único documento).
+  parcelAId: z.string().uuid().optional(),
+  parcelBId: z.string().uuid().optional(),
+
   comparisonType: z.enum([
     "memorial_to_memorial",
     "memorial_to_plan",
@@ -223,8 +243,13 @@ export const runComparison = createServerFn({ method: "POST" })
     const { supabase, userId } = context;
     const tol: Tolerances = data.tolerances ?? DEFAULT_TOLERANCES;
 
-    async function loadParcel(documentId: string): Promise<{
+    async function loadParcel(
+      documentId: string,
+      parcelId?: string,
+      excluirParcelId?: string,
+    ): Promise<{
       parcel: ParcelInput;
+      parcelId: string;
       label: string;
     } | null> {
       const { data: doc } = await supabase
@@ -232,19 +257,25 @@ export const runComparison = createServerFn({ method: "POST" })
         .select("id, file_name, source_type")
         .eq("id", documentId)
         .single();
-      const { data: parcel } = await supabase
+      let query = supabase
         .from("parcels")
         .select("*")
         .eq("document_id", documentId)
-        .maybeSingle();
+        .order("created_at");
+      if (parcelId) query = query.eq("id", parcelId);
+      else if (excluirParcelId) query = query.neq("id", excluirParcelId);
+      const { data: parcelas } = await query.limit(1);
+      const parcel = parcelas?.[0];
       if (!parcel) return null;
       const { data: segments } = await supabase
         .from("segments")
         .select("*")
         .eq("parcel_id", parcel.id)
         .order("seq");
+      const nomeDoc = doc?.file_name ?? "Texto colado";
       return {
-        label: doc?.file_name ?? "Texto colado",
+        parcelId: parcel.id,
+        label: parcel.label ? `${nomeDoc} — ${parcel.label}` : nomeDoc,
         parcel: {
           label: parcel.label,
           area_m2: parcel.area_m2 === null ? null : Number(parcel.area_m2),
@@ -280,13 +311,36 @@ export const runComparison = createServerFn({ method: "POST" })
       };
     }
 
-    const a = await loadParcel(data.documentAId);
-    const b = await loadParcel(data.documentBId);
+    const mesmoDocumento = data.documentAId === data.documentBId;
+    if (mesmoDocumento && data.comparisonType !== "boundary_to_boundary") {
+      throw new Error(
+        "Comparar um documento com ele mesmo só é possível no modo divisa comum entre vizinhos.",
+      );
+    }
+    if (mesmoDocumento && data.parcelAId && data.parcelAId === data.parcelBId) {
+      throw new Error("Selecione dois polígonos distintos do documento.");
+    }
+
+    const a = await loadParcel(data.documentAId, data.parcelAId);
+    const b = await loadParcel(
+      data.documentBId,
+      data.parcelBId,
+      mesmoDocumento && !data.parcelBId ? a?.parcelId : undefined,
+    );
+    if (mesmoDocumento && a && !b) {
+      throw new Error(
+        "Este documento descreve apenas um polígono. Para conferir a divisa comum dentro de um único documento, ele precisa trazer a descrição perimétrica de todos os imóveis envolvidos.",
+      );
+    }
     if (!a || !b) {
       throw new Error(
         "Ambos os documentos precisam ter extração concluída antes da comparação.",
       );
     }
+    if (a.parcelId === b.parcelId) {
+      throw new Error("Selecione dois polígonos distintos.");
+    }
+
 
     // Divisa comum entre vizinhos: imóveis distintos, confere-se só o trecho
     // compartilhado (sem área, perímetro total ou reciprocidade de confrontantes).

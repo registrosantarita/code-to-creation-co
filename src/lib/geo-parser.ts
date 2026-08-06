@@ -271,3 +271,75 @@ export function parseGeometryText(text: string): ParsedParcel | null {
   if (trimmed.includes("<kml") || trimmed.includes("<coordinates>")) return parseKml(trimmed);
   return parseGeoJson(trimmed) ?? parseKml(trimmed);
 }
+
+/** Todos os polígonos de um KML, na ordem em que aparecem (Placemarks). */
+export function parseKmlPolygons(xml: string): ParsedParcel[] {
+  const placemarks = [...xml.matchAll(/<Placemark[\s\S]*?<\/Placemark>/gi)].map(
+    (m) => m[0]!,
+  );
+  const fontes = placemarks.length > 0 ? placemarks : [xml];
+  const parcelas: ParsedParcel[] = [];
+  for (const fonte of fontes) {
+    const outers = [
+      ...fonte.matchAll(
+        /<outerBoundaryIs[\s\S]*?<coordinates>([\s\S]*?)<\/coordinates>[\s\S]*?<\/outerBoundaryIs>/gi,
+      ),
+    ].map((m) => m[1]!);
+    const blocks =
+      outers.length > 0
+        ? outers
+        : [...fonte.matchAll(/<coordinates>([\s\S]*?)<\/coordinates>/gi)].map(
+            (m) => m[1]!,
+          );
+    const nameMatch = /<name>([\s\S]*?)<\/name>/i.exec(fonte);
+    const label = nameMatch ? nameMatch[1]!.replace(/<[^>]+>/g, "").trim() : null;
+    blocks
+      .map(parseKmlCoordinates)
+      .filter((r) => r.length >= 3)
+      .forEach((ring) => parcelas.push(buildParcel(label || null, ring, [])));
+  }
+  return parcelas;
+}
+
+/** Todos os polígonos de um GeoJSON. */
+export function parseGeoJsonPolygons(raw: string): ParsedParcel[] {
+  let json: unknown;
+  try {
+    json = JSON.parse(raw);
+  } catch {
+    return [];
+  }
+  const obj = json as Record<string, unknown>;
+  const features: { geometry?: GeoJsonGeometry; properties?: Record<string, unknown> }[] =
+    [];
+  if (obj["type"] === "FeatureCollection" && Array.isArray(obj["features"])) {
+    features.push(...(obj["features"] as typeof features));
+  } else if (obj["type"] === "Feature") {
+    features.push(obj as (typeof features)[number]);
+  } else {
+    features.push({ geometry: obj as GeoJsonGeometry });
+  }
+  const parcelas: ParsedParcel[] = [];
+  for (const f of features) {
+    const label =
+      (f.properties?.["name"] as string | undefined) ??
+      (f.properties?.["nome"] as string | undefined) ??
+      (f.properties?.["matricula"] as string | undefined) ??
+      null;
+    for (const ring of ringsFromGeometry(f.geometry ?? {})) {
+      if (ring.length < 3) continue;
+      parcelas.push(buildParcel(label, ring, []));
+    }
+  }
+  return parcelas;
+}
+
+/** Detecta o formato e devolve TODAS as parcelas descritas no arquivo. */
+export function parseGeometryPolygons(text: string): ParsedParcel[] {
+  const trimmed = text.trim();
+  if (trimmed.startsWith("{")) return parseGeoJsonPolygons(trimmed);
+  if (trimmed.includes("<kml") || trimmed.includes("<coordinates>"))
+    return parseKmlPolygons(trimmed);
+  const json = parseGeoJsonPolygons(trimmed);
+  return json.length > 0 ? json : parseKmlPolygons(trimmed);
+}

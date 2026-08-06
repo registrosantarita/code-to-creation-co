@@ -81,6 +81,8 @@ function AnaliseDetalhe() {
   const [categoria, setCategoria] = useState("memorial");
   const [docA, setDocA] = useState("");
   const [docB, setDocB] = useState("");
+  const [parcelA, setParcelA] = useState("");
+  const [parcelB, setParcelB] = useState("");
   const [tipo, setTipo] = useState("memorial_to_memorial");
   const [tol, setTol] = useState(DEFAULT_TOLERANCES);
 
@@ -248,12 +250,17 @@ function AnaliseDetalhe() {
   const executarComparacao = useMutation({
     mutationFn: async () => {
       if (!docA || !docB) throw new Error("Selecione dois documentos.");
-      if (docA === docB) throw new Error("Selecione documentos distintos.");
+      if (docA === docB && tipo !== "boundary_to_boundary")
+        throw new Error("Selecione documentos distintos.");
+      if (docA === docB && parcelA && parcelA === parcelB)
+        throw new Error("Selecione dois polígonos distintos do documento.");
       return comparar({
         data: {
           analysisId: id,
           documentAId: docA,
           documentBId: docB,
+          ...(parcelA ? { parcelAId: parcelA } : {}),
+          ...(parcelB ? { parcelBId: parcelB } : {}),
           comparisonType: tipo as never,
           tolerances: tol,
         },
@@ -267,6 +274,13 @@ function AnaliseDetalhe() {
   });
 
   const extraidos = (documents.data ?? []).filter((d) => d.status === "parsed");
+
+  /** Polígonos (parcelas) extraídos de um documento, na ordem de leitura. */
+  function poligonosDe(documentId: string) {
+    return (parcels.data ?? [])
+      .filter((p) => p.document_id === documentId)
+      .sort((a, b) => String(a.created_at).localeCompare(String(b.created_at)));
+  }
 
   const tipoSugerido = (() => {
     const cat = (id: string) =>
@@ -430,6 +444,12 @@ function AnaliseDetalhe() {
                           <span className="eyebrow">
                             {CATEGORIA_DOCUMENTO[d.document_category]}
                           </span>
+                          {poligonosDe(d.id).length > 1 && (
+                            <span className="eyebrow">
+                              {poligonosDe(d.id).length} polígonos
+                            </span>
+                          )}
+
                           <span
                             className={`ml-auto rounded-sm border px-2 py-0.5 text-[11px] ${
                               d.status === "parsed"
@@ -610,7 +630,13 @@ function AnaliseDetalhe() {
             <div className="mt-6 grid gap-4 md:grid-cols-3">
               <div className="space-y-2">
                 <Label>Documento A</Label>
-                <Select value={docA} onValueChange={setDocA}>
+                <Select
+                  value={docA}
+                  onValueChange={(v) => {
+                    setDocA(v);
+                    setParcelA("");
+                  }}
+                >
                   <SelectTrigger>
                     <SelectValue placeholder="Selecionar" />
                   </SelectTrigger>
@@ -622,10 +648,30 @@ function AnaliseDetalhe() {
                     ))}
                   </SelectContent>
                 </Select>
+                {poligonosDe(docA).length > 1 && (
+                  <Select value={parcelA} onValueChange={setParcelA}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Polígono (1º por padrão)" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {poligonosDe(docA).map((p, i) => (
+                        <SelectItem key={p.id} value={p.id}>
+                          {p.label ?? `Polígono ${i + 1}`}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
               </div>
               <div className="space-y-2">
                 <Label>Documento B</Label>
-                <Select value={docB} onValueChange={setDocB}>
+                <Select
+                  value={docB}
+                  onValueChange={(v) => {
+                    setDocB(v);
+                    setParcelB("");
+                  }}
+                >
                   <SelectTrigger>
                     <SelectValue placeholder="Selecionar" />
                   </SelectTrigger>
@@ -633,10 +679,27 @@ function AnaliseDetalhe() {
                     {extraidos.map((d) => (
                       <SelectItem key={d.id} value={d.id}>
                         {d.file_name ?? "Texto colado"}
+                        {d.id === docA && poligonosDe(d.id).length > 1
+                          ? " (mesmo documento)"
+                          : ""}
                       </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
+                {poligonosDe(docB).length > 1 && (
+                  <Select value={parcelB} onValueChange={setParcelB}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Polígono (2º por padrão)" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {poligonosDe(docB).map((p, i) => (
+                        <SelectItem key={p.id} value={p.id}>
+                          {p.label ?? `Polígono ${i + 1}`}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
               </div>
               <div className="space-y-2">
                 <Label>Tipo de comparação</Label>
@@ -656,11 +719,14 @@ function AnaliseDetalhe() {
                   <p className="text-xs text-muted-foreground">
                     Modo vizinhos: confere apenas o trecho de divisa compartilhado
                     (distâncias, azimutes e cotas), ignorando nomes de vértices,
-                    área, perímetro total e reciprocidade de confrontantes.
+                    área, perímetro total e reciprocidade de confrontantes. Um
+                    único documento que descreva todos os polígonos envolvidos
+                    pode ser escolhido em A e em B — basta indicar os polígonos.
                   </p>
                 ) : null}
               </div>
             </div>
+
 
             <h3 className="mt-8 text-base">Tolerâncias técnicas</h3>
             <div className="mt-3 grid gap-4 sm:grid-cols-2 md:grid-cols-4">
