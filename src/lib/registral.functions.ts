@@ -249,6 +249,7 @@ export const runComparison = createServerFn({ method: "POST" })
       excluirParcelId?: string,
     ): Promise<{
       parcel: ParcelInput;
+      parcelId: string;
       label: string;
     } | null> {
       const { data: doc } = await supabase
@@ -273,6 +274,7 @@ export const runComparison = createServerFn({ method: "POST" })
         .order("seq");
       const nomeDoc = doc?.file_name ?? "Texto colado";
       return {
+        parcelId: parcel.id,
         label: parcel.label ? `${nomeDoc} — ${parcel.label}` : nomeDoc,
         parcel: {
           label: parcel.label,
@@ -323,12 +325,20 @@ export const runComparison = createServerFn({ method: "POST" })
     const b = await loadParcel(
       data.documentBId,
       data.parcelBId,
-      mesmoDocumento ? (data.parcelAId ?? a?.parcel.label ? undefined : undefined) : undefined,
+      mesmoDocumento && !data.parcelBId ? a?.parcelId : undefined,
     );
+    if (mesmoDocumento && a && !b) {
+      throw new Error(
+        "Este documento descreve apenas um polígono. Para conferir a divisa comum dentro de um único documento, ele precisa trazer a descrição perimétrica de todos os imóveis envolvidos.",
+      );
+    }
     if (!a || !b) {
       throw new Error(
         "Ambos os documentos precisam ter extração concluída antes da comparação.",
       );
+    }
+    if (a.parcelId === b.parcelId) {
+      throw new Error("Selecione dois polígonos distintos.");
     }
 
 
