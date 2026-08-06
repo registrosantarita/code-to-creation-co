@@ -211,6 +211,11 @@ const CompareInput = z.object({
   analysisId: z.string().uuid(),
   documentAId: z.string().uuid(),
   documentBId: z.string().uuid(),
+  // Polígonos específicos: obrigatório quando o mesmo documento descreve
+  // vários imóveis (divisa comum conferida dentro de um único documento).
+  parcelAId: z.string().uuid().optional(),
+  parcelBId: z.string().uuid().optional(),
+
   comparisonType: z.enum([
     "memorial_to_memorial",
     "memorial_to_plan",
