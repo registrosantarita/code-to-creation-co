@@ -3,6 +3,7 @@
  * Cada achado é rastreável até a evidência de origem.
  */
 import { normalizeName } from "./memorial-parser";
+import { degToDms, fmtMedida } from "./labels";
 
 export type Severity = "critical" | "moderate" | "informative" | "inconclusive";
 export type Classification =
@@ -81,6 +82,8 @@ export type TrechoConferido = {
   invertido: boolean;
   ok: boolean;
   problemas: string[];
+  confrontante_a?: string | null;
+  confrontante_b?: string | null;
 };
 
 function montarTrecho(
@@ -110,8 +113,11 @@ function montarTrecho(
     invertido,
     ok: problemas.length === 0,
     problemas,
+    confrontante_a: sa.confrontante ?? null,
+    confrontante_b: sb.confrontante ?? null,
   };
 }
+
 
 const fmt = (n: number, d = 2) =>
   n.toLocaleString("pt-BR", { minimumFractionDigits: d, maximumFractionDigits: d });
@@ -345,7 +351,7 @@ export function compareParcels(
       const d = Math.abs(sa.distance_m - sb.distance_m);
       if (d > tol.distanceM) {
         problems.push(
-          `distância ${fmt(sa.distance_m, 3)} m x ${fmt(sb.distance_m, 3)} m (Δ ${fmt(d, 3)} m)`,
+          `distância ${fmtMedida(sa.distance_m)} m x ${fmtMedida(sb.distance_m)} m (Δ ${fmtMedida(d)} m)`,
         );
       }
     }
@@ -357,8 +363,8 @@ export function compareParcels(
       if (d > tol.azimuthDeg) {
         problems.push(
           alignment.reversed
-            ? `azimute ${fmt(sa.azimuth_deg, 4)}° x contra-azimute ${fmt(azB, 4)}° (original ${fmt(sb.azimuth_deg, 4)}°, Δ ${fmt(d, 4)}°)`
-            : `azimute ${fmt(sa.azimuth_deg, 4)}° x ${fmt(sb.azimuth_deg, 4)}° (Δ ${fmt(d, 4)}°)`,
+            ? `azimute ${degToDms(sa.azimuth_deg)} x contra-azimute ${degToDms(azB)} (original ${degToDms(sb.azimuth_deg)}, Δ ${degToDms(d)})`
+            : `azimute ${degToDms(sa.azimuth_deg)} x ${degToDms(sb.azimuth_deg)} (Δ ${degToDms(d)})`,
         );
       }
     }
@@ -378,10 +384,11 @@ export function compareParcels(
       const d = Math.abs(va - vb);
       if (d > tol.altitudeM) {
         problems.push(
-          `altitude do ${rotulo} ${fmt(va, 2)} m x ${fmt(vb, 2)} m (Δ ${fmt(d, 2)} m)`,
+          `altitude do ${rotulo} ${fmtMedida(va)} m x ${fmtMedida(vb)} m (Δ ${fmtMedida(d)} m)`,
         );
       }
     });
+
 
     if (sa.confrontante && sb.confrontante) {
       if (normalizeConfrontante(sa.confrontante) !== normalizeConfrontante(sb.confrontante)) {
@@ -711,7 +718,7 @@ export function compareSharedBoundary(
       const d = Math.abs(sa.distance_m - sb.distance_m);
       if (d > tol.distanceM) {
         problems.push(
-          `distância ${fmt(sa.distance_m, 3)} m x ${fmt(sb.distance_m, 3)} m (Δ ${fmt(d, 3)} m)`,
+          `distância ${fmtMedida(sa.distance_m)} m x ${fmtMedida(sb.distance_m)} m (Δ ${fmtMedida(d)} m)`,
         );
       }
     }
@@ -721,8 +728,8 @@ export function compareSharedBoundary(
       if (d > tol.azimuthDeg) {
         problems.push(
           run.reversed
-            ? `azimute ${fmt(sa.azimuth_deg, 4)}° x contra-azimute ${fmt(azB, 4)}° (original ${fmt(sb.azimuth_deg, 4)}°, Δ ${fmt(d, 4)}°)`
-            : `azimute ${fmt(sa.azimuth_deg, 4)}° x ${fmt(sb.azimuth_deg, 4)}° (Δ ${fmt(d, 4)}°)`,
+            ? `azimute ${degToDms(sa.azimuth_deg)} x contra-azimute ${degToDms(azB)} (original ${degToDms(sb.azimuth_deg)}, Δ ${degToDms(d)})`
+            : `azimute ${degToDms(sa.azimuth_deg)} x ${degToDms(sb.azimuth_deg)} (Δ ${degToDms(d)})`,
         );
       }
     }
@@ -740,10 +747,11 @@ export function compareSharedBoundary(
       const d = Math.abs(va - vb);
       if (d > tol.altitudeM) {
         problems.push(
-          `altitude do ${rotulo} ${fmt(va, 2)} m x ${fmt(vb, 2)} m (Δ ${fmt(d, 2)} m)`,
+          `altitude do ${rotulo} ${fmtMedida(va)} m x ${fmtMedida(vb)} m (Δ ${fmtMedida(d)} m)`,
         );
       }
     });
+
 
     trechos.push(montarTrecho(ia + 1, ib + 1, sa, sb, run.reversed, problems));
 

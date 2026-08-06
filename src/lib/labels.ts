@@ -92,3 +92,33 @@ export function degToDms(value: number | string | null): string {
   }
   return `${d}°${String(m).padStart(2, "0")}'${String(s).padStart(2, "0")}"`;
 }
+
+/** Casas decimais efetivamente informadas na medida de origem (máx. 6). */
+export function casasDecimais(value: number | string | null): number {
+  if (value === null || value === "") return 0;
+  const n = typeof value === "string" ? Number(String(value).replace(",", ".")) : value;
+  if (!Number.isFinite(n)) return 0;
+  const s = String(Number(n.toFixed(6)));
+  const i = s.indexOf(".");
+  return i < 0 ? 0 : s.length - i - 1;
+}
+
+/**
+ * Medida (distância, altitude, área) com a mesma precisão do documento de
+ * origem: mínimo de 2 casas, no máximo as casas efetivamente informadas.
+ */
+export function fmtMedida(value: number | string | null, min = 2, max = 6): string {
+  if (value === null || value === "") return "—";
+  const n = typeof value === "string" ? Number(String(value).replace(",", ".")) : value;
+  if (!Number.isFinite(n)) return "—";
+  const d = Math.min(max, Math.max(min, casasDecimais(n)));
+  return n.toLocaleString("pt-BR", {
+    minimumFractionDigits: d,
+    maximumFractionDigits: d,
+  });
+}
+
+/** Ângulo/azimute sempre em grau, minuto e segundo. */
+export function fmtAngulo(value: number | string | null): string {
+  return degToDms(value === "" ? null : (value as number | string | null));
+}

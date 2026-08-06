@@ -7,7 +7,9 @@
 import { utils, writeFile } from "xlsx";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
-import { degToDms, fmtNum, CLASSIFICACAO, SEVERIDADE, TIPO_COMPARACAO } from "./labels";
+import { degToDms, fmtNum, fmtMedida, CLASSIFICACAO, SEVERIDADE, TIPO_COMPARACAO } from "./labels";
+import { agruparConfrontantes } from "./confrontantes";
+import type { TrechoConferido } from "./comparison-engine";
 
 export type VertexCoordRow = {
   name: string;
@@ -78,7 +80,7 @@ function vertexIndex(parcel: ParcelExport): Map<string, VertexCoordRow> {
 }
 
 function altitudeDe(s: SegmentRow, v: VertexCoordRow | undefined): string {
-  return br(s.altitude_from_m ?? v?.alt ?? null, 2);
+  return fmtMedida(s.altitude_from_m ?? v?.alt ?? null);
 }
 
 export function buildDescricaoSheets(parcel: ParcelExport): {
@@ -111,7 +113,7 @@ export function buildDescricaoSheets(parcel: ParcelExport): {
         altitudeDe(s, v),
         vname(s.to_vertex),
         grau(s.azimuth_deg),
-        br(s.distance_m, 3),
+        fmtMedida(s.distance_m),
       ]);
       confrontacao.push([
         vname(s.from_vertex),
@@ -133,7 +135,7 @@ export function buildDescricaoSheets(parcel: ParcelExport): {
       v?.east === null || v?.east === undefined ? "" : br(v.east, 3),
       vname(s.to_vertex),
       grau(s.azimuth_deg),
-      br(s.distance_m, 3),
+      fmtMedida(s.distance_m),
       s.confrontante ?? "",
     ]);
   });
@@ -174,9 +176,9 @@ export function exportarDescricaoXlsx(
   const resumo: (string | number)[][] = [
     ["Elemento", "Valor"],
     ["Identificação", parcel.label ?? "—"],
-    ["Área (m²)", br(parcel.area_m2, 2)],
-    ["Perímetro declarado (m)", br(parcel.declared_perimeter_m, 2)],
-    ["Perímetro calculado (m)", br(parcel.computed_perimeter_m, 2)],
+    ["Área (m²)", fmtMedida(parcel.area_m2)],
+    ["Perímetro declarado (m)", fmtMedida(parcel.declared_perimeter_m)],
+    ["Perímetro calculado (m)", fmtMedida(parcel.computed_perimeter_m)],
     ["Vértices", parcel.vertex_count],
     ["Formato", sigef ? "Rural georreferenciado (SIGEF)" : "Coordenadas planas / descrição comum"],
     ["Emissão", new Date().toLocaleString("pt-BR")],
@@ -203,21 +205,7 @@ export type RelatorioPdfInput = {
   documentoB: string;
   tolerancias: Record<string, number | undefined>;
   contagens: Record<string, number | undefined>;
-  trechos?: {
-    seq_a: number;
-    seq_b: number;
-    de_a: string | null;
-    ate_a: string | null;
-    de_b: string | null;
-    ate_b: string | null;
-    distancia_a: number | null;
-    distancia_b: number | null;
-    azimute_a: number | null;
-    azimute_b: number | null;
-    invertido: boolean;
-    ok: boolean;
-    problemas: string[];
-  }[];
+  trechos?: TrechoConferido[];
   extensaoConferidaM?: number | null;
   achados: {
     severity: string;
@@ -335,7 +323,7 @@ export function exportarRelatorioPdf(
     doc.setFontSize(9);
     doc.setTextColor(110);
     doc.text(
-      `Trecho total conferido: ${primeiro.de_a ?? "?"} → ${ultimo.ate_a ?? "?"} • ${trechos.length} trecho(s) • ${fmtNum(extensao, 3)} m • ${trechos.filter((t) => t.ok).length} conforme(s)${primeiro.invertido ? " • conferido por contra-azimute" : ""}`,
+      `Trecho total conferido: ${primeiro.de_a ?? "?"} → ${ultimo.ate_a ?? "?"} • ${trechos.length} trecho(s) • ${fmtMedida(extensao)} m • ${trechos.filter((t) => t.ok).length} conforme(s)${primeiro.invertido ? " • conferido por contra-azimute" : ""}`,
       M,
       yTop + 13,
     );
@@ -343,13 +331,13 @@ export function exportarRelatorioPdf(
 
     autoTable(doc, {
       startY: yTop + 24,
-      head: [["#", "Trecho (A)", "Correspondente (B)", "Dist. A/B (m)", "Azim. A/B (°)", "Situação"]],
+      head: [["#", "Trecho (A)", "Correspondente (B)", "Dist. A/B (m)", "Azimute A/B", "Situação"]],
       body: trechos.map((t) => [
         String(t.seq_a),
         `${t.de_a ?? "?"} - ${t.ate_a ?? "?"}`,
         `${t.de_b ?? "?"} - ${t.ate_b ?? "?"}`,
-        `${fmtNum(t.distancia_a, 3)} / ${fmtNum(t.distancia_b, 3)}`,
-        `${fmtNum(t.azimute_a, 4)} / ${fmtNum(t.azimute_b, 4)}`,
+        `${fmtMedida(t.distancia_a)} / ${fmtMedida(t.distancia_b)}`,
+        `${degToDms(t.azimute_a)} / ${degToDms(t.azimute_b)}`,
         t.ok ? "OK — correto" : `X — ${t.problemas.join("; ")}`,
       ]),
       theme: "grid",
@@ -358,7 +346,7 @@ export function exportarRelatorioPdf(
       columnStyles: {
         0: { cellWidth: 22 },
         3: { cellWidth: 84, halign: "right" },
-        4: { cellWidth: 84, halign: "right" },
+        4: { cellWidth: 92, halign: "right" },
       },
       didParseCell: (data) => {
         if (data.section === "body" && data.column.index === 5) {
@@ -369,7 +357,53 @@ export function exportarRelatorioPdf(
       },
       margin: { left: M, right: M },
     });
+
+    const confrontacoes = agruparConfrontantes(trechos);
+    if (confrontacoes.length > 0) {
+      const yConf =
+        (doc as unknown as { lastAutoTable: { finalY: number } }).lastAutoTable.finalY + 22;
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(11);
+      doc.text("Imóveis confrontantes", M, yConf);
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(9);
+      doc.setTextColor(110);
+      doc.text(
+        "Caminhamento resumido por confrontação: do vértice inicial ao final de cada divisa comum.",
+        M,
+        yConf + 13,
+      );
+      doc.setTextColor(0);
+
+      autoTable(doc, {
+        startY: yConf + 24,
+        head: [["Confrontação", "Caminhamento", "Trechos", "Extensão (m)", "Situação"]],
+        body: confrontacoes.map((g) => [
+          g.confrontante,
+          `${g.de} → ${g.ate}`,
+          String(g.trechos),
+          fmtMedida(g.extensao_m),
+          g.ok ? "OK — correto" : `X — ${g.problemas.join("; ")}`,
+        ]),
+        theme: "grid",
+        styles: { fontSize: 8, cellPadding: 4, overflow: "linebreak", valign: "top" },
+        headStyles: { fillColor: [24, 28, 38], textColor: 255 },
+        columnStyles: {
+          2: { cellWidth: 44, halign: "right" },
+          3: { cellWidth: 68, halign: "right" },
+        },
+        didParseCell: (data) => {
+          if (data.section === "body" && data.column.index === 4) {
+            const ok = confrontacoes[data.row.index]?.ok;
+            data.cell.styles.textColor = ok ? [22, 101, 52] : [153, 27, 27];
+            data.cell.styles.fontStyle = "bold";
+          }
+        },
+        margin: { left: M, right: M },
+      });
+    }
   }
+
 
 
   const achados = [...input.achados].sort(
