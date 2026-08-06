@@ -81,6 +81,8 @@ function AnaliseDetalhe() {
   const [categoria, setCategoria] = useState("memorial");
   const [docA, setDocA] = useState("");
   const [docB, setDocB] = useState("");
+  const [parcelA, setParcelA] = useState("");
+  const [parcelB, setParcelB] = useState("");
   const [tipo, setTipo] = useState("memorial_to_memorial");
   const [tol, setTol] = useState(DEFAULT_TOLERANCES);
 
@@ -248,12 +250,17 @@ function AnaliseDetalhe() {
   const executarComparacao = useMutation({
     mutationFn: async () => {
       if (!docA || !docB) throw new Error("Selecione dois documentos.");
-      if (docA === docB) throw new Error("Selecione documentos distintos.");
+      if (docA === docB && tipo !== "boundary_to_boundary")
+        throw new Error("Selecione documentos distintos.");
+      if (docA === docB && parcelA && parcelA === parcelB)
+        throw new Error("Selecione dois polígonos distintos do documento.");
       return comparar({
         data: {
           analysisId: id,
           documentAId: docA,
           documentBId: docB,
+          ...(parcelA ? { parcelAId: parcelA } : {}),
+          ...(parcelB ? { parcelBId: parcelB } : {}),
           comparisonType: tipo as never,
           tolerances: tol,
         },
