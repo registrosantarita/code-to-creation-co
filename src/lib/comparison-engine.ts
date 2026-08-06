@@ -486,6 +486,13 @@ export function compareParcels(
     });
   }
 
+  findings.push(
+    ...findingsAltitudeZero(a, labels.a),
+    ...findingsAltitudeZero(b, labels.b),
+  );
+
+
+
   // --- Confrontantes (reciprocidade) ---
   const setA = new Map(a.confrontantes.map((c) => [normalizeConfrontante(c), c]));
   const setB = new Map(b.confrontantes.map((c) => [normalizeConfrontante(c), c]));
@@ -774,6 +781,12 @@ export function compareSharedBoundary(
   metrics["extensao_conferida_m"] = run.totalDistance;
   metrics["divergent_segments"] = divergentes;
 
+  findings.push(
+    ...findingsAltitudeZero(a, labels.a),
+    ...findingsAltitudeZero(b, labels.b),
+  );
+
+
 
 
   findings.push({
@@ -839,4 +852,31 @@ export function compareSharedBoundary(
     metrics,
     findings,
   };
+}
+
+/**
+ * Altitude igual a zero em qualquer vértice indica cota não informada ou erro
+ * de digitação/extração: o sistema alerta sempre que ocorrer.
+ */
+function findingsAltitudeZero(p: ParcelInput, rotulo: string): Finding[] {
+  const zerados: { trecho: number; vertice: string }[] = [];
+  p.segments.forEach((s, i) => {
+    if (s.altitude_from_m === 0)
+      zerados.push({ trecho: i + 1, vertice: s.from_vertex ?? `${i + 1}` });
+    if (s.altitude_to_m === 0)
+      zerados.push({ trecho: i + 1, vertice: s.to_vertex ?? `${i + 2}` });
+  });
+  if (zerados.length === 0) return [];
+  const unicos = [...new Map(zerados.map((z) => [z.vertice, z])).values()];
+  return [
+    {
+      severity: "critical",
+      code: "ALTITUDE_ZERO",
+      title: "Altitude igual a zero",
+      description: `Em ${rotulo}, ${unicos.length} vértice(s) apresentam altitude igual a 0,00 m (${unicos
+        .map((z) => z.vertice)
+        .join(", ")}). Cota zerada normalmente indica altitude não informada ou erro de digitação/extração e deve ser verificada.`,
+      evidence: { documento: rotulo, vertices: unicos },
+    },
+  ];
 }
