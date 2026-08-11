@@ -143,6 +143,10 @@ function Relatorio() {
   const nomeDoc = (docId: string | null) =>
     (docs.data ?? []).find((d) => d.id === docId)?.file_name ?? "Documento";
 
+  const idx = (irmas.data ?? []).findIndex((s) => s.id === c.id);
+  const indiceB = idx >= 0 ? idx + 1 : 1;
+
+
   const ordenados = [...(findings.data ?? [])].sort(
     (a, b) => ORDEM.indexOf(a.severity) - ORDEM.indexOf(b.severity),
   );
