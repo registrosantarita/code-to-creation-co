@@ -346,35 +346,54 @@ function Relatorio() {
         </dl>
       </section>
 
-      <TrechosConferidos
-        trechos={trechos}
-        extensaoM={extensaoConferida}
-        labelA={nomeDoc(c.document_a_id)}
-        labelB={nomeDoc(c.document_b_id)}
-        vertices={vertices.data}
-        verticesB={verticesB.data}
-        indiceA={indiceA}
-        indiceB={indiceB}
-      />
+      {(() => {
+        const temConsolidado = (consolidado.data?.comps.length ?? 0) > 1;
+        const tabelaConsolidada = temConsolidado ? (
+          <TrechosConsolidados
+            docA={{
+              indice: indiceA,
+              nome: nomeDocOrdem(c.document_a_id),
+              vertices: consolidado.data!.mapas.get(c.document_a_id!),
+            }}
+            comparados={consolidado.data!.comps
+              .filter((x) => !!x.document_b_id)
+              .map((x) => ({
+                indice: posDoc(x.document_b_id, 1),
+                nome: nomeDocOrdem(x.document_b_id),
+                trechos: lerTrechos((x.metrics ?? {}) as Record<string, unknown>),
+                vertices: consolidado.data!.mapas.get(x.document_b_id!),
+              }))
+              .sort((a, b) => a.indice - b.indice)}
+          />
+        ) : null;
 
-      {(consolidado.data?.comps.length ?? 0) > 1 && (
-        <TrechosConsolidados
-          docA={{
-            indice: indiceA,
-            nome: nomeDocOrdem(c.document_a_id),
-            vertices: consolidado.data!.mapas.get(c.document_a_id!),
-          }}
-          comparados={consolidado.data!.comps
-            .filter((x) => !!x.document_b_id)
-            .map((x) => ({
-              indice: posDoc(x.document_b_id, 1),
-              nome: nomeDocOrdem(x.document_b_id),
-              trechos: lerTrechos((x.metrics ?? {}) as Record<string, unknown>),
-              vertices: consolidado.data!.mapas.get(x.document_b_id!),
-            }))
-            .sort((a, b) => a.indice - b.indice)}
-        />
-      )}
+        const parAPar = (
+          <TrechosConferidos
+            trechos={trechos}
+            extensaoM={extensaoConferida}
+            labelA={nomeDoc(c.document_a_id)}
+            labelB={nomeDoc(c.document_b_id)}
+            vertices={vertices.data}
+            verticesB={verticesB.data}
+            indiceA={indiceA}
+            indiceB={indiceB}
+          />
+        );
+
+        // Na comparação múltipla a visão consolidada vem primeiro.
+        return c.comparison_type === "custom" && temConsolidado ? (
+          <>
+            {tabelaConsolidada}
+            {parAPar}
+          </>
+        ) : (
+          <>
+            {parAPar}
+            {tabelaConsolidada}
+          </>
+        );
+      })()}
+
 
 
       <section className="mt-10">
