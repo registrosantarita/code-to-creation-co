@@ -82,10 +82,13 @@ export type TrechoConferido = {
   azimute_b: number | null;
   invertido: boolean;
   ok: boolean;
+  /** Falso quando não havia dado comum (distância/azimute) para conferir. */
+  comparado?: boolean;
   problemas: string[];
   confrontante_a?: string | null;
   confrontante_b?: string | null;
 };
+
 
 function montarTrecho(
   seqA: number,
