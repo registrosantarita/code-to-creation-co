@@ -34,7 +34,7 @@ export const TIPO_COMPARACAO: Record<string, string> = {
   memorial_to_title: "Memorial x Escritura / Título",
   boundary_to_boundary: "Divisa comum entre vizinhos",
   memorial_to_registry: "Memorial x Matrícula",
-  custom: "Comparação personalizada",
+  custom: "Comparação múltipla (paradigma × B, C, D…)",
 };
 
 export const CLASSIFICACAO: Record<
