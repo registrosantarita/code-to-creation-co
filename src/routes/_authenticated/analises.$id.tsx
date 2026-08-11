@@ -290,17 +290,18 @@ function AnaliseDetalhe() {
     },
     onSuccess: (res) => {
       queryClient.invalidateQueries({ queryKey: ["comparisons", id] });
-      if (res.length === 1) {
-        navigate({ to: "/comparacoes/$id", params: { id: res[0]!.comparisonId } });
-        return;
+      if (res.length === 0) return;
+      if (res.length > 1) {
+        const divergentes = res.filter(
+          (r) => r.classification === "incompatible",
+        ).length;
+        toast.success(
+          `${res.length} documentos comparados com o paradigma: ${divergentes} com divergência. Abrindo a conferência consolidada.`,
+        );
       }
-      const divergentes = res.filter(
-        (r) => r.classification === "incompatible",
-      ).length;
-      toast.success(
-        `${res.length} comparação(ões) concluída(s): ${divergentes} com divergência.`,
-      );
+      navigate({ to: "/comparacoes/$id", params: { id: res[0]!.comparisonId } });
     },
+
     onError: (e: Error) => toast.error(e.message),
   });
 
