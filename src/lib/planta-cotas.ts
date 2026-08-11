@@ -20,7 +20,12 @@ export type BlocoCotado = {
   cotas: number[];
   /** Número do lote quando aparece isolado junto ao bloco. */
   loteNum: number | null;
+  /** Logradouros grafados junto ao bloco (rua/avenida de frente). */
+  logradouros: string[];
+  /** Outros rótulos textuais próximos (vizinhos, remanescentes, nomes). */
+  rotulos: string[];
 };
+
 
 const numero = (bruto: string): number =>
   Number(bruto.replace(/\./g, "").replace(",", "."));
