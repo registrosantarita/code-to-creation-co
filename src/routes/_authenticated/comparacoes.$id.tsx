@@ -161,9 +161,18 @@ function Relatorio() {
         .order("created_at", { ascending: true });
       if (e1) throw e1;
 
-      const bIds = (comps ?? [])
+      // Mantém apenas a comparação mais recente de cada documento comparado,
+      // para que reexecuções não dupliquem linhas na tabela consolidada.
+      const porB = new Map<string, (typeof comps)[number]>();
+      (comps ?? []).forEach((c) => {
+        if (c.document_b_id) porB.set(c.document_b_id, c);
+      });
+      const unicos = Array.from(porB.values());
+
+      const bIds = unicos
         .map((c) => c.document_b_id)
         .filter((v): v is string => !!v);
+
       const ids = Array.from(new Set([docAId, ...bIds]));
 
       const { data: parcelas, error: e2 } = await supabase
