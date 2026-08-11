@@ -60,12 +60,21 @@ function AuthenticatedLayout() {
           </div>
 
           <div className="flex items-center gap-3">
+            {admin.data?.admin && (
+              <Link
+                to="/admin"
+                className="text-xs text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
+              >
+                Administração
+              </Link>
+            )}
             <Link
               to="/normas"
               className="text-xs text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
             >
               Acervo normativo
             </Link>
+
             <Link
               to="/creditos"
               className="text-xs text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
