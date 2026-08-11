@@ -623,7 +623,7 @@ function AnaliseDetalhe() {
                               });
                               return (
                               <div className="mt-6 overflow-x-auto">
-                                <table className="w-full min-w-[900px] border-collapse text-left text-xs [&_td]:whitespace-nowrap [&_th]:whitespace-nowrap">
+                                <table className="w-auto min-w-full table-auto border-collapse text-left text-xs [&_td]:whitespace-nowrap [&_td]:pr-4 [&_th]:whitespace-nowrap [&_th]:pr-4">
                                   <thead>
                                     <tr className="border-b border-border">
                                       {[
