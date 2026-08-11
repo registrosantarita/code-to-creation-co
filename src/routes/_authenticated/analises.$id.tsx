@@ -22,6 +22,7 @@ import {
 } from "@/lib/labels";
 import { Button } from "@/components/ui/button";
 import { exportarDescricaoXlsx } from "@/lib/export-registral";
+import { exportarMatriculaXlsx } from "@/lib/export-matricula";
 
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
