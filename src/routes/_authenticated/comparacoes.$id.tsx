@@ -11,6 +11,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { exportarRelatorioPdf } from "@/lib/export-registral";
 import { TrechosConferidos, lerTrechos } from "@/components/TrechosConferidos";
+import { TrechosConsolidados } from "@/components/TrechosConsolidados";
 import { getVertices, type VertexCoordRow } from "@/lib/export-registral";
 
 
@@ -134,7 +135,7 @@ function Relatorio() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("documents")
-        .select("id, created_at")
+        .select("id, file_name, created_at")
         .eq("analysis_id", comparison.data!.analysis_id)
         .order("created_at", { ascending: true });
       if (error) throw error;
@@ -213,6 +214,9 @@ function Relatorio() {
     const i = docId ? ordemDocs.indexOf(docId) : -1;
     return i >= 0 ? i : fallback;
   };
+  const nomeDocOrdem = (docId: string | null) =>
+    (docsAnalise.data ?? []).find((d) => d.id === docId)?.file_name ??
+    nomeDoc(docId);
   const indiceA = posDoc(c.document_a_id, 0);
   const indiceB = posDoc(c.document_b_id, 1);
 
