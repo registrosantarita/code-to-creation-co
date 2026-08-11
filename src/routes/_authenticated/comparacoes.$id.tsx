@@ -11,6 +11,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { exportarRelatorioPdf } from "@/lib/export-registral";
 import { TrechosConferidos, lerTrechos } from "@/components/TrechosConferidos";
+import { TrechosConsolidados } from "@/components/TrechosConsolidados";
 import { getVertices, type VertexCoordRow } from "@/lib/export-registral";
 
 
@@ -134,11 +135,54 @@ function Relatorio() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("documents")
-        .select("id, created_at")
+        .select("id, file_name, created_at")
         .eq("analysis_id", comparison.data!.analysis_id)
         .order("created_at", { ascending: true });
       if (error) throw error;
       return data;
+    },
+  });
+
+  // Tabela consolidada: todas as comparações que partem do mesmo paradigma.
+  const consolidado = useQuery({
+    enabled: !!comparison.data?.document_a_id,
+    queryKey: [
+      "comparison-consolidado",
+      comparison.data?.analysis_id,
+      comparison.data?.document_a_id,
+    ],
+    queryFn: async () => {
+      const docAId = comparison.data!.document_a_id!;
+      const { data: comps, error: e1 } = await supabase
+        .from("comparisons")
+        .select("id, document_a_id, document_b_id, metrics, created_at")
+        .eq("analysis_id", comparison.data!.analysis_id)
+        .eq("document_a_id", docAId)
+        .order("created_at", { ascending: true });
+      if (e1) throw e1;
+
+      const bIds = (comps ?? [])
+        .map((c) => c.document_b_id)
+        .filter((v): v is string => !!v);
+      const ids = Array.from(new Set([docAId, ...bIds]));
+
+      const { data: parcelas, error: e2 } = await supabase
+        .from("parcels")
+        .select("document_id, raw_extraction")
+        .in("document_id", ids);
+      if (e2) throw e2;
+
+      const mapas = new Map<string, Map<string, VertexCoordRow>>();
+      (parcelas ?? []).forEach((p) => {
+        const m = mapas.get(p.document_id) ?? new Map<string, VertexCoordRow>();
+        getVertices({ raw_extraction: p.raw_extraction } as never).forEach((v) => {
+          const key = String(v.name ?? "").trim().replace(/[.,;]+$/, "").toUpperCase();
+          if (key && !m.has(key)) m.set(key, v);
+        });
+        mapas.set(p.document_id, m);
+      });
+
+      return { comps: comps ?? [], mapas };
     },
   });
 
@@ -170,6 +214,9 @@ function Relatorio() {
     const i = docId ? ordemDocs.indexOf(docId) : -1;
     return i >= 0 ? i : fallback;
   };
+  const nomeDocOrdem = (docId: string | null) =>
+    (docsAnalise.data ?? []).find((d) => d.id === docId)?.file_name ??
+    nomeDoc(docId);
   const indiceA = posDoc(c.document_a_id, 0);
   const indiceB = posDoc(c.document_b_id, 1);
 
@@ -301,7 +348,24 @@ function Relatorio() {
         indiceB={indiceB}
       />
 
-
+      {(consolidado.data?.comps.length ?? 0) > 1 && (
+        <TrechosConsolidados
+          docA={{
+            indice: indiceA,
+            nome: nomeDocOrdem(c.document_a_id),
+            vertices: consolidado.data!.mapas.get(c.document_a_id!),
+          }}
+          comparados={consolidado.data!.comps
+            .filter((x) => !!x.document_b_id)
+            .map((x) => ({
+              indice: posDoc(x.document_b_id, 1),
+              nome: nomeDocOrdem(x.document_b_id),
+              trechos: lerTrechos((x.metrics ?? {}) as Record<string, unknown>),
+              vertices: consolidado.data!.mapas.get(x.document_b_id!),
+            }))
+            .sort((a, b) => a.indice - b.indice)}
+        />
+      )}
 
 
       <section className="mt-10">
