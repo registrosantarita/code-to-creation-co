@@ -122,9 +122,8 @@ export function degToDms(value: number | string | null): string {
     m -= 60;
     d += 1;
   }
-  if (m === 0 && s === 0) return `${sinal}${d}°`;
+  // Os documentos sempre trazem minutos e segundos, mesmo zerados: 339°13'00".
   const mm = String(m).padStart(2, "0");
-  if (s === 0) return `${sinal}${d}°${mm}'`;
   return `${sinal}${d}°${mm}'${segundosStr(s, 2)}"`;
 }
 

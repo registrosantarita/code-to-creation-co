@@ -65,7 +65,7 @@ function Situacao({
       ) : (
         <X className="h-5 w-5 text-destructive" aria-label="Incorreto" />
       )}
-      <span className="max-w-[220px] text-center text-[11px] leading-snug text-muted-foreground">
+      <span className="max-w-[220px] whitespace-normal text-center text-[11px] leading-snug text-muted-foreground">
         {problemas.length > 0
           ? problemas.join("; ")
           : comparado
@@ -117,7 +117,7 @@ export function TrechosConferidos({
 
   return (
     <>
-      <section className="panel mt-8 p-6">
+      <section className="panel relative left-1/2 mt-8 w-[min(96rem,calc(100vw-3rem))] max-w-[96rem] -translate-x-1/2 p-6 print:left-0 print:w-full print:translate-x-0">
         <h2 className="text-lg">Conferência trecho a trecho</h2>
         <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
           Trecho total conferido: <span className="numeric">{inicio}</span> →{" "}
@@ -136,7 +136,7 @@ export function TrechosConferidos({
         </p>
 
         <div className="mt-5 overflow-x-auto">
-          <table className="w-full min-w-[720px] border-collapse text-sm">
+          <table className="w-full min-w-[900px] border-collapse text-sm [&_td]:whitespace-nowrap [&_th]:whitespace-nowrap">
             <thead>
               <tr className="border-b border-border text-left">
                 <th className="eyebrow py-2 pr-3">#</th>
