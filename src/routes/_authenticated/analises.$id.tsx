@@ -515,7 +515,12 @@ function AnaliseDetalhe() {
                 Nenhum documento ingerido até o momento.
               </p>
             ) : (
-              <Accordion type="multiple" className="mt-4">
+              <Accordion
+                type="multiple"
+                className="mt-4"
+                value={openDocs}
+                onValueChange={setOpenDocs}
+              >
                 {documents.data!.map((d) => {
                   const parcel = (parcels.data ?? []).find(
                     (p) => p.document_id === d.id,
