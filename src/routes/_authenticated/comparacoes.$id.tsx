@@ -105,6 +105,22 @@ function Relatorio() {
     },
   });
 
+  // Posição do documento comparado (B, C, D...) dentro da análise, usada para
+  // colorir as informações de cada documento de forma consistente.
+  const irmas = useQuery({
+    enabled: !!comparison.data?.analysis_id,
+    queryKey: ["comparison-siblings", comparison.data?.analysis_id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("comparisons")
+        .select("id, document_b_id, created_at")
+        .eq("analysis_id", comparison.data!.analysis_id)
+        .order("created_at", { ascending: true });
+      if (error) throw error;
+      return data;
+    },
+  });
+
 
   if (comparison.isLoading || !comparison.data) {
     return (
@@ -126,6 +142,10 @@ function Relatorio() {
       : null;
   const nomeDoc = (docId: string | null) =>
     (docs.data ?? []).find((d) => d.id === docId)?.file_name ?? "Documento";
+
+  const idx = (irmas.data ?? []).findIndex((s) => s.id === c.id);
+  const indiceB = idx >= 0 ? idx + 1 : 1;
+
 
   const ordenados = [...(findings.data ?? [])].sort(
     (a, b) => ORDEM.indexOf(a.severity) - ORDEM.indexOf(b.severity),
@@ -249,6 +269,7 @@ function Relatorio() {
         labelA={nomeDoc(c.document_a_id)}
         labelB={nomeDoc(c.document_b_id)}
         vertices={vertices.data}
+        indiceB={indiceB}
       />
 
 

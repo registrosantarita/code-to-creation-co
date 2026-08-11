@@ -139,9 +139,11 @@ export function coordToDms(
   if (!Number.isFinite(n)) return "—";
   const negativo = n < 0;
   const hemisferio = eixo === "lat" ? (negativo ? "S" : "N") : negativo ? "W" : "E";
-  const { d, m, s } = decompor(Math.abs(n), 5);
+  // Sem arredondar: mantém todas as casas de segundo presentes no dado de
+  // origem e apenas descarta zeros finais que não foram informados.
+  const { d, m, s } = decompor(Math.abs(n), 6);
   const sinal = negativo ? "-" : "";
-  return `${sinal}${d}°${String(m).padStart(2, "0")}'${segundosStr(s, 5)}"${hemisferio}`;
+  return `${sinal}${d}°${String(m).padStart(2, "0")}'${segundosStr(s, 6)}"${hemisferio}`;
 }
 
 
@@ -174,4 +176,25 @@ export function fmtMedida(value: number | string | null, min = 2, max = 6): stri
 /** Ângulo/azimute sempre em grau, minuto e segundo. */
 export function fmtAngulo(value: number | string | null): string {
   return degToDms(value === "" ? null : (value as number | string | null));
+}
+
+/** Cor de identificação de cada documento comparado (A, B, C, D, ...). */
+const DOC_CLASSES = [
+  "doc-a",
+  "doc-b",
+  "doc-c",
+  "doc-d",
+  "doc-e",
+  "doc-f",
+  "doc-g",
+  "doc-h",
+] as const;
+
+export function docColor(indice: number): string {
+  return DOC_CLASSES[indice % DOC_CLASSES.length]!;
+}
+
+/** Letra do documento na ordem de comparação: 0 → A, 1 → B, ... */
+export function docLetra(indice: number): string {
+  return String.fromCharCode(65 + (indice % 26));
 }
