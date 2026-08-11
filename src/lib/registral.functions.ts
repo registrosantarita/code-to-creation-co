@@ -4,7 +4,7 @@ import type { Database, Json } from "@/integrations/supabase/types";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { z } from "zod";
 import { isGeoExtension } from "./geo-parser";
-import { parseParcelas } from "./multi-parcel";
+import { parseParcelas, semDescricaoPerimetrica } from "./multi-parcel";
 import {
   DEFAULT_TOLERANCES,
   compareParcels,
