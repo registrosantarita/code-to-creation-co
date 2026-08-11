@@ -89,6 +89,7 @@ export function TrechosConferidos({ trechos, extensaoM, labelA, labelB }: Props)
                 </th>
                 <th className="eyebrow py-2 pr-3 text-right">Distância (m)</th>
                 <th className="eyebrow py-2 pr-3 text-right">Azimute</th>
+                <th className="eyebrow py-2 pr-3 text-right">Cota (m)</th>
                 <th className="eyebrow py-2 pr-3 text-center">Situação</th>
               </tr>
             </thead>
@@ -110,6 +111,9 @@ export function TrechosConferidos({ trechos, extensaoM, labelA, labelB }: Props)
                   </td>
                   <td className="numeric py-2 pr-3 text-right">
                     {degToDms(t.azimute_a)} / {degToDms(t.azimute_b)}
+                  </td>
+                  <td className="numeric py-2 pr-3 text-right">
+                    {fmtMedida(t.cota_a)} / {fmtMedida(t.cota_b)}
                   </td>
                   <td className="py-2 pr-3">
                     <Situacao ok={t.ok} problemas={t.problemas} comparado={t.comparado ?? true} />

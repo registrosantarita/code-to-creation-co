@@ -91,6 +91,9 @@ export type TrechoConferido = {
   distancia_b: number | null;
   azimute_a: number | null;
   azimute_b: number | null;
+  /** Cota (altitude) do vértice inicial do trecho, em metros. */
+  cota_a: number | null;
+  cota_b: number | null;
   invertido: boolean;
   ok: boolean;
   /** Falso quando não havia dado comum (distância/azimute) para conferir. */
@@ -125,6 +128,8 @@ function montarTrecho(
         : invertido
           ? (sb.azimuth_deg + 180) % 360
           : sb.azimuth_deg,
+    cota_a: sa.altitude_from_m,
+    cota_b: invertido ? sb.altitude_to_m : sb.altitude_from_m,
     invertido,
     ok: problemas.length === 0,
     comparado:
