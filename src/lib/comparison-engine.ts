@@ -3,7 +3,7 @@
  * Cada achado é rastreável até a evidência de origem.
  */
 import { normalizeName } from "./memorial-parser";
-import { degToDms, fmtMedida } from "./labels";
+import { degToDms, fmtMedida, anguloComoModelo } from "./labels";
 
 export type Severity = "critical" | "moderate" | "informative" | "inconclusive";
 export type Classification =
@@ -395,7 +395,7 @@ export function compareParcels(
       if (d > tol.azimuthDeg) {
         problems.push(
           alignment.reversed
-            ? `azimute ${degToDms(sa.azimuth_deg)} x contra-azimute ${degToDms(azB)} (original ${degToDms(sb.azimuth_deg)}, Δ ${degToDms(d)})`
+            ? `azimute ${degToDms(sa.azimuth_deg)} x contra-azimute ${anguloComoModelo(azB, (sb as { bearing_text?: string | null }).bearing_text ?? null)} (original ${degToDms(sb.azimuth_deg)}, Δ ${degToDms(d)})`
             : `azimute ${degToDms(sa.azimuth_deg)} x ${degToDms(sb.azimuth_deg)} (Δ ${degToDms(d)})`,
         );
       }
@@ -779,7 +779,7 @@ export function compareSharedBoundary(
       if (d > tol.azimuthDeg) {
         problems.push(
           run.reversed
-            ? `azimute ${degToDms(sa.azimuth_deg)} x contra-azimute ${degToDms(azB)} (original ${degToDms(sb.azimuth_deg)}, Δ ${degToDms(d)})`
+            ? `azimute ${degToDms(sa.azimuth_deg)} x contra-azimute ${anguloComoModelo(azB, (sb as { bearing_text?: string | null }).bearing_text ?? null)} (original ${degToDms(sb.azimuth_deg)}, Δ ${degToDms(d)})`
             : `azimute ${degToDms(sa.azimuth_deg)} x ${degToDms(sb.azimuth_deg)} (Δ ${degToDms(d)})`,
         );
       }

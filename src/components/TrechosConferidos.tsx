@@ -227,8 +227,9 @@ export function TrechosConferidos({
                     </td>
                     <td className="numeric py-2 pr-3">
                       <Par
-                        a={anguloLiteral(t.azimute_txt_a, t.azimute_a)}
-                        b={anguloLiteral(t.azimute_txt_b, t.azimute_b)}
+                        a={anguloLiteral(t.azimute_txt_a, t.azimute_a, t.azimute_txt_b)}
+                        b={anguloLiteral(t.azimute_txt_b, t.azimute_b, t.azimute_txt_a)}
+
                         corA={corA}
                         corB={corB}
                       />
