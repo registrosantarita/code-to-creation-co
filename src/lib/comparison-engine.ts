@@ -983,7 +983,8 @@ export function compareMemorialToPlan(
     metrics["area_diff_m2"] = diff;
     metrics["area_diff_pct"] = pct;
     findings.push(
-      pct > tol.areaPct
+      !dentroDaTolerancia(diff, pct, tol.areaPct, tol.areaM2)
+
         ? {
             severity: "critical",
             code: "AREA_DIVERGENTE",
