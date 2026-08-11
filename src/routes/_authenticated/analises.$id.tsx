@@ -362,6 +362,17 @@ function AnaliseDetalhe() {
     if (tipoSugerido) setTipo(tipoSugerido);
   }, [tipoSugerido]);
 
+  useEffect(() => {
+    if (!documents.data || !parcels.data) return;
+    const parsedWithParcel = documents.data
+      .filter((d) => d.status === "parsed")
+      .filter((d) => parcels.data!.some((p) => p.document_id === d.id))
+      .map((d) => d.id);
+    if (openDocs.length === 0 && parsedWithParcel.length > 0) {
+      setOpenDocs(parsedWithParcel);
+    }
+  }, [documents.data, parcels.data]);
+
   return (
     <main className="mx-auto max-w-6xl px-6 py-10">
       <Link to="/painel" className="eyebrow hover:text-accent-foreground">
