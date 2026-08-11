@@ -191,13 +191,70 @@ export function fmtMedida(value: number | string | null, min = 2, max = 6): stri
   });
 }
 
+/** Estrutura (grau / minuto / segundo e casas) de um ângulo escrito no documento. */
+function estruturaAngulo(
+  texto: string | null | undefined,
+): { min: boolean; seg: boolean; casas: number } | null {
+  const t = (texto ?? "").trim();
+  const m = t.match(
+    /(-?\d{1,3})\s*[°º]\s*(?:(\d{1,2})\s*['\u2032´`])?\s*(?:(\d{1,2}(?:[.,]\d+)?)\s*["\u2033''])?/,
+  );
+  if (!m || !m[1]) return null;
+  if (m[2] === undefined) return { min: false, seg: false, casas: 0 };
+  if (m[3] === undefined) return { min: true, seg: false, casas: 0 };
+  const frac = m[3].replace(".", ",").split(",")[1] ?? "";
+  return { min: true, seg: true, casas: frac.length };
+}
+
+/**
+ * Valor calculado (ex.: contra-azimute) impresso com a MESMA estrutura do
+ * ângulo de origem: se o documento não traz segundos, o calculado também não.
+ */
+export function anguloComoModelo(
+  valor: number | string | null,
+  modelo: string | null | undefined,
+): string {
+  const est = estruturaAngulo(modelo);
+  if (!est) return degToDms(valor);
+  if (valor === null || valor === "") return "—";
+  const n = typeof valor === "string" ? Number(valor) : valor;
+  if (!Number.isFinite(n)) return "—";
+  const sinal = n < 0 ? "-" : "";
+  const abs = Math.abs(n);
+  if (!est.min) return `${sinal}${Math.round(abs)}°`;
+  if (!est.seg) {
+    let d = Math.trunc(abs);
+    let mm = Math.round((abs - d) * 60);
+    if (mm >= 60) {
+      mm -= 60;
+      d += 1;
+    }
+    return `${sinal}${d}°${String(mm).padStart(2, "0")}'`;
+  }
+  let { d, m: mi, s } = decompor(abs, est.casas);
+  let ss = s.toFixed(est.casas);
+  if (Number(ss) >= 60) {
+    ss = (0).toFixed(est.casas);
+    mi += 1;
+  }
+  if (mi >= 60) {
+    mi -= 60;
+    d += 1;
+  }
+  const [si = "", sf] = ss.split(".");
+  const segTxt = sf ? `${si.padStart(2, "0")},${sf}` : si.padStart(2, "0");
+  return `${sinal}${d}°${String(mi).padStart(2, "0")}'${segTxt}"`;
+}
+
 /**
  * Ângulo com a literalidade do documento: se o texto de origem traz segundos,
  * eles aparecem; se traz apenas grau e minuto, nada é completado.
+ * Sem texto próprio (valor calculado), segue a estrutura do ângulo modelo.
  */
 export function anguloLiteral(
   texto: string | null | undefined,
   valor: number | string | null,
+  modelo?: string | null,
 ): string {
   const t = (texto ?? "").trim();
   const m = t.match(
@@ -212,8 +269,10 @@ export function anguloLiteral(
     const ss = (si ?? "0").padStart(2, "0");
     return `${g}°${mm}'${sf ? `${ss},${sf}` : ss}"`;
   }
+  if (modelo) return anguloComoModelo(valor, modelo);
   return degToDms(valor);
 }
+
 
 /** Ângulo/azimute sempre em grau, minuto e segundo. */
 export function fmtAngulo(value: number | string | null): string {
