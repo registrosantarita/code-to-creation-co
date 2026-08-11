@@ -171,3 +171,35 @@
   font-family: var(--font-tech);
   font-variant-numeric: tabular-nums;
 }
+
+/* Cores de identificação por documento comparado (A, B, C, D, ...) */
+:root {
+  --doc-a: oklch(0.22 0.01 265);
+  --doc-b: oklch(0.48 0.14 255);
+  --doc-c: oklch(0.5 0.12 155);
+  --doc-d: oklch(0.48 0.16 305);
+  --doc-e: oklch(0.55 0.14 35);
+  --doc-f: oklch(0.5 0.11 200);
+  --doc-g: oklch(0.5 0.13 340);
+  --doc-h: oklch(0.5 0.1 110);
+}
+
+.dark {
+  --doc-a: oklch(0.93 0.008 88);
+  --doc-b: oklch(0.72 0.13 255);
+  --doc-c: oklch(0.72 0.12 155);
+  --doc-d: oklch(0.72 0.14 305);
+  --doc-e: oklch(0.76 0.13 35);
+  --doc-f: oklch(0.74 0.1 200);
+  --doc-g: oklch(0.74 0.12 340);
+  --doc-h: oklch(0.74 0.1 110);
+}
+
+@utility doc-a { color: var(--doc-a); }
+@utility doc-b { color: var(--doc-b); }
+@utility doc-c { color: var(--doc-c); }
+@utility doc-d { color: var(--doc-d); }
+@utility doc-e { color: var(--doc-e); }
+@utility doc-f { color: var(--doc-f); }
+@utility doc-g { color: var(--doc-g); }
+@utility doc-h { color: var(--doc-h); }
