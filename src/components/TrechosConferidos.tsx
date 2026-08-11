@@ -89,6 +89,7 @@ export function TrechosConferidos({
   labelA,
   labelB,
   vertices,
+  verticesB,
   indiceA = 0,
   indiceB = 1,
 }: Props) {
@@ -107,14 +108,19 @@ export function TrechosConferidos({
   const confrontacoes = agruparConfrontantes(trechos);
 
   const coordDe = (t: TrechoConferido) => vertices?.get(vname(t.de_a));
-  // Colunas geodésicas/planas só aparecem quando o documento traz o dado.
+  const coordDeB = (t: TrechoConferido) => verticesB?.get(vname(t.de_b));
+  // Colunas geodésicas/planas só aparecem quando algum documento traz o dado.
   const temGeo = trechos.some((t) => {
     const v = coordDe(t);
-    return v?.lat != null || v?.lon != null;
+    const w = coordDeB(t);
+    return v?.lat != null || v?.lon != null || w?.lat != null || w?.lon != null;
   });
   const temPlana = trechos.some((t) => {
     const v = coordDe(t);
-    return v?.north != null || v?.east != null;
+    const w = coordDeB(t);
+    return (
+      v?.north != null || v?.east != null || w?.north != null || w?.east != null
+    );
   });
 
   return (
