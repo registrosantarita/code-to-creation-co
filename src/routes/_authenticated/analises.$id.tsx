@@ -818,7 +818,7 @@ function AnaliseDetalhe() {
                 >
                   {conferirLotes.isPending
                     ? "Conferindo lote a lote..."
-                    : "Conferir todos os lotes/quadras"}
+                    : "Conferência de Loteamentos — memorial e planta"}
                 </Button>
               )}
             </div>
