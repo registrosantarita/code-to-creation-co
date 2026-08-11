@@ -1,0 +1,130 @@
+import { createServerFn } from "@tanstack/react-start";
+import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { z } from "zod";
+
+const PAPEIS = ["admin", "official", "operator", "reviewer", "read_only"] as const;
+
+async function exigirAdmin(context: { supabase: any; userId: string }) {
+  const { data, error } = await context.supabase.rpc("has_role", {
+    _user_id: context.userId,
+    _role: "admin",
+  });
+  if (error) throw new Error(error.message);
+  if (!data) throw new Error("Acesso restrito a administradores.");
+}
+
+export const souAdmin = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { data } = await context.supabase.rpc("has_role", {
+      _user_id: context.userId,
+      _role: "admin",
+    });
+    return { admin: Boolean(data) };
+  });
+
+export const listarUsuarios = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    await exigirAdmin(context);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    const [{ data: perfis, error: e1 }, { data: papeis, error: e2 }] = await Promise.all([
+      supabaseAdmin
+        .from("profiles")
+        .select("id, full_name, email, status, created_at")
+        .order("created_at", { ascending: true }),
+      supabaseAdmin.from("user_roles").select("user_id, role"),
+    ]);
+    if (e1) throw new Error(e1.message);
+    if (e2) throw new Error(e2.message);
+
+    const { data: analises, error: e3 } = await supabaseAdmin
+      .from("analyses")
+      .select("id, created_by, created_at");
+    if (e3) throw new Error(e3.message);
+
+    return (perfis ?? []).map((p) => ({
+      ...p,
+      roles: (papeis ?? []).filter((r) => r.user_id === p.id).map((r) => r.role as string),
+      total_analises: (analises ?? []).filter((a) => a.created_by === p.id).length,
+      ultima_atividade:
+        (analises ?? [])
+          .filter((a) => a.created_by === p.id)
+          .map((a) => a.created_at)
+          .sort()
+          .at(-1) ?? null,
+    }));
+  });
+
+export const listarAtividade = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    await exigirAdmin(context);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    const [{ data: analises, error: e1 }, { data: perfis, error: e2 }] = await Promise.all([
+      supabaseAdmin
+        .from("analyses")
+        .select("id, title, status, created_by, created_at, updated_at")
+        .order("created_at", { ascending: false })
+        .limit(300),
+      supabaseAdmin.from("profiles").select("id, full_name, email"),
+    ]);
+    if (e1) throw new Error(e1.message);
+    if (e2) throw new Error(e2.message);
+
+    const ids = (analises ?? []).map((a) => a.id);
+    const { data: comps } = ids.length
+      ? await supabaseAdmin
+          .from("comparisons")
+          .select("id, analysis_id, comparison_type, status, classification")
+          .in("analysis_id", ids)
+      : { data: [] as any[] };
+
+    return (analises ?? []).map((a) => {
+      const autor = (perfis ?? []).find((p) => p.id === a.created_by);
+      const c = (comps ?? []).filter((x) => x.analysis_id === a.id);
+      return {
+        ...a,
+        autor_nome: autor?.full_name || "",
+        autor_email: autor?.email || "—",
+        comparacoes: c.length,
+        incompativeis: c.filter((x) => x.classification === "incompatible").length,
+      };
+    });
+  });
+
+export const definirPapel = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) =>
+    z.object({ userId: z.string().uuid(), role: z.enum(PAPEIS) }).parse(input),
+  )
+  .handler(async ({ data, context }) => {
+    await exigirAdmin(context);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { error } = await supabaseAdmin
+      .from("user_roles")
+      .upsert({ user_id: data.userId, role: data.role }, { onConflict: "user_id,role" });
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
+
+export const removerPapel = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) =>
+    z.object({ userId: z.string().uuid(), role: z.enum(PAPEIS) }).parse(input),
+  )
+  .handler(async ({ data, context }) => {
+    await exigirAdmin(context);
+    if (data.userId === context.userId && data.role === "admin")
+      throw new Error("Não é possível remover o próprio papel de administrador.");
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { error } = await supabaseAdmin
+      .from("user_roles")
+      .delete()
+      .eq("user_id", data.userId)
+      .eq("role", data.role);
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
