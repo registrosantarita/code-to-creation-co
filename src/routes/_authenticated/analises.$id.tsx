@@ -85,9 +85,11 @@ function AnaliseDetalhe() {
   const [nomeTexto, setNomeTexto] = useState("");
   const [categoria, setCategoria] = useState("memorial");
   const [docA, setDocA] = useState("");
-  const [docB, setDocB] = useState("");
   const [parcelA, setParcelA] = useState("");
-  const [parcelB, setParcelB] = useState("");
+  /** Documentos comparáveis (B, C, D...) confrontados com o paradigma A. */
+  const [comparaveis, setComparaveis] = useState<
+    { doc: string; parcel: string }[]
+  >([{ doc: "", parcel: "" }]);
   const [tipo, setTipo] = useState("memorial_to_memorial");
   const [tol, setTol] = useState(DEFAULT_TOLERANCES);
 
@@ -254,38 +256,58 @@ function AnaliseDetalhe() {
 
   const executarComparacao = useMutation({
     mutationFn: async () => {
-      if (!docA || !docB) throw new Error("Selecione dois documentos.");
-      if (docA === docB && tipo !== "boundary_to_boundary")
-        throw new Error("Selecione documentos distintos.");
-      if (docA === docB && parcelA && parcelA === parcelB)
-        throw new Error("Selecione dois polígonos distintos do documento.");
-      return comparar({
-        data: {
-          analysisId: id,
-          documentAId: docA,
-          documentBId: docB,
-          ...(parcelA ? { parcelAId: parcelA } : {}),
-          ...(parcelB ? { parcelBId: parcelB } : {}),
-          comparisonType: tipo as never,
-          tolerances: tol,
-        },
-      });
+      const alvos = comparaveis.filter((c) => c.doc);
+      if (!docA || alvos.length === 0)
+        throw new Error("Selecione o documento paradigma e ao menos um comparável.");
+      const resultados: { comparisonId: string; classification: string | null }[] = [];
+      for (const alvo of alvos) {
+        if (alvo.doc === docA && tipo !== "boundary_to_boundary")
+          throw new Error(
+            "Cada documento comparável precisa ser distinto do paradigma.",
+          );
+        if (alvo.doc === docA && parcelA && parcelA === alvo.parcel)
+          throw new Error("Selecione dois polígonos distintos do documento.");
+        const r = await comparar({
+          data: {
+            analysisId: id,
+            documentAId: docA,
+            documentBId: alvo.doc,
+            ...(parcelA ? { parcelAId: parcelA } : {}),
+            ...(alvo.parcel ? { parcelBId: alvo.parcel } : {}),
+            comparisonType: tipo as never,
+            tolerances: tol,
+          },
+        });
+        resultados.push(r);
+      }
+      return resultados;
     },
     onSuccess: (res) => {
       queryClient.invalidateQueries({ queryKey: ["comparisons", id] });
-      navigate({ to: "/comparacoes/$id", params: { id: res.comparisonId } });
+      if (res.length === 1) {
+        navigate({ to: "/comparacoes/$id", params: { id: res[0]!.comparisonId } });
+        return;
+      }
+      const divergentes = res.filter(
+        (r) => r.classification === "incompatible",
+      ).length;
+      toast.success(
+        `${res.length} comparação(ões) concluída(s): ${divergentes} com divergência.`,
+      );
     },
     onError: (e: Error) => toast.error(e.message),
   });
 
   const conferirLotes = useMutation({
     mutationFn: async () => {
-      if (!docA || !docB) throw new Error("Selecione o memorial e a planta.");
+      const planta = comparaveis.find((c) => c.doc)?.doc ?? "";
+      if (!docA || !planta)
+        throw new Error("Selecione o memorial e a planta.");
       return conferirLoteALote({
         data: {
           analysisId: id,
           memorialDocumentId: docA,
-          plantaDocumentId: docB,
+          plantaDocumentId: planta,
           tolerances: tol,
         },
       });
@@ -321,7 +343,7 @@ function AnaliseDetalhe() {
     const cat = (id: string) =>
       extraidos.find((d) => d.id === id)?.document_category ?? "";
     const a = cat(docA);
-    const b = cat(docB);
+    const b = cat(comparaveis.find((c) => c.doc)?.doc ?? "");
     if (!a || !b) return null;
     const par = [a, b].sort().join("|");
     if (par === "memorial|memorial") return "memorial_to_memorial";
