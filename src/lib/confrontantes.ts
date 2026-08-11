@@ -9,7 +9,10 @@ export type TrechoConfrontante = {
   /** Caminhamento conforme o documento comparado. */
   de_b: string;
   ate_b: string;
+  /** Número de trechos do documento paradigma. */
   trechos: number;
+  /** Número de trechos do documento comparado (quando houver dado comum). */
+  trechos_b: number;
   extensao_m: number | null;
   /** Extensão somada conforme o documento comparado. */
   extensao_b_m: number | null;
