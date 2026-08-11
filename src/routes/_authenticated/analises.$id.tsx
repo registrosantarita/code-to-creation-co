@@ -24,6 +24,7 @@ import {
 } from "@/lib/labels";
 import { Button } from "@/components/ui/button";
 import { exportarMatriculaXlsx } from "@/lib/export-matricula";
+import type { VertexCoordRow } from "@/lib/export-registral";
 
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
