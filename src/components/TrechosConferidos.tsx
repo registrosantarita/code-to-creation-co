@@ -309,19 +309,43 @@ export function TrechosConferidos({
                     key={`${g.confrontante}-${i}`}
                     className="border-b border-border/60 align-top"
                   >
-                    <td className="py-2 pr-3">{g.confrontante}</td>
+                    <td className="py-2 pr-3">
+                      <Par
+                        a={g.confrontante || "—"}
+                        b={g.confrontante_b || "—"}
+                        corA={corA}
+                        corB={corB}
+                        align="left"
+                      />
+                    </td>
                     <td className="numeric py-2 pr-3">
-                      {g.de} → {g.ate}
+                      <Par
+                        a={`${g.de} → ${g.ate}`}
+                        b={
+                          g.de_b || g.ate_b
+                            ? `${g.de_b || "?"} → ${g.ate_b || "?"}`
+                            : "—"
+                        }
+                        corA={corA}
+                        corB={corB}
+                        align="left"
+                      />
                     </td>
                     <td className="numeric py-2 pr-3 text-right">{g.trechos}</td>
                     <td className="numeric py-2 pr-3 text-right">
-                      {fmtMedida(g.extensao_m)}
+                      <Par
+                        a={fmtMedida(g.extensao_m)}
+                        b={g.extensao_b_m == null ? "—" : fmtMedida(g.extensao_b_m)}
+                        corA={corA}
+                        corB={corB}
+                      />
                     </td>
                     <td className="py-2 pr-3">
                       <Situacao ok={g.ok} problemas={g.problemas} />
                     </td>
                   </tr>
                 ))}
+
               </tbody>
             </table>
           </div>
