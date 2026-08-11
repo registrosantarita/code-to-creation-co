@@ -136,8 +136,8 @@ export async function exportarMatriculaXlsx(
       return [
         vname(s.from_vertex),
         vname(s.to_vertex),
-        v?.lon ?? null,
-        v?.lat ?? null,
+        coordToDms(v?.lon ?? null, "lon"),
+        coordToDms(v?.lat ?? null, "lat"),
         num(s.altitude_from_m) ?? v?.alt ?? null,
         degToDms(num(s.azimuth_deg)),
         num(s.distance_m),
