@@ -17,7 +17,9 @@ import {
   STATUS_DOCUMENTO,
   TIPO_COMPARACAO,
   TONE_CLASS,
-  degToDms,
+  anguloLiteral,
+  coordToDms,
+  fmtMedida,
   fmtNum,
 } from "@/lib/labels";
 import { Button } from "@/components/ui/button";
