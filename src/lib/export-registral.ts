@@ -7,7 +7,7 @@
 import { utils, writeFile } from "xlsx";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
-import { degToDms, fmtNum, fmtMedida, CLASSIFICACAO, SEVERIDADE, TIPO_COMPARACAO } from "./labels";
+import { coordToDms, degToDms, fmtNum, fmtMedida, CLASSIFICACAO, SEVERIDADE, TIPO_COMPARACAO } from "./labels";
 import { agruparConfrontantes } from "./confrontantes";
 import type { TrechoConferido } from "./comparison-engine";
 
@@ -108,8 +108,8 @@ export function buildDescricaoSheets(parcel: ParcelExport): {
       const v = idx.get(vname(s.from_vertex));
       perimetro.push([
         vname(s.from_vertex),
-        v?.lon === null || v?.lon === undefined ? "" : br(v.lon, 8),
-        v?.lat === null || v?.lat === undefined ? "" : br(v.lat, 8),
+        v?.lon === null || v?.lon === undefined ? "" : coordToDms(v.lon, "lon"),
+        v?.lat === null || v?.lat === undefined ? "" : coordToDms(v.lat, "lat"),
         altitudeDe(s, v),
         vname(s.to_vertex),
         grau(s.azimuth_deg),

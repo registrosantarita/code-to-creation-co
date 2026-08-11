@@ -6,13 +6,12 @@
  *    vértice) + tabela de confrontação (agrupada por confrontante).
  */
 import ExcelJS from "exceljs";
-import { degToDms } from "./labels";
+import { coordToDms, degToDms } from "./labels";
 import { getVertices, isSigefGeodesico, type ParcelExport, type SegmentRow, type VertexCoordRow } from "./export-registral";
 
 const FONTE = { name: "Montserrat", size: 9 } as const;
 const FMT2 = "#,##0.00";
 const FMT3 = "#,##0.000";
-const FMT8 = "#,##0.00000000";
 
 const num = (v: number | string | null | undefined): number | null => {
   if (v === null || v === undefined || v === "") return null;
@@ -136,8 +135,8 @@ export async function exportarMatriculaXlsx(
       return [
         vname(s.from_vertex),
         vname(s.to_vertex),
-        v?.lon ?? null,
-        v?.lat ?? null,
+        coordToDms(v?.lon ?? null, "lon"),
+        coordToDms(v?.lat ?? null, "lat"),
         num(s.altitude_from_m) ?? v?.alt ?? null,
         degToDms(num(s.azimuth_deg)),
         num(s.distance_m),
@@ -148,8 +147,8 @@ export async function exportarMatriculaXlsx(
       [
         { titulo: "DE", largura: 14 },
         { titulo: "PARA", largura: 14 },
-        { titulo: "LONGITUDE", largura: 18, fmt: FMT8, alinhar: "right" },
-        { titulo: "LATITUDE", largura: 18, fmt: FMT8, alinhar: "right" },
+        { titulo: "LONGITUDE", largura: 20, alinhar: "right" },
+        { titulo: "LATITUDE", largura: 20, alinhar: "right" },
         { titulo: "ALT. (m)", largura: 12, fmt: FMT2, alinhar: "right" },
         { titulo: "ÂNGULO", largura: 16, alinhar: "right" },
         { titulo: "DIST. (m)", largura: 14, fmt: FMT2, alinhar: "right" },
