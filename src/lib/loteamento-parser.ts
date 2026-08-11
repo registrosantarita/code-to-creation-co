@@ -167,16 +167,18 @@ export function parseLoteamento(text: string): ParsedParcel[] {
   if (marcas.length < 2) return [];
 
   const parcelas: ParsedParcel[] = [];
+  let quadra: string | null = null;
+  let cursor = 0;
   marcas.forEach((marca, i) => {
     const fim = marcas[i + 1]?.index ?? text.length;
-    const cabecalho = text.slice(Math.max(0, marca.index - 1200), marca.index);
-    const quadraMatches = [...cabecalho.matchAll(new RegExp(QUADRA_RE.source, "gi"))];
-    const quadra = quadraMatches.length > 0
-      ? quadraMatches[quadraMatches.length - 1]![1]!.toUpperCase()
-      : null;
+    // A quadra é declarada uma vez e vale para os lotes seguintes.
+    const entre = [...text.slice(cursor, marca.index).matchAll(new RegExp(QUADRA_RE.source, "gi"))];
+    if (entre.length > 0) quadra = entre[entre.length - 1]![1]!.toUpperCase();
+    cursor = marca.index;
     const parcela = parseLote(text.slice(marca.index, fim), marca.titulo, quadra);
     if (parcela) parcelas.push(parcela);
   });
+
 
   return parcelas;
 }
