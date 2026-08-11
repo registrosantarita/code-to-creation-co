@@ -191,7 +191,7 @@ function Relatorio() {
         mapas.set(p.document_id, m);
       });
 
-      return { comps: comps ?? [], mapas };
+      return { comps: unicos, mapas };
     },
   });
 
