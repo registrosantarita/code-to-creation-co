@@ -1,9 +1,12 @@
 import { createFileRoute, Outlet, redirect, Link, useNavigate } from "@tanstack/react-router";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQueryClient, useQuery } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { NavArrows } from "@/components/NavArrows";
+import { souAdmin } from "@/lib/admin.functions";
 import logoAsset from "@/assets/geoconfronto-logo.png.asset.json";
+
 
 
 export const Route = createFileRoute("/_authenticated")({
