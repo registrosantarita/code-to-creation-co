@@ -94,6 +94,8 @@ function AnaliseDetalhe() {
   const [tipo, setTipo] = useState("memorial_to_memorial");
   const [tol, setTol] = useState(DEFAULT_TOLERANCES);
   const [unidadeArea, setUnidadeArea] = useState<"m2" | "ha">("m2");
+  /** Acordeões de documentos expandidos para facilitar acesso às ações. */
+  const [openDocs, setOpenDocs] = useState<string[]>([]);
 
   const analysis = useQuery({
     queryKey: ["analysis", id],
@@ -360,6 +362,17 @@ function AnaliseDetalhe() {
     if (tipoSugerido) setTipo(tipoSugerido);
   }, [tipoSugerido]);
 
+  useEffect(() => {
+    if (!documents.data || !parcels.data) return;
+    const parsedWithParcel = documents.data
+      .filter((d) => d.status === "parsed")
+      .filter((d) => parcels.data!.some((p) => p.document_id === d.id))
+      .map((d) => d.id);
+    if (openDocs.length === 0 && parsedWithParcel.length > 0) {
+      setOpenDocs(parsedWithParcel);
+    }
+  }, [documents.data, parcels.data]);
+
   return (
     <main className="mx-auto max-w-6xl px-6 py-10">
       <Link to="/painel" className="eyebrow hover:text-accent-foreground">
@@ -502,7 +515,12 @@ function AnaliseDetalhe() {
                 Nenhum documento ingerido até o momento.
               </p>
             ) : (
-              <Accordion type="multiple" className="mt-4">
+              <Accordion
+                type="multiple"
+                className="mt-4"
+                value={openDocs}
+                onValueChange={setOpenDocs}
+              >
                 {documents.data!.map((d) => {
                   const parcel = (parcels.data ?? []).find(
                     (p) => p.document_id === d.id,
