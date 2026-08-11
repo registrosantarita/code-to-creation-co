@@ -331,7 +331,14 @@ export function TrechosConferidos({
                         align="left"
                       />
                     </td>
-                    <td className="numeric py-2 pr-3 text-right">{g.trechos}</td>
+                    <td className="numeric py-2 pr-3 text-right">
+                      <Par
+                        a={String(g.trechos)}
+                        b={g.trechos_b > 0 ? String(g.trechos_b) : "—"}
+                        corA={corA}
+                        corB={corB}
+                      />
+                    </td>
                     <td className="numeric py-2 pr-3 text-right">
                       <Par
                         a={fmtMedida(g.extensao_m)}
