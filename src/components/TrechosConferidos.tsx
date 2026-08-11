@@ -1,7 +1,8 @@
 import { Check, Minus, X } from "lucide-react";
-import { fmtMedida, degToDms } from "@/lib/labels";
+import { fmtMedida, degToDms, coordToDms } from "@/lib/labels";
 import type { TrechoConferido } from "@/lib/comparison-engine";
 import { agruparConfrontantes } from "@/lib/confrontantes";
+import type { VertexCoordRow } from "@/lib/export-registral";
 
 export function lerTrechos(metrics: Record<string, unknown>): TrechoConferido[] {
   const t = metrics["trechos"];
@@ -13,7 +14,10 @@ type Props = {
   extensaoM?: number | null;
   labelA?: string;
   labelB?: string;
+  /** Coordenadas dos vértices do documento A, indexadas pelo nome em maiúsculas. */
+  vertices?: Map<string, VertexCoordRow>;
 };
+
 
 function Situacao({
   ok,
