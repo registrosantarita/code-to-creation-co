@@ -1,7 +1,8 @@
 import { Check, Minus, X } from "lucide-react";
-import { fmtMedida, degToDms } from "@/lib/labels";
+import { fmtMedida, degToDms, coordToDms } from "@/lib/labels";
 import type { TrechoConferido } from "@/lib/comparison-engine";
 import { agruparConfrontantes } from "@/lib/confrontantes";
+import type { VertexCoordRow } from "@/lib/export-registral";
 
 export function lerTrechos(metrics: Record<string, unknown>): TrechoConferido[] {
   const t = metrics["trechos"];
@@ -13,7 +14,10 @@ type Props = {
   extensaoM?: number | null;
   labelA?: string;
   labelB?: string;
+  /** Coordenadas dos vértices do documento A, indexadas pelo nome em maiúsculas. */
+  vertices?: Map<string, VertexCoordRow> | undefined;
 };
+
 
 function Situacao({
   ok,
@@ -45,8 +49,17 @@ function Situacao({
 }
 
 
+const vname = (v: string | null | undefined): string =>
+  (v ?? "").trim().replace(/[.,;]+$/, "").toUpperCase();
+
 /** Conferência trecho a trecho: vértice inicial → final e conformidade. */
-export function TrechosConferidos({ trechos, extensaoM, labelA, labelB }: Props) {
+export function TrechosConferidos({
+  trechos,
+  extensaoM,
+  labelA,
+  labelB,
+  vertices,
+}: Props) {
   if (trechos.length === 0) return null;
 
   const conformes = trechos.filter((t) => t.ok).length;
@@ -55,6 +68,17 @@ export function TrechosConferidos({ trechos, extensaoM, labelA, labelB }: Props)
   const inicio = primeiro.de_a ?? `seg. ${primeiro.seq_a}`;
   const fim = ultimo.ate_a ?? `seg. ${ultimo.seq_a}`;
   const confrontacoes = agruparConfrontantes(trechos);
+
+  const coordDe = (t: TrechoConferido) => vertices?.get(vname(t.de_a));
+  // Colunas geodésicas/planas só aparecem quando o documento traz o dado.
+  const temGeo = trechos.some((t) => {
+    const v = coordDe(t);
+    return v?.lat != null || v?.lon != null;
+  });
+  const temPlana = trechos.some((t) => {
+    const v = coordDe(t);
+    return v?.north != null || v?.east != null;
+  });
 
   return (
     <>
@@ -81,48 +105,84 @@ export function TrechosConferidos({ trechos, extensaoM, labelA, labelB }: Props)
             <thead>
               <tr className="border-b border-border text-left">
                 <th className="eyebrow py-2 pr-3">#</th>
-                <th className="eyebrow py-2 pr-3">
-                  Trecho {labelA ? `— ${labelA}` : "— documento A"}
+                <th className="eyebrow py-2 pr-3" title={labelA ?? "Documento A"}>
+                  TRECHO DE (Doc. A)
                 </th>
-                <th className="eyebrow py-2 pr-3">
-                  Correspondente {labelB ? `— ${labelB}` : "— documento B"}
+                <th className="eyebrow py-2 pr-3" title={labelB ?? "Documento B"}>
+                  TRECHO PARA (Doc. B)
                 </th>
-                <th className="eyebrow py-2 pr-3 text-right">Distância (m)</th>
-                <th className="eyebrow py-2 pr-3 text-right">Azimute</th>
-                <th className="eyebrow py-2 pr-3 text-right">Cota (m)</th>
-                <th className="eyebrow py-2 pr-3 text-center">Situação</th>
+                {temGeo && (
+                  <>
+                    <th className="eyebrow py-2 pr-3 text-right">LONGITUDE</th>
+                    <th className="eyebrow py-2 pr-3 text-right">LATITUDE</th>
+                  </>
+                )}
+                {temPlana && (
+                  <>
+                    <th className="eyebrow py-2 pr-3 text-right">COORD. N(Y)</th>
+                    <th className="eyebrow py-2 pr-3 text-right">COORD. E(X)</th>
+                  </>
+                )}
+                <th className="eyebrow py-2 pr-3 text-right">ALT. (m)</th>
+                <th className="eyebrow py-2 pr-3 text-right">ÂNGULO</th>
+                <th className="eyebrow py-2 pr-3 text-right">DIST. (m)</th>
+                <th className="eyebrow py-2 pr-3 text-center" aria-label="Situação" />
               </tr>
             </thead>
             <tbody>
-              {trechos.map((t) => (
-                <tr
-                  key={`${t.seq_a}-${t.seq_b}`}
-                  className="border-b border-border/60 align-top"
-                >
-                  <td className="numeric py-2 pr-3 text-muted-foreground">{t.seq_a}</td>
-                  <td className="numeric py-2 pr-3">
-                    {t.de_a ?? "?"} → {t.ate_a ?? "?"}
-                  </td>
-                  <td className="numeric py-2 pr-3 text-muted-foreground">
-                    {t.de_b ?? "?"} → {t.ate_b ?? "?"}
-                  </td>
-                  <td className="numeric py-2 pr-3 text-right">
-                    {fmtMedida(t.distancia_a)} / {fmtMedida(t.distancia_b)}
-                  </td>
-                  <td className="numeric py-2 pr-3 text-right">
-                    {degToDms(t.azimute_a)} / {degToDms(t.azimute_b)}
-                  </td>
-                  <td className="numeric py-2 pr-3 text-right">
-                    {fmtMedida(t.cota_a)} / {fmtMedida(t.cota_b)}
-                  </td>
-                  <td className="py-2 pr-3">
-                    <Situacao ok={t.ok} problemas={t.problemas} comparado={t.comparado ?? true} />
-                  </td>
-                </tr>
-              ))}
+              {trechos.map((t) => {
+                const v = coordDe(t);
+                return (
+                  <tr
+                    key={`${t.seq_a}-${t.seq_b}`}
+                    className="border-b border-border/60 align-top"
+                  >
+                    <td className="numeric py-2 pr-3 text-muted-foreground">{t.seq_a}</td>
+                    <td className="numeric py-2 pr-3">
+                      {t.de_a ?? "?"} → {t.ate_a ?? "?"}
+                    </td>
+                    <td className="numeric py-2 pr-3 text-muted-foreground">
+                      {t.de_b ?? "?"} → {t.ate_b ?? "?"}
+                    </td>
+                    {temGeo && (
+                      <>
+                        <td className="numeric py-2 pr-3 text-right">
+                          {coordToDms(v?.lon ?? null, "lon")}
+                        </td>
+                        <td className="numeric py-2 pr-3 text-right">
+                          {coordToDms(v?.lat ?? null, "lat")}
+                        </td>
+                      </>
+                    )}
+                    {temPlana && (
+                      <>
+                        <td className="numeric py-2 pr-3 text-right">
+                          {fmtMedida(v?.north ?? null)}
+                        </td>
+                        <td className="numeric py-2 pr-3 text-right">
+                          {fmtMedida(v?.east ?? null)}
+                        </td>
+                      </>
+                    )}
+                    <td className="numeric py-2 pr-3 text-right">
+                      {fmtMedida(t.cota_a)} / {fmtMedida(t.cota_b)}
+                    </td>
+                    <td className="numeric py-2 pr-3 text-right">
+                      {degToDms(t.azimute_a)} / {degToDms(t.azimute_b)}
+                    </td>
+                    <td className="numeric py-2 pr-3 text-right">
+                      {fmtMedida(t.distancia_a)} / {fmtMedida(t.distancia_b)}
+                    </td>
+                    <td className="py-2 pr-3">
+                      <Situacao ok={t.ok} problemas={t.problemas} comparado={t.comparado ?? true} />
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>
+
       </section>
 
       {confrontacoes.length > 0 && (

@@ -11,6 +11,8 @@ import {
 import { Button } from "@/components/ui/button";
 import { exportarRelatorioPdf } from "@/lib/export-registral";
 import { TrechosConferidos, lerTrechos } from "@/components/TrechosConferidos";
+import { getVertices, type VertexCoordRow } from "@/lib/export-registral";
+
 
 
 export const Route = createFileRoute("/_authenticated/comparacoes/$id")({
@@ -81,6 +83,28 @@ function Relatorio() {
       return data;
     },
   });
+
+  // Coordenadas dos vértices do documento A, para as colunas geodésicas/planas.
+  const vertices = useQuery({
+    enabled: !!comparison.data?.document_a_id,
+    queryKey: ["comparison-vertices", id, comparison.data?.document_a_id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("parcels")
+        .select("raw_extraction")
+        .eq("document_id", comparison.data!.document_a_id!);
+      if (error) throw error;
+      const map = new Map<string, VertexCoordRow>();
+      (data ?? []).forEach((p) => {
+        getVertices({ raw_extraction: p.raw_extraction } as never).forEach((v) => {
+          const key = String(v.name ?? "").trim().replace(/[.,;]+$/, "").toUpperCase();
+          if (key && !map.has(key)) map.set(key, v);
+        });
+      });
+      return map;
+    },
+  });
+
 
   if (comparison.isLoading || !comparison.data) {
     return (
@@ -224,7 +248,9 @@ function Relatorio() {
         extensaoM={extensaoConferida}
         labelA={nomeDoc(c.document_a_id)}
         labelB={nomeDoc(c.document_b_id)}
+        vertices={vertices.data}
       />
+
 
 
 
