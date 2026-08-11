@@ -16,6 +16,8 @@ type Props = {
   labelB?: string;
   /** Coordenadas dos vértices do documento A, indexadas pelo nome em maiúsculas. */
   vertices?: Map<string, VertexCoordRow> | undefined;
+  /** Coordenadas dos vértices do documento comparado, indexadas pelo nome. */
+  verticesB?: Map<string, VertexCoordRow> | undefined;
   /** Posição do documento paradigma na ordem de upload: 0 → A, 1 → B... */
   indiceA?: number;
   /** Posição do documento comparado na ordem de upload: 1 → B, 2 → C... */
@@ -87,6 +89,7 @@ export function TrechosConferidos({
   labelA,
   labelB,
   vertices,
+  verticesB,
   indiceA = 0,
   indiceB = 1,
 }: Props) {
@@ -105,14 +108,19 @@ export function TrechosConferidos({
   const confrontacoes = agruparConfrontantes(trechos);
 
   const coordDe = (t: TrechoConferido) => vertices?.get(vname(t.de_a));
-  // Colunas geodésicas/planas só aparecem quando o documento traz o dado.
+  const coordDeB = (t: TrechoConferido) => verticesB?.get(vname(t.de_b));
+  // Colunas geodésicas/planas só aparecem quando algum documento traz o dado.
   const temGeo = trechos.some((t) => {
     const v = coordDe(t);
-    return v?.lat != null || v?.lon != null;
+    const w = coordDeB(t);
+    return v?.lat != null || v?.lon != null || w?.lat != null || w?.lon != null;
   });
   const temPlana = trechos.some((t) => {
     const v = coordDe(t);
-    return v?.north != null || v?.east != null;
+    const w = coordDeB(t);
+    return (
+      v?.north != null || v?.east != null || w?.north != null || w?.east != null
+    );
   });
 
   return (
@@ -154,14 +162,14 @@ export function TrechosConferidos({
                 </th>
                 {temGeo && (
                   <>
-                    <th className={`eyebrow py-2 pr-3 text-right ${corA}`}>LONGITUDE</th>
-                    <th className={`eyebrow py-2 pr-3 text-right ${corA}`}>LATITUDE</th>
+                    <th className="eyebrow py-2 pr-3 text-right">LONGITUDE</th>
+                    <th className="eyebrow py-2 pr-3 text-right">LATITUDE</th>
                   </>
                 )}
                 {temPlana && (
                   <>
-                    <th className={`eyebrow py-2 pr-3 text-right ${corA}`}>COORD. N(Y)</th>
-                    <th className={`eyebrow py-2 pr-3 text-right ${corA}`}>COORD. E(X)</th>
+                    <th className="eyebrow py-2 pr-3 text-right">COORD. N(Y)</th>
+                    <th className="eyebrow py-2 pr-3 text-right">COORD. E(X)</th>
                   </>
                 )}
                 <th className="eyebrow py-2 pr-3 text-right">ALT. (m)</th>
@@ -173,6 +181,7 @@ export function TrechosConferidos({
             <tbody>
               {trechos.map((t) => {
                 const v = coordDe(t);
+                const w = coordDeB(t);
                 return (
                   <tr
                     key={`${t.seq_a}-${t.seq_b}`}
@@ -199,21 +208,41 @@ export function TrechosConferidos({
                     </td>
                     {temGeo && (
                       <>
-                        <td className={`numeric py-2 pr-3 text-right ${corA}`}>
-                          {coordToDms(v?.lon ?? null, "lon")}
+                        <td className="numeric py-2 pr-3">
+                          <Par
+                            a={coordToDms(v?.lon ?? null, "lon")}
+                            b={coordToDms(w?.lon ?? null, "lon")}
+                            corA={corA}
+                            corB={corB}
+                          />
                         </td>
-                        <td className={`numeric py-2 pr-3 text-right ${corA}`}>
-                          {coordToDms(v?.lat ?? null, "lat")}
+                        <td className="numeric py-2 pr-3">
+                          <Par
+                            a={coordToDms(v?.lat ?? null, "lat")}
+                            b={coordToDms(w?.lat ?? null, "lat")}
+                            corA={corA}
+                            corB={corB}
+                          />
                         </td>
                       </>
                     )}
                     {temPlana && (
                       <>
-                        <td className={`numeric py-2 pr-3 text-right ${corA}`}>
-                          {fmtMedida(v?.north ?? null)}
+                        <td className="numeric py-2 pr-3">
+                          <Par
+                            a={fmtMedida(v?.north ?? null)}
+                            b={fmtMedida(w?.north ?? null)}
+                            corA={corA}
+                            corB={corB}
+                          />
                         </td>
-                        <td className={`numeric py-2 pr-3 text-right ${corA}`}>
-                          {fmtMedida(v?.east ?? null)}
+                        <td className="numeric py-2 pr-3">
+                          <Par
+                            a={fmtMedida(v?.east ?? null)}
+                            b={fmtMedida(w?.east ?? null)}
+                            corA={corA}
+                            corB={corB}
+                          />
                         </td>
                       </>
                     )}
