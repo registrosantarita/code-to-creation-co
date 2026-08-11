@@ -1,5 +1,5 @@
 import { Check, Minus, X } from "lucide-react";
-import { fmtMedida, degToDms, coordToDms, docColor, docLetra } from "@/lib/labels";
+import { fmtMedida, anguloLiteral, coordToDms, docColor, docLetra } from "@/lib/labels";
 import type { TrechoConferido } from "@/lib/comparison-engine";
 import { agruparConfrontantes } from "@/lib/confrontantes";
 import type { VertexCoordRow } from "@/lib/export-registral";
@@ -227,8 +227,8 @@ export function TrechosConferidos({
                     </td>
                     <td className="numeric py-2 pr-3">
                       <Par
-                        a={degToDms(t.azimute_a)}
-                        b={degToDms(t.azimute_b)}
+                        a={anguloLiteral(t.azimute_txt_a, t.azimute_a)}
+                        b={anguloLiteral(t.azimute_txt_b, t.azimute_b)}
                         corA={corA}
                         corB={corB}
                       />
