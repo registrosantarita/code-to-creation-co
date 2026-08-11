@@ -252,6 +252,59 @@ export function compararLoteComBloco(
     });
   }
 
+  // Nomes grafados na planta (rua de frente e vizinhos) x confrontantes do memorial.
+  const nomesPlanta = [...bloco.logradouros, ...bloco.rotulos];
+  const nomesMemorial = [
+    ...memorial.confrontantes,
+    ...memorial.segments.map((s) => s.confrontante ?? ""),
+  ]
+    .map((v) => (v ?? "").trim())
+    .filter(Boolean);
+
+  const nomesConferidos: { planta: string; memorial: string }[] = [];
+  const nomesSemCorrespondencia: string[] = [];
+  nomesPlanta.forEach((np) => {
+    const achado = nomesMemorial.find((nm) => mesmoConfrontante(np, nm));
+    if (achado) nomesConferidos.push({ planta: np, memorial: achado });
+    else nomesSemCorrespondencia.push(np);
+  });
+
+  if (nomesConferidos.length > 0) {
+    findings.push({
+      severity: "informative",
+      code: "CONFRONTANTE_CONFERIDO",
+      title: "Confrontantes/logradouro da planta conferem com o memorial",
+      description: nomesConferidos
+        .map((n) => `Planta: "${n.planta}" ≙ memorial: "${n.memorial}"`)
+        .join("; "),
+      evidence: { nomes_conferidos: nomesConferidos },
+    });
+  }
+
+  if (nomesMemorial.length > 0 && nomesSemCorrespondencia.length > 0) {
+    findings.push({
+      severity: "moderate",
+      code: "CONFRONTANTE_PLANTA_SEM_CORRESPONDENCIA",
+      title: "Nome grafado na planta sem correspondência no memorial",
+      description: `Rótulo(s) lido(s) na planta junto a este lote e não localizado(s) entre os confrontantes do memorial: ${nomesSemCorrespondencia
+        .map((n) => `"${n}"`)
+        .join(", ")}. Verifique se se trata de outra grafia, de legenda geral do desenho ou de divergência real.`,
+      evidence: {
+        nomes_planta: nomesSemCorrespondencia,
+        confrontantes_memorial: nomesMemorial,
+      },
+    });
+  } else if (nomesPlanta.length === 0) {
+    findings.push({
+      severity: "informative",
+      code: "PLANTA_SEM_ROTULO_TEXTUAL",
+      title: "Planta sem nomes legíveis junto ao lote",
+      description:
+        "Não há nome de logradouro ou de confrontante legível próximo a este bloco cotado; a ausência não é tratada como divergência.",
+      evidence: {},
+    });
+  }
+
   const critico = findings.some((f) => f.severity === "critical");
   const alerta = findings.some((f) => f.severity === "inconclusive");
 
@@ -261,16 +314,24 @@ export function compararLoteComBloco(
       ? `Divergência entre as cotas da planta e o memorial (${naoConferidas.length} cota(s)).`
       : alerta
         ? "Conferência inconclusiva: faltam medidas no memorial."
-        : `Todas as ${bloco.cotas.length} cota(s) representadas na planta conferem com o memorial.`,
+        : `Todas as ${bloco.cotas.length} cota(s) representadas na planta conferem com o memorial${
+            nomesConferidos.length > 0
+              ? `; ${nomesConferidos.length} nome(s) de logradouro/confrontante também conferem`
+              : ""
+          }.`,
     metrics: {
       modo: "cotas_avulsas",
       area_planta: bloco.area_m2,
       cotas_planta: bloco.cotas.length,
       cotas_nao_conferidas: naoConferidas.length,
+      nomes_planta: nomesPlanta.length,
+      nomes_conferidos: nomesConferidos.length,
+      nomes_sem_correspondencia: nomesSemCorrespondencia.length,
     },
     findings,
   };
 }
+
 
 /** Casa cada lote do memorial com o bloco cotado de mesma área. */
 export function parearPorArea(
