@@ -108,7 +108,35 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { rel: "manifest", href: "/manifest.webmanifest" },
       { rel: "apple-touch-icon", href: "/apple-touch-icon.png", sizes: "180x180" },
     ],
-
+    scripts: [
+      {
+        type: "application/ld+json",
+        children: JSON.stringify({
+          "@context": "https://schema.org",
+          "@graph": [
+            {
+              "@type": "Organization",
+              "@id": "https://code-to-creation-co.lovable.app/#organization",
+              name: "GeoConfronto",
+              url: "https://code-to-creation-co.lovable.app/",
+              logo: "https://code-to-creation-co.lovable.app/apple-touch-icon.png",
+              description:
+                "Plataforma de conferência registral, geométrica e normativa de memoriais descritivos, plantas e títulos.",
+            },
+            {
+              "@type": "WebSite",
+              "@id": "https://code-to-creation-co.lovable.app/#website",
+              name: "GeoConfronto",
+              url: "https://code-to-creation-co.lovable.app/",
+              inLanguage: "pt-BR",
+              publisher: { "@id": "https://code-to-creation-co.lovable.app/#organization" },
+              description:
+                "GeoConfronto — extração, normalização e comparação auditável de memoriais descritivos, plantas e escrituras.",
+            },
+          ],
+        }),
+      },
+    ],
   }),
   shellComponent: RootShell,
   component: RootComponent,
