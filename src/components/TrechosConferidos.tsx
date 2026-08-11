@@ -112,7 +112,7 @@ export function TrechosConferidos({ trechos, extensaoM, labelA, labelB }: Props)
                     {degToDms(t.azimute_a)} / {degToDms(t.azimute_b)}
                   </td>
                   <td className="py-2 pr-3">
-                    <Situacao ok={t.ok} problemas={t.problemas} />
+                    <Situacao ok={t.ok} problemas={t.problemas} comparado={t.comparado ?? true} />
                   </td>
                 </tr>
               ))}
