@@ -107,13 +107,13 @@ function Relatorio() {
 
   // Posição do documento comparado (B, C, D...) dentro da análise, usada para
   // colorir as informações de cada documento de forma consistente.
-  const irmas = useQuery({
+  const docsAnalise = useQuery({
     enabled: !!comparison.data?.analysis_id,
-    queryKey: ["comparison-siblings", comparison.data?.analysis_id],
+    queryKey: ["analysis-docs-order", comparison.data?.analysis_id],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("comparisons")
-        .select("id, document_b_id, created_at")
+        .from("documents")
+        .select("id, created_at")
         .eq("analysis_id", comparison.data!.analysis_id)
         .order("created_at", { ascending: true });
       if (error) throw error;
@@ -143,8 +143,14 @@ function Relatorio() {
   const nomeDoc = (docId: string | null) =>
     (docs.data ?? []).find((d) => d.id === docId)?.file_name ?? "Documento";
 
-  const idx = (irmas.data ?? []).findIndex((s) => s.id === c.id);
-  const indiceB = idx >= 0 ? idx + 1 : 1;
+  // Letra/cor de cada documento segue a ordem de inclusão na guia de upload.
+  const ordemDocs = (docsAnalise.data ?? []).map((d) => d.id);
+  const posDoc = (docId: string | null, fallback: number) => {
+    const i = docId ? ordemDocs.indexOf(docId) : -1;
+    return i >= 0 ? i : fallback;
+  };
+  const indiceA = posDoc(c.document_a_id, 0);
+  const indiceB = posDoc(c.document_b_id, 1);
 
 
   const ordenados = [...(findings.data ?? [])].sort(
@@ -269,6 +275,7 @@ function Relatorio() {
         labelA={nomeDoc(c.document_a_id)}
         labelB={nomeDoc(c.document_b_id)}
         vertices={vertices.data}
+        indiceA={indiceA}
         indiceB={indiceB}
       />
 

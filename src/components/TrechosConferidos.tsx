@@ -16,7 +16,9 @@ type Props = {
   labelB?: string;
   /** Coordenadas dos vértices do documento A, indexadas pelo nome em maiúsculas. */
   vertices?: Map<string, VertexCoordRow> | undefined;
-  /** Posição do documento comparado na análise: 1 → B, 2 → C, 3 → D... */
+  /** Posição do documento paradigma na ordem de upload: 0 → A, 1 → B... */
+  indiceA?: number;
+  /** Posição do documento comparado na ordem de upload: 1 → B, 2 → C... */
   indiceB?: number;
 };
 
@@ -85,11 +87,13 @@ export function TrechosConferidos({
   labelA,
   labelB,
   vertices,
+  indiceA = 0,
   indiceB = 1,
 }: Props) {
   if (trechos.length === 0) return null;
-  const corA = docColor(0);
+  const corA = docColor(indiceA);
   const corB = docColor(indiceB);
+  const letraA = docLetra(indiceA);
   const letraB = docLetra(indiceB);
 
 
@@ -136,14 +140,17 @@ export function TrechosConferidos({
             <thead>
               <tr className="border-b border-border text-left">
                 <th className="eyebrow py-2 pr-3">#</th>
-                <th className={`eyebrow py-2 pr-3 ${corA}`} title={labelA ?? "Documento A"}>
-                  TRECHO DE (Doc. A)
+                <th
+                  className="eyebrow py-2 pr-3"
+                  title={`Doc. ${letraA}: ${labelA ?? ""} / Doc. ${letraB}: ${labelB ?? ""}`}
+                >
+                  TRECHO DE
                 </th>
                 <th
-                  className={`eyebrow py-2 pr-3 ${corB}`}
-                  title={labelB ?? `Documento ${letraB}`}
+                  className="eyebrow py-2 pr-3"
+                  title={`Doc. ${letraA}: ${labelA ?? ""} / Doc. ${letraB}: ${labelB ?? ""}`}
                 >
-                  TRECHO PARA (Doc. {letraB})
+                  TRECHO PARA
                 </th>
                 {temGeo && (
                   <>
@@ -172,11 +179,23 @@ export function TrechosConferidos({
                     className="border-b border-border/60 align-top"
                   >
                     <td className="numeric py-2 pr-3 text-muted-foreground">{t.seq_a}</td>
-                    <td className={`numeric py-2 pr-3 ${corA}`}>
-                      {t.de_a ?? "?"} → {t.ate_a ?? "?"}
+                    <td className="numeric py-2 pr-3">
+                      <Par
+                        a={t.de_a ?? "?"}
+                        b={t.de_b ?? "?"}
+                        corA={corA}
+                        corB={corB}
+                        align="left"
+                      />
                     </td>
-                    <td className={`numeric py-2 pr-3 ${corB}`}>
-                      {t.de_b ?? "?"} → {t.ate_b ?? "?"}
+                    <td className="numeric py-2 pr-3">
+                      <Par
+                        a={t.ate_a ?? "?"}
+                        b={t.ate_b ?? "?"}
+                        corA={corA}
+                        corB={corB}
+                        align="left"
+                      />
                     </td>
                     {temGeo && (
                       <>
