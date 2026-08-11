@@ -314,6 +314,8 @@ export const runComparison = createServerFn({ method: "POST" })
             from_vertex: s.from_vertex,
             to_vertex: s.to_vertex,
             azimuth_deg: s.azimuth_deg === null ? null : Number(s.azimuth_deg),
+        bearing_text: s.bearing_text,
+            bearing_text: s.bearing_text,
             distance_m: s.distance_m === null ? null : Number(s.distance_m),
             altitude_from_m:
               s.altitude_from_m === null ? null : Number(s.altitude_from_m),
@@ -478,6 +480,7 @@ export const runLotBatchComparison = createServerFn({ method: "POST" })
         from_vertex: s.from_vertex,
         to_vertex: s.to_vertex,
         azimuth_deg: s.azimuth_deg === null ? null : Number(s.azimuth_deg),
+        bearing_text: s.bearing_text,
         distance_m: s.distance_m === null ? null : Number(s.distance_m),
         altitude_from_m: s.altitude_from_m === null ? null : Number(s.altitude_from_m),
         altitude_to_m: s.altitude_to_m === null ? null : Number(s.altitude_to_m),

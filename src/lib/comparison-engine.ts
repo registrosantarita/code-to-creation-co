@@ -45,6 +45,8 @@ export type SegmentInput = {
   from_vertex: string | null;
   to_vertex: string | null;
   azimuth_deg: number | null;
+  /** Ângulo exatamente como escrito no documento (ex.: "45°12'"). */
+  bearing_text?: string | null;
   distance_m: number | null;
   altitude_from_m: number | null;
   altitude_to_m: number | null;
@@ -91,6 +93,9 @@ export type TrechoConferido = {
   distancia_b: number | null;
   azimute_a: number | null;
   azimute_b: number | null;
+  /** Texto literal do ângulo no documento, quando disponível. */
+  azimute_txt_a?: string | null;
+  azimute_txt_b?: string | null;
   /** Cota (altitude) do vértice inicial do trecho, em metros. */
   cota_a: number | null;
   cota_b: number | null;
@@ -122,6 +127,9 @@ function montarTrecho(
     distancia_a: sa.distance_m,
     distancia_b: sb.distance_m,
     azimute_a: sa.azimuth_deg,
+    azimute_txt_a: sa.bearing_text ?? null,
+    // Com caminhamento invertido o valor exibido é o contra-azimute calculado.
+    azimute_txt_b: invertido ? null : (sb.bearing_text ?? null),
     azimute_b:
       sb.azimuth_deg === null
         ? null

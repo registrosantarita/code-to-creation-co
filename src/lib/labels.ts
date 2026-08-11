@@ -191,6 +191,30 @@ export function fmtMedida(value: number | string | null, min = 2, max = 6): stri
   });
 }
 
+/**
+ * Ângulo com a literalidade do documento: se o texto de origem traz segundos,
+ * eles aparecem; se traz apenas grau e minuto, nada é completado.
+ */
+export function anguloLiteral(
+  texto: string | null | undefined,
+  valor: number | string | null,
+): string {
+  const t = (texto ?? "").trim();
+  const m = t.match(
+    /(-?\d{1,3})\s*[°º]\s*(?:(\d{1,2})\s*['\u2032´`])?\s*(?:(\d{1,2}(?:[.,]\d+)?)\s*["\u2033''])?/,
+  );
+  if (m && m[1]) {
+    const g = m[1];
+    if (m[2] === undefined) return `${g}°`;
+    const mm = m[2].padStart(2, "0");
+    if (m[3] === undefined) return `${g}°${mm}'`;
+    const [si, sf] = m[3].replace(".", ",").split(",");
+    const ss = (si ?? "0").padStart(2, "0");
+    return `${g}°${mm}'${sf ? `${ss},${sf}` : ss}"`;
+  }
+  return degToDms(valor);
+}
+
 /** Ângulo/azimute sempre em grau, minuto e segundo. */
 export function fmtAngulo(value: number | string | null): string {
   return degToDms(value === "" ? null : (value as number | string | null));
