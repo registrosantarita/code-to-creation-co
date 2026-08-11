@@ -829,7 +829,7 @@ function AnaliseDetalhe() {
                       <Button
                         type="button"
                         variant="ghost"
-                        size="icon-sm"
+                        size="icon"
                         className="h-6 w-6 shrink-0 text-muted-foreground hover:text-foreground"
                         aria-label="O que cada critério faz?"
                       >
@@ -847,7 +847,7 @@ function AnaliseDetalhe() {
                       <div className="mt-2 space-y-4 text-sm">
                         <div className="space-y-2">
                           <h4 className="font-medium">
-                            {TIPO_COMPARACAO.memorial_to_memorial}
+                            {TIPO_COMPARACAO["memorial_to_memorial"]}
                           </h4>
                           <p className="text-muted-foreground">
                             Confronta dois memoriais descritivos: azimutes/rumbos,
@@ -857,7 +857,7 @@ function AnaliseDetalhe() {
                         </div>
                         <div className="space-y-2">
                           <h4 className="font-medium">
-                            {TIPO_COMPARACAO.memorial_to_plan}
+                            {TIPO_COMPARACAO["memorial_to_plan"]}
                           </h4>
                           <p className="text-muted-foreground">
                             Compara a descrição textual do memorial com a
@@ -867,7 +867,7 @@ function AnaliseDetalhe() {
                         </div>
                         <div className="space-y-2">
                           <h4 className="font-medium">
-                            {TIPO_COMPARACAO.plan_to_plan}
+                            {TIPO_COMPARACAO["plan_to_plan"]}
                           </h4>
                           <p className="text-muted-foreground">
                             Confronta geometria vetorial/gráfica entre duas
@@ -876,7 +876,7 @@ function AnaliseDetalhe() {
                         </div>
                         <div className="space-y-2">
                           <h4 className="font-medium">
-                            {TIPO_COMPARACAO.memorial_to_title}
+                            {TIPO_COMPARACAO["memorial_to_title"]}
                           </h4>
                           <p className="text-muted-foreground">
                             Compara o memorial com a descrição contida em uma
@@ -885,7 +885,7 @@ function AnaliseDetalhe() {
                         </div>
                         <div className="space-y-2">
                           <h4 className="font-medium">
-                            {TIPO_COMPARACAO.memorial_to_registry}
+                            {TIPO_COMPARACAO["memorial_to_registry"]}
                           </h4>
                           <p className="text-muted-foreground">
                             Compara o memorial com os dados de uma matrícula.
@@ -893,7 +893,7 @@ function AnaliseDetalhe() {
                         </div>
                         <div className="space-y-2">
                           <h4 className="font-medium">
-                            {TIPO_COMPARACAO.boundary_to_boundary}
+                            {TIPO_COMPARACAO["boundary_to_boundary"]}
                           </h4>
                           <p className="text-muted-foreground">
                             Modo vizinhos: confere apenas o trecho de divisa
@@ -905,7 +905,7 @@ function AnaliseDetalhe() {
                           </p>
                         </div>
                         <div className="space-y-2">
-                          <h4 className="font-medium">{TIPO_COMPARACAO.custom}</h4>
+                          <h4 className="font-medium">{TIPO_COMPARACAO["custom"]}</h4>
                           <p className="text-muted-foreground">
                             Permite adicionar quantos documentos comparáveis
                             quiser (B, C, D…), de categorias iguais ou diferentes.
