@@ -22,6 +22,7 @@ import {
 } from "@/lib/labels";
 import { Button } from "@/components/ui/button";
 import { exportarDescricaoXlsx } from "@/lib/export-registral";
+import { exportarMatriculaXlsx } from "@/lib/export-matricula";
 
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -680,6 +681,38 @@ function AnaliseDetalhe() {
                               Baixar descrição (XLSX)
                             </Button>
                           )}
+                          {parcel && (parcel.segments ?? []).length > 0 && (
+                            <Button
+                              variant="secondary"
+                              size="sm"
+                              onClick={async () => {
+                                const base = (d.file_name ?? "descricao").replace(
+                                  /\.[^.]+$/,
+                                  "",
+                                );
+                                const r = await exportarMatriculaXlsx(
+                                  {
+                                    label: parcel.label,
+                                    area_m2: parcel.area_m2,
+                                    declared_perimeter_m: parcel.declared_perimeter_m,
+                                    computed_perimeter_m: parcel.computed_perimeter_m,
+                                    vertex_count: parcel.vertex_count,
+                                    raw_extraction: parcel.raw_extraction,
+                                    segments: (parcel.segments ?? []) as never,
+                                  },
+                                  `descricao-matricula-${base}.xlsx`,
+                                );
+                                toast.success(
+                                  r.sigef
+                                    ? `Descrição para matrícula gerada: ${r.linhas} vértices e ${r.confrontacoes} confrontação(ões).`
+                                    : `Descrição para matrícula gerada com ${r.linhas} linhas.`,
+                                );
+                              }}
+                            >
+                              Gerar descrição para Matrícula
+                            </Button>
+                          )}
+
                         </div>
 
                       </AccordionContent>
