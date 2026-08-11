@@ -735,44 +735,6 @@ function AnaliseDetalhe() {
                 )}
               </div>
               <div className="space-y-2">
-                <Label>Documento B</Label>
-                <Select
-                  value={docB}
-                  onValueChange={(v) => {
-                    setDocB(v);
-                    setParcelB("");
-                  }}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecionar" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {extraidos.map((d) => (
-                      <SelectItem key={d.id} value={d.id}>
-                        {d.file_name ?? "Texto colado"}
-                        {d.id === docA && poligonosDe(d.id).length > 1
-                          ? " (mesmo documento)"
-                          : ""}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                {poligonosDe(docB).length > 1 && (
-                  <Select value={parcelB} onValueChange={setParcelB}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Polígono (2º por padrão)" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {poligonosDe(docB).map((p, i) => (
-                        <SelectItem key={p.id} value={p.id}>
-                          {p.label ?? `Polígono ${i + 1}`}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                )}
-              </div>
-              <div className="space-y-2">
                 <Label>Tipo de comparação</Label>
                 <Select value={tipo} onValueChange={setTipo}>
                   <SelectTrigger>
@@ -792,11 +754,109 @@ function AnaliseDetalhe() {
                     (distâncias, azimutes e cotas), ignorando nomes de vértices,
                     área, perímetro total e reciprocidade de confrontantes. Um
                     único documento que descreva todos os polígonos envolvidos
-                    pode ser escolhido em A e em B — basta indicar os polígonos.
+                    pode ser escolhido no paradigma e no comparável — basta
+                    indicar os polígonos.
                   </p>
                 ) : null}
               </div>
             </div>
+
+            <div className="mt-8">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <h3 className="text-base">Documentos comparáveis</h3>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() =>
+                    setComparaveis((lista) => [...lista, { doc: "", parcel: "" }])
+                  }
+                >
+                  + Adicionar documento
+                </Button>
+              </div>
+              <p className="mt-2 text-xs text-muted-foreground">
+                Cada documento comparável (B, C, D…) é confrontado com o
+                documento paradigma, gerando uma comparação própria.
+              </p>
+
+              <div className="mt-4 space-y-4">
+                {comparaveis.map((c, i) => (
+                  <div
+                    key={i}
+                    className="grid gap-3 md:grid-cols-[1fr_auto] md:items-start"
+                  >
+                    <div className="space-y-2">
+                      <Label>
+                        Documento {String.fromCharCode(66 + i)}
+                      </Label>
+                      <Select
+                        value={c.doc}
+                        onValueChange={(v) =>
+                          setComparaveis((lista) =>
+                            lista.map((item, j) =>
+                              j === i ? { doc: v, parcel: "" } : item,
+                            ),
+                          )
+                        }
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Selecionar" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {extraidos.map((d) => (
+                            <SelectItem key={d.id} value={d.id}>
+                              {d.file_name ?? "Texto colado"}
+                              {d.id === docA && poligonosDe(d.id).length > 1
+                                ? " (mesmo documento)"
+                                : ""}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      {poligonosDe(c.doc).length > 1 && (
+                        <Select
+                          value={c.parcel}
+                          onValueChange={(v) =>
+                            setComparaveis((lista) =>
+                              lista.map((item, j) =>
+                                j === i ? { ...item, parcel: v } : item,
+                              ),
+                            )
+                          }
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Polígono (2º por padrão)" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {poligonosDe(c.doc).map((p, k) => (
+                              <SelectItem key={p.id} value={p.id}>
+                                {p.label ?? `Polígono ${k + 1}`}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      )}
+                    </div>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      className="md:mt-7"
+                      disabled={comparaveis.length === 1}
+                      onClick={() =>
+                        setComparaveis((lista) =>
+                          lista.filter((_, j) => j !== i),
+                        )
+                      }
+                    >
+                      − Excluir
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            </div>
+
 
 
             <h3 className="mt-8 text-base">Tolerâncias técnicas</h3>
