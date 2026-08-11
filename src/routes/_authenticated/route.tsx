@@ -1,9 +1,12 @@
 import { createFileRoute, Outlet, redirect, Link, useNavigate } from "@tanstack/react-router";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQueryClient, useQuery } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { NavArrows } from "@/components/NavArrows";
+import { souAdmin } from "@/lib/admin.functions";
 import logoAsset from "@/assets/geoconfronto-logo.png.asset.json";
+
 
 
 export const Route = createFileRoute("/_authenticated")({
@@ -20,6 +23,13 @@ function AuthenticatedLayout() {
   const { user } = Route.useRouteContext();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const souAdminFn = useServerFn(souAdmin);
+  const admin = useQuery({
+    queryKey: ["sou-admin"],
+    queryFn: () => souAdminFn({}),
+    staleTime: 5 * 60 * 1000,
+  });
+
 
   async function signOut() {
     await queryClient.cancelQueries();
@@ -50,12 +60,21 @@ function AuthenticatedLayout() {
           </div>
 
           <div className="flex items-center gap-3">
+            {admin.data?.admin && (
+              <Link
+                to="/admin"
+                className="text-xs text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
+              >
+                Administração
+              </Link>
+            )}
             <Link
               to="/normas"
               className="text-xs text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
             >
               Acervo normativo
             </Link>
+
             <Link
               to="/creditos"
               className="text-xs text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
