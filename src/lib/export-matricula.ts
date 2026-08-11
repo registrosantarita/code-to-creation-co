@@ -148,8 +148,8 @@ export async function exportarMatriculaXlsx(
       [
         { titulo: "DE", largura: 14 },
         { titulo: "PARA", largura: 14 },
-        { titulo: "LONGITUDE", largura: 18, fmt: FMT8, alinhar: "right" },
-        { titulo: "LATITUDE", largura: 18, fmt: FMT8, alinhar: "right" },
+        { titulo: "LONGITUDE", largura: 20, alinhar: "right" },
+        { titulo: "LATITUDE", largura: 20, alinhar: "right" },
         { titulo: "ALT. (m)", largura: 12, fmt: FMT2, alinhar: "right" },
         { titulo: "ÂNGULO", largura: 16, alinhar: "right" },
         { titulo: "DIST. (m)", largura: 14, fmt: FMT2, alinhar: "right" },
