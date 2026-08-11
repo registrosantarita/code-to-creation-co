@@ -139,9 +139,11 @@ export function coordToDms(
   if (!Number.isFinite(n)) return "—";
   const negativo = n < 0;
   const hemisferio = eixo === "lat" ? (negativo ? "S" : "N") : negativo ? "W" : "E";
-  const { d, m, s } = decompor(Math.abs(n), 5);
+  // Sem arredondar: mantém todas as casas de segundo presentes no dado de
+  // origem e apenas descarta zeros finais que não foram informados.
+  const { d, m, s } = decompor(Math.abs(n), 6);
   const sinal = negativo ? "-" : "";
-  return `${sinal}${d}°${String(m).padStart(2, "0")}'${segundosStr(s, 5)}"${hemisferio}`;
+  return `${sinal}${d}°${String(m).padStart(2, "0")}'${segundosStr(s, 6)}"${hemisferio}`;
 }
 
 
