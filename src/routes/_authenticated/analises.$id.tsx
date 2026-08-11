@@ -92,6 +92,7 @@ function AnaliseDetalhe() {
   >([{ doc: "", parcel: "" }]);
   const [tipo, setTipo] = useState("memorial_to_memorial");
   const [tol, setTol] = useState(DEFAULT_TOLERANCES);
+  const [unidadeArea, setUnidadeArea] = useState<"m2" | "ha">("m2");
 
   const analysis = useQuery({
     queryKey: ["analysis", id],
@@ -700,7 +701,7 @@ function AnaliseDetalhe() {
 
             <div className="mt-6 grid gap-4 md:grid-cols-3">
               <div className="space-y-2">
-                <Label>Documento A</Label>
+                <Label>Documento A (paradigma)</Label>
                 <Select
                   value={docA}
                   onValueChange={(v) => {
@@ -868,6 +869,7 @@ function AnaliseDetalhe() {
                   ["distanceM", "Distância (m)", 0.001],
                   ["azimuthDeg", "Azimute (°)", 0.0001],
                   ["altitudeM", "Altitude (m)", 0.01],
+                  ["perimeterM", "Perímetro (m)", 0.001],
                 ] as const
               ).map(([key, label, step]) => (
                 <div key={key} className="space-y-2">
@@ -884,7 +886,50 @@ function AnaliseDetalhe() {
                   />
                 </div>
               ))}
+
+              <div className="space-y-2">
+                <Label htmlFor="areaM2">
+                  Área ({unidadeArea === "ha" ? "ha" : "m²"})
+                </Label>
+                <div className="flex gap-2">
+                  <Input
+                    id="areaM2"
+                    type="number"
+                    step={unidadeArea === "ha" ? 0.0001 : 0.01}
+                    min={0}
+                    className="flex-1"
+                    value={
+                      unidadeArea === "ha" ? tol.areaM2 / 10000 : tol.areaM2
+                    }
+                    onChange={(e) =>
+                      setTol({
+                        ...tol,
+                        areaM2:
+                          Number(e.target.value) *
+                          (unidadeArea === "ha" ? 10000 : 1),
+                      })
+                    }
+                  />
+                  <Select
+                    value={unidadeArea}
+                    onValueChange={(v) => setUnidadeArea(v as "m2" | "ha")}
+                  >
+                    <SelectTrigger className="w-24">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="m2">m²</SelectItem>
+                      <SelectItem value="ha">ha</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
             </div>
+            <p className="mt-3 text-xs leading-relaxed text-muted-foreground">
+              Área e perímetro conferem quando a diferença fica dentro do
+              percentual <em>ou</em> da medida absoluta informada.
+            </p>
+
 
             <div className="mt-6 flex flex-wrap items-center gap-3">
               <Button
