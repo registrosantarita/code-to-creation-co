@@ -78,17 +78,42 @@ export function fmtNum(value: number | string | null, digits = 2): string {
  * Ângulo em grau/minuto/segundo respeitando a precisão do documento de origem:
  * não completa casas que não foram informadas (45°12' permanece 45°12').
  */
+/** Decompõe graus decimais em g/m/s sem arredondar o que não existe. */
+function decompor(abs: number, casasSeg: number) {
+  let d = Math.floor(abs);
+  const mFloat = (abs - d) * 60;
+  let m = Math.floor(mFloat + 1e-9);
+  const fator = 10 ** casasSeg;
+  let s = Math.round((mFloat - m) * 60 * fator) / fator;
+  if (s >= 60) {
+    s -= 60;
+    m += 1;
+  }
+  if (m >= 60) {
+    m -= 60;
+    d += 1;
+  }
+  return { d, m, s };
+}
+
+/** Segundos sem zeros artificiais: 24,443 / 07 / 12,5 */
+function segundosStr(s: number, casas: number): string {
+  const txt = s.toFixed(casas);
+  const [int, frac = ""] = txt.split(".");
+  const base = int!.padStart(2, "0");
+  const fracLimpa = frac.replace(/0+$/, "");
+  return fracLimpa ? `${base},${fracLimpa}` : base;
+}
+
 export function degToDms(value: number | string | null): string {
   if (value === null) return "—";
   const n = typeof value === "string" ? Number(value) : value;
   if (!Number.isFinite(n)) return "—";
   const sinal = n < 0 ? "-" : "";
-  const abs = Math.abs(n);
-  let d = Math.floor(abs);
-  const mFloat = (abs - d) * 60;
-  let m = Math.floor(mFloat + 1e-9);
-  const sFloat = (mFloat - m) * 60;
-  let s = Math.round(sFloat);
+  let { d, m, s } = decompor(Math.abs(n), 2);
+  // Ruído de conversão: segundos praticamente inteiros voltam a ser inteiros.
+  const inteiro = Math.round(s);
+  if (Math.abs(s - inteiro) < 0.02) s = inteiro;
   if (s >= 60) {
     s -= 60;
     m += 1;
@@ -100,10 +125,11 @@ export function degToDms(value: number | string | null): string {
   if (m === 0 && s === 0) return `${sinal}${d}°`;
   const mm = String(m).padStart(2, "0");
   if (s === 0) return `${sinal}${d}°${mm}'`;
-  return `${sinal}${d}°${mm}'${String(s).padStart(2, "0")}"`;
+  return `${sinal}${d}°${mm}'${segundosStr(s, 2)}"`;
 }
 
-/** Latitude/longitude em grau, minuto e segundo, com hemisfério. */
+
+/** Latitude/longitude em grau, minuto e segundo, com sinal e hemisfério. */
 export function coordToDms(
   value: number | string | null | undefined,
   eixo: "lat" | "lon",
@@ -111,28 +137,13 @@ export function coordToDms(
   if (value === null || value === undefined || value === "") return "—";
   const n = typeof value === "string" ? Number(value) : value;
   if (!Number.isFinite(n)) return "—";
-  const hemisferio =
-    eixo === "lat" ? (n < 0 ? "S" : "N") : n < 0 ? "W" : "E";
-  const abs = Math.abs(n);
-  let d = Math.floor(abs);
-  const mFloat = (abs - d) * 60;
-  let m = Math.floor(mFloat + 1e-9);
-  let s = Math.round((mFloat - m) * 60 * 1000) / 1000;
-  if (s >= 60) {
-    s -= 60;
-    m += 1;
-  }
-  if (m >= 60) {
-    m -= 60;
-    d += 1;
-  }
-  const intPart = Math.floor(s);
-  const frac = s - intPart;
-  const intStr = intPart === 0 && frac > 0 ? "0" : String(intPart).padStart(2, "0");
-  const fracStr = frac === 0 ? "000" : frac.toFixed(3).slice(2).padEnd(3, "0");
-  const ss = `${intStr},${fracStr}`;
-  return `${d}°${String(m).padStart(2, "0")}'${ss}"${hemisferio}`;
+  const negativo = n < 0;
+  const hemisferio = eixo === "lat" ? (negativo ? "S" : "N") : negativo ? "W" : "E";
+  const { d, m, s } = decompor(Math.abs(n), 5);
+  const sinal = negativo ? "-" : "";
+  return `${sinal}${d}°${String(m).padStart(2, "0")}'${segundosStr(s, 5)}"${hemisferio}`;
 }
+
 
 
 /** Casas decimais efetivamente informadas na medida de origem (máx. 6). */

@@ -69,15 +69,30 @@ export function agruparConfrontacao(
 
 type Coluna = { titulo: string; largura: number; fmt?: string; alinhar?: "right" | "left" };
 
+/** Formato numérico com as casas decimais efetivamente presentes (mín. 2). */
+function fmtDinamico(valores: (string | number | null)[][], col: number): string {
+  let casas = 2;
+  for (const linha of valores) {
+    const v = linha[col];
+    if (typeof v !== "number" || !Number.isFinite(v)) continue;
+    const s = String(Number(v.toFixed(8)));
+    const i = s.indexOf(".");
+    if (i >= 0) casas = Math.max(casas, s.length - i - 1);
+  }
+  return `#,##0.${"0".repeat(Math.min(casas, 8))}`;
+}
+
 function montarTabela(
   ws: ExcelJS.Worksheet,
   colunas: Coluna[],
   linhas: (string | number | null)[][],
   linhaInicial: number,
+  colunaInicial = 1,
 ): number {
+  const formatos = colunas.map((c, i) => (c.fmt ? fmtDinamico(linhas, i) : undefined));
   const head = ws.getRow(linhaInicial);
   colunas.forEach((c, i) => {
-    const cell = head.getCell(i + 1);
+    const cell = head.getCell(colunaInicial + i);
     cell.value = c.titulo.toUpperCase();
     cell.font = { ...FONTE, bold: true };
     cell.alignment = { horizontal: c.alinhar ?? "left", vertical: "middle" };
@@ -87,7 +102,7 @@ function montarTabela(
   linhas.forEach((linha, r) => {
     const row = ws.getRow(linhaInicial + 1 + r);
     colunas.forEach((c, i) => {
-      const cell = row.getCell(i + 1);
+      const cell = row.getCell(colunaInicial + i);
       const v = linha[i];
       cell.value = v === null || v === undefined ? "" : v;
       cell.font = { ...FONTE, bold: false };
@@ -95,18 +110,19 @@ function montarTabela(
         horizontal: c.alinhar ?? (typeof v === "number" ? "right" : "left"),
         vertical: "middle",
       };
-      if (c.fmt && typeof v === "number") cell.numFmt = c.fmt;
+      if (formatos[i] && typeof v === "number") cell.numFmt = formatos[i] as string;
     });
     row.commit?.();
   });
 
   colunas.forEach((c, i) => {
-    const col = ws.getColumn(i + 1);
+    const col = ws.getColumn(colunaInicial + i);
     col.width = Math.max(col.width ?? 0, c.largura);
   });
 
   return linhaInicial + linhas.length + 1;
 }
+
 
 export type MatriculaResultado = {
   sigef: boolean;
@@ -156,9 +172,11 @@ export async function exportarMatriculaXlsx(
       perim,
       1,
     );
+    void prox;
 
     const grupos = agruparConfrontacao(segs);
     confrontacoes = grupos.length;
+    // Tabela de confrontação ao lado direito, pulando uma coluna (col. 9).
     montarTabela(
       ws,
       [
@@ -167,8 +185,10 @@ export async function exportarMatriculaXlsx(
         { titulo: "CONFRONTAÇÃO", largura: 60 },
       ],
       grupos.map((g) => [g.de, g.para, g.confrontacao]),
-      prox + 1,
+      1,
+      9,
     );
+
 
     await baixar(wb, nomeArquivo);
     return { sigef, linhas: perim.length, confrontacoes };
