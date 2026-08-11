@@ -82,6 +82,28 @@ function Relatorio() {
     },
   });
 
+  // Coordenadas dos vértices do documento A, para as colunas geodésicas/planas.
+  const vertices = useQuery({
+    enabled: !!comparison.data?.document_a_id,
+    queryKey: ["comparison-vertices", id, comparison.data?.document_a_id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("parcels")
+        .select("raw_extraction")
+        .eq("document_id", comparison.data!.document_a_id!);
+      if (error) throw error;
+      const map = new Map<string, VertexCoordRow>();
+      (data ?? []).forEach((p) => {
+        getVertices({ raw_extraction: p.raw_extraction } as never).forEach((v) => {
+          const key = String(v.name ?? "").trim().replace(/[.,;]+$/, "").toUpperCase();
+          if (key && !map.has(key)) map.set(key, v);
+        });
+      });
+      return map;
+    },
+  });
+
+
   if (comparison.isLoading || !comparison.data) {
     return (
       <main className="mx-auto max-w-4xl px-6 py-12">
