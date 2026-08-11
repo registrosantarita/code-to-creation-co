@@ -17,11 +17,14 @@ import {
   STATUS_DOCUMENTO,
   TIPO_COMPARACAO,
   TONE_CLASS,
-  degToDms,
+  anguloLiteral,
+  coordToDms,
+  fmtMedida,
   fmtNum,
 } from "@/lib/labels";
 import { Button } from "@/components/ui/button";
 import { exportarMatriculaXlsx } from "@/lib/export-matricula";
+import type { VertexCoordRow } from "@/lib/export-registral";
 
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -595,23 +598,50 @@ function AnaliseDetalhe() {
                               ))}
                             </dl>
 
-                            {parcel.segments && parcel.segments.length > 0 && (
+                            {parcel.segments && parcel.segments.length > 0 && (() => {
+                              const verts = new Map<string, VertexCoordRow>();
+                              const rawV = (
+                                parcel.raw_extraction as {
+                                  vertices?: VertexCoordRow[];
+                                } | null
+                              )?.vertices;
+                              (Array.isArray(rawV) ? rawV : []).forEach((v) =>
+                                verts.set(String(v.name).toUpperCase(), v),
+                              );
+                              const segs = [...parcel.segments].sort(
+                                (x, y) => x.seq - y.seq,
+                              );
+                              const vDe = (s: (typeof segs)[number]) =>
+                                verts.get(String(s.from_vertex ?? "").toUpperCase());
+                              const temGeo = segs.some((s) => {
+                                const v = vDe(s);
+                                return v?.lat != null || v?.lon != null;
+                              });
+                              const temPlana = segs.some((s) => {
+                                const v = vDe(s);
+                                return v?.north != null || v?.east != null;
+                              });
+                              return (
                               <div className="mt-6 overflow-x-auto">
-                                <table className="w-full text-left text-xs">
+                                <table className="w-full min-w-[900px] border-collapse text-left text-xs [&_td]:whitespace-nowrap [&_th]:whitespace-nowrap">
                                   <thead>
                                     <tr className="border-b border-border">
                                       {[
                                         "#",
-                                        "De",
-                                        "Para",
-                                        "Azimute",
-                                        "Distância (m)",
-                                        "Cota do vértice De (m)",
-                                        "Confrontante",
+                                        "TRECHO DE",
+                                        "TRECHO PARA",
+                                        ...(temGeo ? ["LONGITUDE", "LATITUDE"] : []),
+                                        ...(temPlana
+                                          ? ["COORD. N(Y)", "COORD. E(X)"]
+                                          : []),
+                                        "ALT. (m)",
+                                        "ÂNGULO",
+                                        "DIST. (m)",
+                                        "CONFRONTANTE",
                                       ].map((h) => (
                                         <th
                                           key={h}
-                                          className="eyebrow py-2 pr-4 font-normal"
+                                          className="eyebrow py-2 pr-3 font-normal"
                                         >
                                           {h}
                                         </th>
@@ -619,41 +649,67 @@ function AnaliseDetalhe() {
                                     </tr>
                                   </thead>
                                   <tbody>
-                                    {[...parcel.segments]
-                                      .sort((x, y) => x.seq - y.seq)
-                                      .map((s) => (
+                                    {segs.map((s) => {
+                                      const v = vDe(s);
+                                      return (
                                         <tr
                                           key={s.id}
                                           className="border-b border-border/60"
                                         >
-                                          <td className="numeric py-2 pr-4">
+                                          <td className="numeric py-2 pr-3 text-muted-foreground">
                                             {s.seq}
                                           </td>
-                                          <td className="py-2 pr-4">
+                                          <td className="numeric py-2 pr-3">
                                             {s.from_vertex ?? "—"}
                                           </td>
-                                          <td className="py-2 pr-4">
+                                          <td className="numeric py-2 pr-3">
                                             {s.to_vertex ?? "—"}
                                           </td>
-                                          <td className="numeric py-2 pr-4">
-                                            {degToDms(s.azimuth_deg)}
+                                          {temGeo && (
+                                            <>
+                                              <td className="numeric py-2 pr-3">
+                                                {coordToDms(v?.lon ?? null, "lon")}
+                                              </td>
+                                              <td className="numeric py-2 pr-3">
+                                                {coordToDms(v?.lat ?? null, "lat")}
+                                              </td>
+                                            </>
+                                          )}
+                                          {temPlana && (
+                                            <>
+                                              <td className="numeric py-2 pr-3">
+                                                {fmtMedida(v?.north ?? null)}
+                                              </td>
+                                              <td className="numeric py-2 pr-3">
+                                                {fmtMedida(v?.east ?? null)}
+                                              </td>
+                                            </>
+                                          )}
+                                          <td className="numeric py-2 pr-3">
+                                            {fmtMedida(s.altitude_from_m ?? v?.alt ?? null)}
                                           </td>
-                                          <td className="numeric py-2 pr-4">
-                                            {fmtNum(s.distance_m, 3)}
+                                          <td className="numeric py-2 pr-3">
+                                            {anguloLiteral(
+                                              s.bearing_text,
+                                              s.azimuth_deg,
+                                            )}
                                           </td>
-                                          <td className="numeric py-2 pr-4">
-                                            {fmtNum(s.altitude_from_m, 2)}
+                                          <td className="numeric py-2 pr-3">
+                                            {fmtMedida(s.distance_m)}
                                           </td>
-                                          <td className="py-2 pr-4 text-muted-foreground">
+                                          <td className="py-2 pr-3 text-muted-foreground">
                                             {s.confrontante ?? "—"}
                                           </td>
                                         </tr>
-                                      ))}
+                                      );
+                                    })}
                                   </tbody>
                                 </table>
                               </div>
-                            )}
+                              );
+                            })()}
                           </>
+
                         ) : (
                           <p className="text-sm text-muted-foreground">
                             Nenhum dado técnico extraído deste documento.
