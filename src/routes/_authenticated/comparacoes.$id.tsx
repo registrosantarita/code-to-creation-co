@@ -105,6 +105,27 @@ function Relatorio() {
     },
   });
 
+  // Mesmas coordenadas, agora do documento comparado (B, C, D...).
+  const verticesB = useQuery({
+    enabled: !!comparison.data?.document_b_id,
+    queryKey: ["comparison-vertices-b", id, comparison.data?.document_b_id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("parcels")
+        .select("raw_extraction")
+        .eq("document_id", comparison.data!.document_b_id!);
+      if (error) throw error;
+      const map = new Map<string, VertexCoordRow>();
+      (data ?? []).forEach((p) => {
+        getVertices({ raw_extraction: p.raw_extraction } as never).forEach((v) => {
+          const key = String(v.name ?? "").trim().replace(/[.,;]+$/, "").toUpperCase();
+          if (key && !map.has(key)) map.set(key, v);
+        });
+      });
+      return map;
+    },
+  });
+
   // Posição do documento comparado (B, C, D...) dentro da análise, usada para
   // colorir as informações de cada documento de forma consistente.
   const docsAnalise = useQuery({
