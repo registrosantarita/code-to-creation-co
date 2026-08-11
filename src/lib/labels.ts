@@ -129,7 +129,12 @@ export function degToDms(value: number | string | null): string {
 }
 
 
-/** Latitude/longitude em grau, minuto e segundo, com sinal e hemisfério. */
+/**
+ * Latitude/longitude em grau, minuto e segundo, com sinal e hemisfério.
+ * Os segundos voltam exatamente com as casas do documento de origem: o valor
+ * decimal é reconvertido e "encaixado" na menor precisão que o reproduz,
+ * eliminando o ruído de ponto flutuante (…32,956001 → …32,956).
+ */
 export function coordToDms(
   value: number | string | null | undefined,
   eixo: "lat" | "lon",
@@ -139,12 +144,19 @@ export function coordToDms(
   if (!Number.isFinite(n)) return "—";
   const negativo = n < 0;
   const hemisferio = eixo === "lat" ? (negativo ? "S" : "N") : negativo ? "W" : "E";
-  // Sem arredondar: mantém todas as casas de segundo presentes no dado de
-  // origem e apenas descarta zeros finais que não foram informados.
   const { d, m, s } = decompor(Math.abs(n), 6);
+  // Menor número de casas de segundo que reproduz o valor informado.
+  let casas = 6;
+  for (let c = 0; c <= 6; c++) {
+    if (Math.abs(s - Number(s.toFixed(c))) < 5e-4) {
+      casas = c;
+      break;
+    }
+  }
   const sinal = negativo ? "-" : "";
-  return `${sinal}${d}°${String(m).padStart(2, "0")}'${segundosStr(s, 6)}"${hemisferio}`;
+  return `${sinal}${d}°${String(m).padStart(2, "0")}'${segundosStr(s, casas)}"${hemisferio}`;
 }
+
 
 
 
