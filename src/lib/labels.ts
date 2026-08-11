@@ -88,7 +88,7 @@ export function degToDms(value: number | string | null): string {
   const mFloat = (abs - d) * 60;
   let m = Math.floor(mFloat + 1e-9);
   const sFloat = (mFloat - m) * 60;
-  let s = Math.round(sFloat * 100) / 100;
+  let s = Math.round(sFloat);
   if (s >= 60) {
     s -= 60;
     m += 1;
@@ -100,13 +100,7 @@ export function degToDms(value: number | string | null): string {
   if (m === 0 && s === 0) return `${sinal}${d}°`;
   const mm = String(m).padStart(2, "0");
   if (s === 0) return `${sinal}${d}°${mm}'`;
-  const inteiro = Math.floor(s);
-  const frac = s - inteiro;
-  const ss =
-    frac === 0
-      ? String(inteiro).padStart(2, "0")
-      : (inteiro < 10 ? "0" : "") + s.toFixed(2).replace(".", ",");
-  return `${sinal}${d}°${mm}'${ss}"`;
+  return `${sinal}${d}°${mm}'${String(s).padStart(2, "0")}"`;
 }
 
 /** Latitude/longitude em grau, minuto e segundo, com hemisfério. */
