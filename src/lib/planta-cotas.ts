@@ -20,7 +20,12 @@ export type BlocoCotado = {
   cotas: number[];
   /** Número do lote quando aparece isolado junto ao bloco. */
   loteNum: number | null;
+  /** Logradouros grafados junto ao bloco (rua/avenida de frente). */
+  logradouros: string[];
+  /** Outros rótulos textuais próximos (vizinhos, remanescentes, nomes). */
+  rotulos: string[];
 };
+
 
 const numero = (bruto: string): number =>
   Number(bruto.replace(/\./g, "").replace(",", "."));
@@ -53,6 +58,11 @@ export function extrairBlocosCotados(texto: string): BlocoCotado[] {
       ...tokens.slice(Math.max(inicio, ancora.i - 10), ancora.i),
       ...tokens.slice(ancora.i + 1, Math.min(ancora.i + 5, fimVizinho)),
     ];
+    /** Janela mais larga: nomes de rua e vizinhos ficam afastados das cotas. */
+    const janelaTexto = tokens.slice(
+      Math.max(inicio, ancora.i - 24),
+      Math.min(ancora.i + 14, fimVizinho),
+    );
 
     const cotas: number[] = [];
     let loteNum: number | null = null;
@@ -70,9 +80,101 @@ export function extrairBlocosCotados(texto: string): BlocoCotado[] {
       }
     });
 
-    return { area_m2: ancora.area, cotas, loteNum };
+    const rotulos = extrairRotulosTextuais(janelaTexto);
+
+    return { area_m2: ancora.area, cotas, loteNum, ...rotulos };
   });
 }
+
+const PALAVRAS_IGNORADAS = new Set([
+  "AREA","ÁREA","LOTE","LOTES","QUADRA","QUADRAS","TOTAL","ESCALA","PLANTA","DATA",
+  "PROJETO","DESENHO","FOLHA","PRANCHA","LEGENDA","TITULO","TÍTULO","MUNICIPIO",
+  "MUNICÍPIO","ESTADO","PROPRIETARIO","PROPRIETÁRIO","RESPONSAVEL","RESPONSÁVEL",
+  "CREA","ART","ENGENHEIRO","AGRIMENSOR","METROS","METRO","NORTE","SUL","LESTE",
+  "OESTE","DIVISA","CONFRONTACAO","CONFRONTAÇÃO","OBS","REV","CAD","MODEL",
+]);
+
+const RE_LOGRADOURO =
+  /^(RUA|AVENIDA|AV|TRAVESSA|TV|ALAMEDA|AL|ESTRADA|RODOVIA|ROD|PRACA|PRAÇA|VIELA|SERVIDAO|SERVIDÃO|CAMINHO|LARGO)$/i;
+
+const RE_VIZINHO =
+  /^(CONFRONTANTE|CONFRONTANTES|CONFRONTANDO|LINDEIRO|LINDEIRA|VIZINHO|VIZINHA|REMANESCENTE|MATRICULA|MATRÍCULA|PROPRIEDADE|GLEBA|CHACARA|CHÁCARA|SITIO|SÍTIO|FAZENDA|CORREGO|CÓRREGO|RIO)$/i;
+
+const limparPalavra = (t: string) =>
+  t.replace(/[^\p{L}ºª°.\-/]/gu, "").replace(/^[.\-/]+|[.\-/]+$/g, "");
+
+/**
+ * Lê os rótulos textuais próximos a um bloco cotado: nome do logradouro de
+ * frente e possíveis confrontantes/vizinhos grafados no desenho.
+ */
+export function extrairRotulosTextuais(tokens: string[]): {
+  logradouros: string[];
+  rotulos: string[];
+} {
+  const palavras = tokens.map(limparPalavra);
+  const logradouros: string[] = [];
+  const rotulos: string[] = [];
+
+  const frase = (i: number): string => {
+    const partes: string[] = [palavras[i]!];
+    for (let j = i + 1; j < Math.min(i + 5, palavras.length); j += 1) {
+      const p = palavras[j] ?? "";
+      if (p.length < 2 || !/\p{L}/u.test(p)) break;
+      if (PALAVRAS_IGNORADAS.has(p.toUpperCase())) break;
+      partes.push(p);
+    }
+    return partes.join(" ").replace(/\s+/g, " ").trim();
+  };
+
+  palavras.forEach((p, i) => {
+    if (!p || !/\p{L}/u.test(p)) return;
+    const up = p.toUpperCase().replace(/\.$/, "");
+    if (RE_LOGRADOURO.test(up)) {
+      const f = frase(i);
+      if (f.split(" ").length > 1 && !logradouros.includes(f)) logradouros.push(f);
+      return;
+    }
+    if (RE_VIZINHO.test(up)) {
+      const f = frase(i);
+      if (f.split(" ").length > 1 && !rotulos.includes(f)) rotulos.push(f);
+      return;
+    }
+    // Nomes próprios em caixa alta soltos no desenho (ex.: "JOSE DA SILVA").
+    if (p.length >= 4 && p === p.toUpperCase() && !PALAVRAS_IGNORADAS.has(up)) {
+      const f = frase(i);
+      if (f.split(" ").length >= 2 && !rotulos.includes(f) && !logradouros.includes(f)) {
+        rotulos.push(f);
+      }
+    }
+  });
+
+  return { logradouros: logradouros.slice(0, 4), rotulos: rotulos.slice(0, 6) };
+}
+
+const normalizarNome = (v: string): string =>
+  v
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toUpperCase()
+    .replace(/\b(RUA|AVENIDA|AV|TRAVESSA|TV|ALAMEDA|AL|ESTRADA|RODOVIA|ROD|PRACA|VIELA|SERVIDAO|CAMINHO|LARGO|DE|DA|DO|DAS|DOS|E|COM|SR|SRA|DR|DRA)\b/g, " ")
+    .replace(/[^A-Z0-9 ]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+
+/** Duas grafias descrevem o mesmo confrontante? (tolerante a abreviações) */
+export function mesmoConfrontante(a: string, b: string): boolean {
+  const na = normalizarNome(a);
+  const nb = normalizarNome(b);
+  if (!na || !nb) return false;
+  if (na === nb || na.includes(nb) || nb.includes(na)) return true;
+  const ta = na.split(" ").filter((t) => t.length >= 3);
+  const tb = new Set(nb.split(" ").filter((t) => t.length >= 3));
+  if (ta.length === 0 || tb.size === 0) return false;
+  const comuns = ta.filter((t) => tb.has(t)).length;
+  return comuns >= Math.min(2, Math.min(ta.length, tb.size));
+}
+
+
 
 
 const fmt = (v: number, casas = 2) =>
@@ -150,6 +252,59 @@ export function compararLoteComBloco(
     });
   }
 
+  // Nomes grafados na planta (rua de frente e vizinhos) x confrontantes do memorial.
+  const nomesPlanta = [...bloco.logradouros, ...bloco.rotulos];
+  const nomesMemorial = [
+    ...memorial.confrontantes,
+    ...memorial.segments.map((s) => s.confrontante ?? ""),
+  ]
+    .map((v) => (v ?? "").trim())
+    .filter(Boolean);
+
+  const nomesConferidos: { planta: string; memorial: string }[] = [];
+  const nomesSemCorrespondencia: string[] = [];
+  nomesPlanta.forEach((np) => {
+    const achado = nomesMemorial.find((nm) => mesmoConfrontante(np, nm));
+    if (achado) nomesConferidos.push({ planta: np, memorial: achado });
+    else nomesSemCorrespondencia.push(np);
+  });
+
+  if (nomesConferidos.length > 0) {
+    findings.push({
+      severity: "informative",
+      code: "CONFRONTANTE_CONFERIDO",
+      title: "Confrontantes/logradouro da planta conferem com o memorial",
+      description: nomesConferidos
+        .map((n) => `Planta: "${n.planta}" ≙ memorial: "${n.memorial}"`)
+        .join("; "),
+      evidence: { nomes_conferidos: nomesConferidos },
+    });
+  }
+
+  if (nomesMemorial.length > 0 && nomesSemCorrespondencia.length > 0) {
+    findings.push({
+      severity: "moderate",
+      code: "CONFRONTANTE_PLANTA_SEM_CORRESPONDENCIA",
+      title: "Nome grafado na planta sem correspondência no memorial",
+      description: `Rótulo(s) lido(s) na planta junto a este lote e não localizado(s) entre os confrontantes do memorial: ${nomesSemCorrespondencia
+        .map((n) => `"${n}"`)
+        .join(", ")}. Verifique se se trata de outra grafia, de legenda geral do desenho ou de divergência real.`,
+      evidence: {
+        nomes_planta: nomesSemCorrespondencia,
+        confrontantes_memorial: nomesMemorial,
+      },
+    });
+  } else if (nomesPlanta.length === 0) {
+    findings.push({
+      severity: "informative",
+      code: "PLANTA_SEM_ROTULO_TEXTUAL",
+      title: "Planta sem nomes legíveis junto ao lote",
+      description:
+        "Não há nome de logradouro ou de confrontante legível próximo a este bloco cotado; a ausência não é tratada como divergência.",
+      evidence: {},
+    });
+  }
+
   const critico = findings.some((f) => f.severity === "critical");
   const alerta = findings.some((f) => f.severity === "inconclusive");
 
@@ -159,16 +314,24 @@ export function compararLoteComBloco(
       ? `Divergência entre as cotas da planta e o memorial (${naoConferidas.length} cota(s)).`
       : alerta
         ? "Conferência inconclusiva: faltam medidas no memorial."
-        : `Todas as ${bloco.cotas.length} cota(s) representadas na planta conferem com o memorial.`,
+        : `Todas as ${bloco.cotas.length} cota(s) representadas na planta conferem com o memorial${
+            nomesConferidos.length > 0
+              ? `; ${nomesConferidos.length} nome(s) de logradouro/confrontante também conferem`
+              : ""
+          }.`,
     metrics: {
       modo: "cotas_avulsas",
       area_planta: bloco.area_m2,
       cotas_planta: bloco.cotas.length,
       cotas_nao_conferidas: naoConferidas.length,
+      nomes_planta: nomesPlanta.length,
+      nomes_conferidos: nomesConferidos.length,
+      nomes_sem_correspondencia: nomesSemCorrespondencia.length,
     },
     findings,
   };
 }
+
 
 /** Casa cada lote do memorial com o bloco cotado de mesma área. */
 export function parearPorArea(
