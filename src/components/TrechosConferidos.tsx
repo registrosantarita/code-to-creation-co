@@ -181,6 +181,7 @@ export function TrechosConferidos({
             <tbody>
               {trechos.map((t) => {
                 const v = coordDe(t);
+                const w = coordDeB(t);
                 return (
                   <tr
                     key={`${t.seq_a}-${t.seq_b}`}
@@ -207,21 +208,41 @@ export function TrechosConferidos({
                     </td>
                     {temGeo && (
                       <>
-                        <td className={`numeric py-2 pr-3 text-right ${corA}`}>
-                          {coordToDms(v?.lon ?? null, "lon")}
+                        <td className="numeric py-2 pr-3">
+                          <Par
+                            a={coordToDms(v?.lon ?? null, "lon")}
+                            b={coordToDms(w?.lon ?? null, "lon")}
+                            corA={corA}
+                            corB={corB}
+                          />
                         </td>
-                        <td className={`numeric py-2 pr-3 text-right ${corA}`}>
-                          {coordToDms(v?.lat ?? null, "lat")}
+                        <td className="numeric py-2 pr-3">
+                          <Par
+                            a={coordToDms(v?.lat ?? null, "lat")}
+                            b={coordToDms(w?.lat ?? null, "lat")}
+                            corA={corA}
+                            corB={corB}
+                          />
                         </td>
                       </>
                     )}
                     {temPlana && (
                       <>
-                        <td className={`numeric py-2 pr-3 text-right ${corA}`}>
-                          {fmtMedida(v?.north ?? null)}
+                        <td className="numeric py-2 pr-3">
+                          <Par
+                            a={fmtMedida(v?.north ?? null)}
+                            b={fmtMedida(w?.north ?? null)}
+                            corA={corA}
+                            corB={corB}
+                          />
                         </td>
-                        <td className={`numeric py-2 pr-3 text-right ${corA}`}>
-                          {fmtMedida(v?.east ?? null)}
+                        <td className="numeric py-2 pr-3">
+                          <Par
+                            a={fmtMedida(v?.east ?? null)}
+                            b={fmtMedida(w?.east ?? null)}
+                            corA={corA}
+                            corB={corB}
+                          />
                         </td>
                       </>
                     )}
