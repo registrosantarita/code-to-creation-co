@@ -144,7 +144,7 @@ export function TrechosConferidos({
         </p>
 
         <div className="mt-5 overflow-x-auto">
-          <table className="w-full min-w-[900px] border-collapse text-sm [&_td]:whitespace-nowrap [&_th]:whitespace-nowrap">
+          <table className="w-auto min-w-full table-auto border-collapse text-sm [&_td]:whitespace-nowrap [&_td]:pr-4 [&_th]:whitespace-nowrap [&_th]:pr-4">
             <thead>
               <tr className="border-b border-border text-left">
                 <th className="eyebrow py-2 pr-3">#</th>
@@ -293,7 +293,7 @@ export function TrechosConferidos({
           </p>
 
           <div className="mt-5 overflow-x-auto">
-            <table className="w-full min-w-[640px] border-collapse text-sm">
+            <table className="w-auto min-w-full table-auto border-collapse text-sm">
               <thead>
                 <tr className="border-b border-border text-left">
                   <th className="eyebrow py-2 pr-3">Confrontação</th>
