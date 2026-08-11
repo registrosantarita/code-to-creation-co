@@ -92,6 +92,7 @@ function AnaliseDetalhe() {
   >([{ doc: "", parcel: "" }]);
   const [tipo, setTipo] = useState("memorial_to_memorial");
   const [tol, setTol] = useState(DEFAULT_TOLERANCES);
+  const [unidadeArea, setUnidadeArea] = useState<"m2" | "ha">("m2");
 
   const analysis = useQuery({
     queryKey: ["analysis", id],
@@ -700,7 +701,7 @@ function AnaliseDetalhe() {
 
             <div className="mt-6 grid gap-4 md:grid-cols-3">
               <div className="space-y-2">
-                <Label>Documento A</Label>
+                <Label>Documento A (paradigma)</Label>
                 <Select
                   value={docA}
                   onValueChange={(v) => {
