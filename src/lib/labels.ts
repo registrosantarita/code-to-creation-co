@@ -126,7 +126,11 @@ export function coordToDms(
     m -= 60;
     d += 1;
   }
-  const ss = s.toFixed(3).padStart(6, "0").replace(".", ",");
+  const intPart = Math.floor(s);
+  const frac = s - intPart;
+  const intStr = intPart === 0 && frac > 0 ? "0" : String(intPart).padStart(2, "0");
+  const fracStr = frac === 0 ? "000" : frac.toFixed(3).slice(2).padEnd(3, "0");
+  const ss = `${intStr},${fracStr}`;
   return `${d}°${String(m).padStart(2, "0")}'${ss}"${hemisferio}`;
 }
 
