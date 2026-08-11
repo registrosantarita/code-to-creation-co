@@ -153,7 +153,14 @@ export function coordToDms(
       break;
     }
   }
+  // Coordenada com fração de segundo mantém as 3 casas do padrão SIGEF,
+  // sem inventar casas além das informadas.
+  if (casas > 0 && casas < 3) casas = 3;
+  const txt = s.toFixed(casas).replace(".", ",");
+  const [int = "", frac] = txt.split(",");
+  const seg = frac ? `${int.padStart(2, "0")},${frac}` : int.padStart(2, "0");
   const sinal = negativo ? "-" : "";
+
   return `${sinal}${d}°${String(m).padStart(2, "0")}'${segundosStr(s, casas)}"${hemisferio}`;
 }
 
