@@ -73,7 +73,23 @@ export function parseParcelas(text: string, ehGeometria: boolean): ParsedParcel[
     return unico ? [unico] : [];
   }
 
+  if (semDescricaoPerimetrica(text)) return [];
+
+  if (pareceLoteamento(text)) {
+    const lotes = parseLoteamento(text);
+    if (lotes.length > 1) {
+      return lotes.map((p) => ({
+        ...p,
+        warnings: [
+          `Memorial de loteamento com ${lotes.length} descrições perimétricas (lotes e áreas públicas): cada uma foi registrada como um imóvel independente.`,
+          ...p.warnings,
+        ],
+      }));
+    }
+  }
+
   const blocos = blocosDeTexto(text);
+
   if (blocos.length > 1) {
     const parcelas: ParsedParcel[] = [];
     const vistos = new Set<string>();
