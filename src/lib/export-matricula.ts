@@ -95,7 +95,7 @@ function montarTabela(
     const cell = head.getCell(colunaInicial + i);
     cell.value = c.titulo.toUpperCase();
     cell.font = { ...FONTE, bold: true };
-    cell.alignment = { horizontal: c.alinhar ?? "left", vertical: "middle" };
+    cell.alignment = { horizontal: "center", vertical: "middle", wrapText: true };
   });
   head.commit?.();
 
@@ -106,14 +106,12 @@ function montarTabela(
       const v = linha[i];
       cell.value = v === null || v === undefined ? "" : v;
       cell.font = { ...FONTE, bold: false };
-      cell.alignment = {
-        horizontal: c.alinhar ?? (typeof v === "number" ? "right" : "left"),
-        vertical: "middle",
-      };
+      cell.alignment = { horizontal: "center", vertical: "middle", wrapText: true };
       if (formatos[i] && typeof v === "number") cell.numFmt = formatos[i] as string;
     });
     row.commit?.();
   });
+
 
   colunas.forEach((c, i) => {
     const col = ws.getColumn(colunaInicial + i);
