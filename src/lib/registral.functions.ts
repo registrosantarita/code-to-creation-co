@@ -244,6 +244,8 @@ const CompareInput = z.object({
       distanceM: z.number().min(0).max(1000),
       azimuthDeg: z.number().min(0).max(180),
       altitudeM: z.number().min(0).max(10000),
+      areaM2: z.number().min(0).default(0),
+      perimeterM: z.number().min(0).default(0),
     })
     .optional(),
 });
@@ -421,6 +423,8 @@ const BatchInput = z.object({
       distanceM: z.number().min(0).max(1000),
       azimuthDeg: z.number().min(0).max(180),
       altitudeM: z.number().min(0).max(10000),
+      areaM2: z.number().min(0).default(0),
+      perimeterM: z.number().min(0).default(0),
     })
     .optional(),
 });
