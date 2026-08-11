@@ -392,17 +392,31 @@ function AnaliseDetalhe() {
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="arquivo">Arquivo</Label>
-                  <Input
-                    id="arquivo"
-                    type="file"
-                    accept=".pdf,.txt,.csv,.md,.docx,.xlsx,.png,.jpg,.jpeg,.tif,.tiff,.webp,.kml,.kmz,.geojson,.json,.dwg"
-                    disabled={enviarArquivo.isPending}
-                    onChange={(e) => {
-                      const f = e.target.files?.[0];
-                      if (f) setArquivoPendente(f);
-                      e.target.value = "";
-                    }}
-                  />
+                  <div className="flex items-center gap-2">
+                    <Input
+                      id="arquivo"
+                      type="file"
+                      className="flex-1"
+                      accept=".pdf,.txt,.csv,.md,.docx,.xlsx,.png,.jpg,.jpeg,.tif,.tiff,.webp,.kml,.kmz,.geojson,.json,.dwg"
+                      disabled={enviarArquivo.isPending}
+                      onChange={(e) => {
+                        const f = e.target.files?.[0];
+                        if (f) setArquivoPendente(f);
+                        e.target.value = "";
+                      }}
+                    />
+                    <Button
+                      type="button"
+                      variant="outline"
+                      disabled={enviarArquivo.isPending}
+                      onClick={() =>
+                        document.getElementById("arquivo")?.click()
+                      }
+                    >
+                      Procurar…
+                    </Button>
+                  </div>
+
                   <p className="text-xs leading-relaxed text-muted-foreground">
                     PDFs digitalizados e imagens passam por OCR assistido por IA.
                     Arquivos KML, KMZ e GeoJSON têm o perímetro, os azimutes e a
@@ -804,7 +818,7 @@ function AnaliseDetalhe() {
                 >
                   {conferirLotes.isPending
                     ? "Conferindo lote a lote..."
-                    : "Conferir todos os lotes/quadras"}
+                    : "Conferência de Loteamentos — memorial e planta"}
                 </Button>
               )}
             </div>
