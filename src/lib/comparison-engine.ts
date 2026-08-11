@@ -18,6 +18,10 @@ export type Tolerances = {
   distanceM: number;
   azimuthDeg: number;
   altitudeM: number;
+  /** Tolerância absoluta de área, em metros quadrados. */
+  areaM2: number;
+  /** Tolerância absoluta de perímetro, em metros lineares. */
+  perimeterM: number;
 };
 
 export const DEFAULT_TOLERANCES: Tolerances = {
@@ -26,7 +30,14 @@ export const DEFAULT_TOLERANCES: Tolerances = {
   distanceM: 0,
   azimuthDeg: 0,
   altitudeM: 0,
+  areaM2: 0,
+  perimeterM: 0,
 };
+
+/** Área/perímetro conferem quando ficam dentro do percentual OU da medida absoluta. */
+const dentroDaTolerancia = (diff: number, pct: number, tolPct: number, tolAbs: number) =>
+  pct <= tolPct || diff <= tolAbs;
+
 
 
 export type SegmentInput = {
