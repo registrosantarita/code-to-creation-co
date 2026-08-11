@@ -74,24 +74,68 @@ export function fmtNum(value: number | string | null, digits = 2): string {
   });
 }
 
+/**
+ * Ângulo em grau/minuto/segundo respeitando a precisão do documento de origem:
+ * não completa casas que não foram informadas (45°12' permanece 45°12').
+ */
 export function degToDms(value: number | string | null): string {
   if (value === null) return "—";
   const n = typeof value === "string" ? Number(value) : value;
   if (!Number.isFinite(n)) return "—";
-  let d = Math.floor(n);
-  const mFloat = (n - d) * 60;
-  let m = Math.floor(mFloat);
-  let s = Math.round((mFloat - m) * 60);
-  if (s === 60) {
-    s = 0;
+  const sinal = n < 0 ? "-" : "";
+  const abs = Math.abs(n);
+  let d = Math.floor(abs);
+  const mFloat = (abs - d) * 60;
+  let m = Math.floor(mFloat + 1e-9);
+  const sFloat = (mFloat - m) * 60;
+  let s = Math.round(sFloat * 100) / 100;
+  if (s >= 60) {
+    s -= 60;
     m += 1;
   }
-  if (m === 60) {
-    m = 0;
+  if (m >= 60) {
+    m -= 60;
     d += 1;
   }
-  return `${d}°${String(m).padStart(2, "0")}'${String(s).padStart(2, "0")}"`;
+  if (m === 0 && s === 0) return `${sinal}${d}°`;
+  const mm = String(m).padStart(2, "0");
+  if (s === 0) return `${sinal}${d}°${mm}'`;
+  const inteiro = Math.floor(s);
+  const frac = s - inteiro;
+  const ss =
+    frac === 0
+      ? String(inteiro).padStart(2, "0")
+      : (inteiro < 10 ? "0" : "") + s.toFixed(2).replace(".", ",");
+  return `${sinal}${d}°${mm}'${ss}"`;
 }
+
+/** Latitude/longitude em grau, minuto e segundo, com hemisfério. */
+export function coordToDms(
+  value: number | string | null | undefined,
+  eixo: "lat" | "lon",
+): string {
+  if (value === null || value === undefined || value === "") return "—";
+  const n = typeof value === "string" ? Number(value) : value;
+  if (!Number.isFinite(n)) return "—";
+  const hemisferio =
+    eixo === "lat" ? (n < 0 ? "S" : "N") : n < 0 ? "W" : "E";
+  const abs = Math.abs(n);
+  let d = Math.floor(abs);
+  const mFloat = (abs - d) * 60;
+  let m = Math.floor(mFloat + 1e-9);
+  let s = Math.round((mFloat - m) * 60 * 1000) / 1000;
+  if (s >= 60) {
+    s -= 60;
+    m += 1;
+  }
+  if (m >= 60) {
+    m -= 60;
+    d += 1;
+  }
+  const ss = s.toFixed(3).padStart(6, "0").replace(".", ",");
+  return `${d}°${String(m).padStart(2, "0")}'${ss}"${hemisferio}`;
+}
+
 
 /** Casas decimais efetivamente informadas na medida de origem (máx. 6). */
 export function casasDecimais(value: number | string | null): number {
