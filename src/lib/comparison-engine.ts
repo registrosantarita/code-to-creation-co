@@ -433,6 +433,18 @@ export function compareParcels(
     0,
   );
   metrics["divergent_segments"] = divergentSegments;
+  const naoComparados = trechos.filter((t) => t.comparado === false).length;
+  metrics["trechos_nao_comparaveis"] = naoComparados;
+  if (naoComparados > 0) {
+    findings.push({
+      severity: "inconclusive",
+      code: "SEGMENTOS_SEM_DADO_COMUM",
+      title: "Trechos sem dado comum para conferência",
+      description: `${naoComparados} de ${trechos.length} trecho(s) não puderam ser conferidos: os documentos não trazem a mesma grandeza (distância ou azimute) para esses lados. Não se trata de divergência, mas de ausência de elemento comparável.`,
+      evidence: { nao_comparaveis: naoComparados, total: trechos.length },
+    });
+  }
+
   if (n > 0 && divergentSegments === 0) {
     findings.push({
       severity: "informative",
