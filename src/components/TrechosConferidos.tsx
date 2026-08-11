@@ -136,22 +136,25 @@ export function TrechosConferidos({
             <thead>
               <tr className="border-b border-border text-left">
                 <th className="eyebrow py-2 pr-3">#</th>
-                <th className="eyebrow py-2 pr-3" title={labelA ?? "Documento A"}>
+                <th className={`eyebrow py-2 pr-3 ${corA}`} title={labelA ?? "Documento A"}>
                   TRECHO DE (Doc. A)
                 </th>
-                <th className="eyebrow py-2 pr-3" title={labelB ?? "Documento B"}>
-                  TRECHO PARA (Doc. B)
+                <th
+                  className={`eyebrow py-2 pr-3 ${corB}`}
+                  title={labelB ?? `Documento ${letraB}`}
+                >
+                  TRECHO PARA (Doc. {letraB})
                 </th>
                 {temGeo && (
                   <>
-                    <th className="eyebrow py-2 pr-3 text-right">LONGITUDE</th>
-                    <th className="eyebrow py-2 pr-3 text-right">LATITUDE</th>
+                    <th className={`eyebrow py-2 pr-3 text-right ${corA}`}>LONGITUDE</th>
+                    <th className={`eyebrow py-2 pr-3 text-right ${corA}`}>LATITUDE</th>
                   </>
                 )}
                 {temPlana && (
                   <>
-                    <th className="eyebrow py-2 pr-3 text-right">COORD. N(Y)</th>
-                    <th className="eyebrow py-2 pr-3 text-right">COORD. E(X)</th>
+                    <th className={`eyebrow py-2 pr-3 text-right ${corA}`}>COORD. N(Y)</th>
+                    <th className={`eyebrow py-2 pr-3 text-right ${corA}`}>COORD. E(X)</th>
                   </>
                 )}
                 <th className="eyebrow py-2 pr-3 text-right">ALT. (m)</th>
@@ -169,41 +172,57 @@ export function TrechosConferidos({
                     className="border-b border-border/60 align-top"
                   >
                     <td className="numeric py-2 pr-3 text-muted-foreground">{t.seq_a}</td>
-                    <td className="numeric py-2 pr-3">
+                    <td className={`numeric py-2 pr-3 ${corA}`}>
                       {t.de_a ?? "?"} → {t.ate_a ?? "?"}
                     </td>
-                    <td className="numeric py-2 pr-3 text-muted-foreground">
+                    <td className={`numeric py-2 pr-3 ${corB}`}>
                       {t.de_b ?? "?"} → {t.ate_b ?? "?"}
                     </td>
                     {temGeo && (
                       <>
-                        <td className="numeric py-2 pr-3 text-right">
+                        <td className={`numeric py-2 pr-3 text-right ${corA}`}>
                           {coordToDms(v?.lon ?? null, "lon")}
                         </td>
-                        <td className="numeric py-2 pr-3 text-right">
+                        <td className={`numeric py-2 pr-3 text-right ${corA}`}>
                           {coordToDms(v?.lat ?? null, "lat")}
                         </td>
                       </>
                     )}
                     {temPlana && (
                       <>
-                        <td className="numeric py-2 pr-3 text-right">
+                        <td className={`numeric py-2 pr-3 text-right ${corA}`}>
                           {fmtMedida(v?.north ?? null)}
                         </td>
-                        <td className="numeric py-2 pr-3 text-right">
+                        <td className={`numeric py-2 pr-3 text-right ${corA}`}>
                           {fmtMedida(v?.east ?? null)}
                         </td>
                       </>
                     )}
-                    <td className="numeric py-2 pr-3 text-right">
-                      {fmtMedida(t.cota_a)} / {fmtMedida(t.cota_b)}
+                    <td className="numeric py-2 pr-3">
+                      <Par
+                        a={fmtMedida(t.cota_a)}
+                        b={fmtMedida(t.cota_b)}
+                        corA={corA}
+                        corB={corB}
+                      />
                     </td>
-                    <td className="numeric py-2 pr-3 text-right">
-                      {degToDms(t.azimute_a)} / {degToDms(t.azimute_b)}
+                    <td className="numeric py-2 pr-3">
+                      <Par
+                        a={degToDms(t.azimute_a)}
+                        b={degToDms(t.azimute_b)}
+                        corA={corA}
+                        corB={corB}
+                      />
                     </td>
-                    <td className="numeric py-2 pr-3 text-right">
-                      {fmtMedida(t.distancia_a)} / {fmtMedida(t.distancia_b)}
+                    <td className="numeric py-2 pr-3">
+                      <Par
+                        a={fmtMedida(t.distancia_a)}
+                        b={fmtMedida(t.distancia_b)}
+                        corA={corA}
+                        corB={corB}
+                      />
                     </td>
+
                     <td className="py-2 pr-3">
                       <Situacao ok={t.ok} problemas={t.problemas} comparado={t.comparado ?? true} />
                     </td>
