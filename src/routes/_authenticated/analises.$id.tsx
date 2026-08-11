@@ -94,6 +94,8 @@ function AnaliseDetalhe() {
   const [tipo, setTipo] = useState("memorial_to_memorial");
   const [tol, setTol] = useState(DEFAULT_TOLERANCES);
   const [unidadeArea, setUnidadeArea] = useState<"m2" | "ha">("m2");
+  /** Acordeões de documentos expandidos para facilitar acesso às ações. */
+  const [openDocs, setOpenDocs] = useState<string[]>([]);
 
   const analysis = useQuery({
     queryKey: ["analysis", id],
