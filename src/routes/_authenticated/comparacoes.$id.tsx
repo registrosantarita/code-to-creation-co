@@ -11,6 +11,8 @@ import {
 import { Button } from "@/components/ui/button";
 import { exportarRelatorioPdf } from "@/lib/export-registral";
 import { TrechosConferidos, lerTrechos } from "@/components/TrechosConferidos";
+import { getVertices, type VertexCoordRow } from "@/lib/export-registral";
+
 
 
 export const Route = createFileRoute("/_authenticated/comparacoes/$id")({
