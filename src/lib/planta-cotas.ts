@@ -53,6 +53,11 @@ export function extrairBlocosCotados(texto: string): BlocoCotado[] {
       ...tokens.slice(Math.max(inicio, ancora.i - 10), ancora.i),
       ...tokens.slice(ancora.i + 1, Math.min(ancora.i + 5, fimVizinho)),
     ];
+    /** Janela mais larga: nomes de rua e vizinhos ficam afastados das cotas. */
+    const janelaTexto = tokens.slice(
+      Math.max(inicio, ancora.i - 24),
+      Math.min(ancora.i + 14, fimVizinho),
+    );
 
     const cotas: number[] = [];
     let loteNum: number | null = null;
@@ -70,9 +75,101 @@ export function extrairBlocosCotados(texto: string): BlocoCotado[] {
       }
     });
 
-    return { area_m2: ancora.area, cotas, loteNum };
+    const rotulos = extrairRotulosTextuais(janelaTexto);
+
+    return { area_m2: ancora.area, cotas, loteNum, ...rotulos };
   });
 }
+
+const PALAVRAS_IGNORADAS = new Set([
+  "AREA","ÁREA","LOTE","LOTES","QUADRA","QUADRAS","TOTAL","ESCALA","PLANTA","DATA",
+  "PROJETO","DESENHO","FOLHA","PRANCHA","LEGENDA","TITULO","TÍTULO","MUNICIPIO",
+  "MUNICÍPIO","ESTADO","PROPRIETARIO","PROPRIETÁRIO","RESPONSAVEL","RESPONSÁVEL",
+  "CREA","ART","ENGENHEIRO","AGRIMENSOR","METROS","METRO","NORTE","SUL","LESTE",
+  "OESTE","DIVISA","CONFRONTACAO","CONFRONTAÇÃO","OBS","REV","CAD","MODEL",
+]);
+
+const RE_LOGRADOURO =
+  /^(RUA|AVENIDA|AV|TRAVESSA|TV|ALAMEDA|AL|ESTRADA|RODOVIA|ROD|PRACA|PRAÇA|VIELA|SERVIDAO|SERVIDÃO|CAMINHO|LARGO)$/i;
+
+const RE_VIZINHO =
+  /^(CONFRONTANTE|CONFRONTANTES|CONFRONTANDO|LINDEIRO|LINDEIRA|VIZINHO|VIZINHA|REMANESCENTE|MATRICULA|MATRÍCULA|PROPRIEDADE|GLEBA|CHACARA|CHÁCARA|SITIO|SÍTIO|FAZENDA|CORREGO|CÓRREGO|RIO)$/i;
+
+const limparPalavra = (t: string) =>
+  t.replace(/[^\p{L}ºª°.\-/]/gu, "").replace(/^[.\-/]+|[.\-/]+$/g, "");
+
+/**
+ * Lê os rótulos textuais próximos a um bloco cotado: nome do logradouro de
+ * frente e possíveis confrontantes/vizinhos grafados no desenho.
+ */
+export function extrairRotulosTextuais(tokens: string[]): {
+  logradouros: string[];
+  rotulos: string[];
+} {
+  const palavras = tokens.map(limparPalavra);
+  const logradouros: string[] = [];
+  const rotulos: string[] = [];
+
+  const frase = (i: number): string => {
+    const partes: string[] = [palavras[i]!];
+    for (let j = i + 1; j < Math.min(i + 5, palavras.length); j += 1) {
+      const p = palavras[j] ?? "";
+      if (p.length < 2 || !/\p{L}/u.test(p)) break;
+      if (PALAVRAS_IGNORADAS.has(p.toUpperCase())) break;
+      partes.push(p);
+    }
+    return partes.join(" ").replace(/\s+/g, " ").trim();
+  };
+
+  palavras.forEach((p, i) => {
+    if (!p || !/\p{L}/u.test(p)) return;
+    const up = p.toUpperCase().replace(/\.$/, "");
+    if (RE_LOGRADOURO.test(up)) {
+      const f = frase(i);
+      if (f.split(" ").length > 1 && !logradouros.includes(f)) logradouros.push(f);
+      return;
+    }
+    if (RE_VIZINHO.test(up)) {
+      const f = frase(i);
+      if (f.split(" ").length > 1 && !rotulos.includes(f)) rotulos.push(f);
+      return;
+    }
+    // Nomes próprios em caixa alta soltos no desenho (ex.: "JOSE DA SILVA").
+    if (p.length >= 4 && p === p.toUpperCase() && !PALAVRAS_IGNORADAS.has(up)) {
+      const f = frase(i);
+      if (f.split(" ").length >= 2 && !rotulos.includes(f) && !logradouros.includes(f)) {
+        rotulos.push(f);
+      }
+    }
+  });
+
+  return { logradouros: logradouros.slice(0, 4), rotulos: rotulos.slice(0, 6) };
+}
+
+const normalizarNome = (v: string): string =>
+  v
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toUpperCase()
+    .replace(/\b(RUA|AVENIDA|AV|TRAVESSA|TV|ALAMEDA|AL|ESTRADA|RODOVIA|ROD|PRACA|VIELA|SERVIDAO|CAMINHO|LARGO|DE|DA|DO|DAS|DOS|E|COM|SR|SRA|DR|DRA)\b/g, " ")
+    .replace(/[^A-Z0-9 ]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+
+/** Duas grafias descrevem o mesmo confrontante? (tolerante a abreviações) */
+export function mesmoConfrontante(a: string, b: string): boolean {
+  const na = normalizarNome(a);
+  const nb = normalizarNome(b);
+  if (!na || !nb) return false;
+  if (na === nb || na.includes(nb) || nb.includes(na)) return true;
+  const ta = na.split(" ").filter((t) => t.length >= 3);
+  const tb = new Set(nb.split(" ").filter((t) => t.length >= 3));
+  if (ta.length === 0 || tb.size === 0) return false;
+  const comuns = ta.filter((t) => tb.has(t)).length;
+  return comuns >= Math.min(2, Math.min(ta.length, tb.size));
+}
+
+
 
 
 const fmt = (v: number, casas = 2) =>
