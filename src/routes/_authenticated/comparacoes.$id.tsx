@@ -105,6 +105,22 @@ function Relatorio() {
     },
   });
 
+  // Posição do documento comparado (B, C, D...) dentro da análise, usada para
+  // colorir as informações de cada documento de forma consistente.
+  const irmas = useQuery({
+    enabled: !!comparison.data?.analysis_id,
+    queryKey: ["comparison-siblings", comparison.data?.analysis_id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("comparisons")
+        .select("id, document_b_id, created_at")
+        .eq("analysis_id", comparison.data!.analysis_id)
+        .order("created_at", { ascending: true });
+      if (error) throw error;
+      return data;
+    },
+  });
+
 
   if (comparison.isLoading || !comparison.data) {
     return (
