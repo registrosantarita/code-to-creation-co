@@ -836,6 +836,16 @@ function AnaliseDetalhe() {
                     indicar os polígonos.
                   </p>
                 ) : null}
+                {tipo === "custom" ? (
+                  <p className="text-xs text-muted-foreground">
+                    Comparação múltipla: adicione quantos documentos comparáveis
+                    quiser (B, C, D…). Todos são conferidos contra o mesmo
+                    paradigma e o resultado abre já na tabela única
+                    “Conferência consolidada”, com cada documento empilhado na
+                    sua cor.
+                  </p>
+                ) : null}
+
               </div>
             </div>
 
