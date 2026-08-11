@@ -85,8 +85,13 @@ export function TrechosConferidos({
   labelA,
   labelB,
   vertices,
+  indiceB = 1,
 }: Props) {
   if (trechos.length === 0) return null;
+  const corA = docColor(0);
+  const corB = docColor(indiceB);
+  const letraB = docLetra(indiceB);
+
 
   const conformes = trechos.filter((t) => t.ok).length;
   const primeiro = trechos[0]!;
