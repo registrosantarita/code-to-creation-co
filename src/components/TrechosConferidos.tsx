@@ -162,14 +162,14 @@ export function TrechosConferidos({
                 </th>
                 {temGeo && (
                   <>
-                    <th className={`eyebrow py-2 pr-3 text-right ${corA}`}>LONGITUDE</th>
-                    <th className={`eyebrow py-2 pr-3 text-right ${corA}`}>LATITUDE</th>
+                    <th className="eyebrow py-2 pr-3 text-right">LONGITUDE</th>
+                    <th className="eyebrow py-2 pr-3 text-right">LATITUDE</th>
                   </>
                 )}
                 {temPlana && (
                   <>
-                    <th className={`eyebrow py-2 pr-3 text-right ${corA}`}>COORD. N(Y)</th>
-                    <th className={`eyebrow py-2 pr-3 text-right ${corA}`}>COORD. E(X)</th>
+                    <th className="eyebrow py-2 pr-3 text-right">COORD. N(Y)</th>
+                    <th className="eyebrow py-2 pr-3 text-right">COORD. E(X)</th>
                   </>
                 )}
                 <th className="eyebrow py-2 pr-3 text-right">ALT. (m)</th>
