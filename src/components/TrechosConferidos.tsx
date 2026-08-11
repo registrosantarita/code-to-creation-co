@@ -65,7 +65,7 @@ function Situacao({
       ) : (
         <X className="h-5 w-5 text-destructive" aria-label="Incorreto" />
       )}
-      <span className="max-w-[220px] text-center text-[11px] leading-snug text-muted-foreground">
+      <span className="max-w-[220px] whitespace-normal text-center text-[11px] leading-snug text-muted-foreground">
         {problemas.length > 0
           ? problemas.join("; ")
           : comparado
