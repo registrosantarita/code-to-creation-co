@@ -1,5 +1,5 @@
 import { Check, Minus, X } from "lucide-react";
-import { fmtMedida, degToDms, coordToDms } from "@/lib/labels";
+import { fmtMedida, degToDms, coordToDms, docColor, docLetra } from "@/lib/labels";
 import type { TrechoConferido } from "@/lib/comparison-engine";
 import { agruparConfrontantes } from "@/lib/confrontantes";
 import type { VertexCoordRow } from "@/lib/export-registral";
@@ -16,7 +16,33 @@ type Props = {
   labelB?: string;
   /** Coordenadas dos vértices do documento A, indexadas pelo nome em maiúsculas. */
   vertices?: Map<string, VertexCoordRow> | undefined;
+  /** Posição do documento comparado na análise: 1 → B, 2 → C, 3 → D... */
+  indiceB?: number;
 };
+
+/** Valores empilhados: documento A acima, documento comparado abaixo. */
+function Par({
+  a,
+  b,
+  corA,
+  corB,
+  align = "right",
+}: {
+  a: string;
+  b: string;
+  corA: string;
+  corB: string;
+  align?: "right" | "left";
+}) {
+  const cls = align === "right" ? "text-right" : "text-left";
+  return (
+    <div className={`flex flex-col leading-tight ${cls}`}>
+      <span className={corA}>{a}</span>
+      <span className={corB}>{b}</span>
+    </div>
+  );
+}
+
 
 
 function Situacao({
