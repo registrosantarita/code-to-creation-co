@@ -43,6 +43,15 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { HelpCircle } from "lucide-react";
 import { EstimativaCreditosArquivo } from "@/components/EstimativaCreditos";
 
 export const Route = createFileRoute("/_authenticated/analises/$id")({
