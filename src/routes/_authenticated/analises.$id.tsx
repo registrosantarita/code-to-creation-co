@@ -273,6 +273,32 @@ function AnaliseDetalhe() {
     onError: (e: Error) => toast.error(e.message),
   });
 
+  const conferirLotes = useMutation({
+    mutationFn: async () => {
+      if (!docA || !docB) throw new Error("Selecione o memorial e a planta.");
+      return conferirLoteALote({
+        data: {
+          analysisId: id,
+          memorialDocumentId: docA,
+          plantaDocumentId: docB,
+          tolerances: tol,
+        },
+      });
+    },
+    onSuccess: (res) => {
+      queryClient.invalidateQueries({ queryKey: ["comparisons", id] });
+      queryClient.invalidateQueries({ queryKey: ["findings", id] });
+      toast.success(
+        `${res.figuras} figura(s) conferida(s): ${res.divergentes} com divergência, ${res.conformes} conforme(s).` +
+          (res.soNoMemorial || res.soNaPlanta
+            ? ` Sem par: ${res.soNoMemorial} no memorial, ${res.soNaPlanta} na planta.`
+            : ""),
+      );
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+
   const extraidos = (documents.data ?? []).filter((d) => d.status === "parsed");
 
   /** Polígonos (parcelas) extraídos de um documento, na ordem de leitura. */
