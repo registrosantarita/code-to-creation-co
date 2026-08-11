@@ -141,7 +141,7 @@ export function coordToDms(
   const hemisferio = eixo === "lat" ? (negativo ? "S" : "N") : negativo ? "W" : "E";
   const { d, m, s } = decompor(Math.abs(n), 5);
   const sinal = negativo ? "-" : "";
-  return `${sinal}${d}°${String(m).padStart(2, "0")}'${segundosStr(s)}"${hemisferio}`;
+  return `${sinal}${d}°${String(m).padStart(2, "0")}'${segundosStr(s, 5)}"${hemisferio}`;
 }
 
 
