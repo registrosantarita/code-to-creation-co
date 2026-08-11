@@ -85,6 +85,10 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
           "GeoConfronto — plataforma de conferência registral, geométrica e normativa: extração, normalização e comparação auditável de memoriais descritivos.",
       },
       { property: "og:type", content: "website" },
+      {
+        name: "google-site-verification",
+        content: "Giaaaiz1v53nMDHNGaSGPwLRGNpF9sp2FIHT4XM2QtY",
+      },
       { name: "twitter:card", content: "summary_large_image" },
       { name: "theme-color", content: "#1e2a44" },
       { name: "mobile-web-app-capable", content: "yes" },
