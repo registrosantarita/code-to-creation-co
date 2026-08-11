@@ -755,15 +755,40 @@ function AnaliseDetalhe() {
               ))}
             </div>
 
-            <Button
-              className="mt-6"
-              disabled={executarComparacao.isPending}
-              onClick={() => executarComparacao.mutate()}
-            >
-              {executarComparacao.isPending
-                ? "Comparando..."
-                : "Executar comparação"}
-            </Button>
+            <div className="mt-6 flex flex-wrap items-center gap-3">
+              <Button
+                disabled={executarComparacao.isPending}
+                onClick={() => executarComparacao.mutate()}
+              >
+                {executarComparacao.isPending
+                  ? "Comparando..."
+                  : "Executar comparação"}
+              </Button>
+
+              {tipo === "memorial_to_plan" && (
+                <Button
+                  variant="outline"
+                  disabled={conferirLotes.isPending}
+                  onClick={() => conferirLotes.mutate()}
+                >
+                  {conferirLotes.isPending
+                    ? "Conferindo lote a lote..."
+                    : "Conferir todos os lotes/quadras"}
+                </Button>
+              )}
+            </div>
+
+            {tipo === "memorial_to_plan" && (
+              <p className="mt-3 text-xs leading-relaxed text-muted-foreground">
+                Na conferência lote a lote, cada figura do memorial (quadra e
+                lote, áreas públicas) é pareada com a mesma figura da planta pelo
+                rótulo. A planta é representação gráfica: a medida que ela não
+                traz não é apontada como erro; a medida que ela traz precisa
+                coincidir com a do memorial. Documento A = memorial, documento B
+                = planta.
+              </p>
+            )}
+
           </section>
 
           <section>
