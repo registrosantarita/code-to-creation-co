@@ -16,6 +16,8 @@ type Props = {
   labelB?: string;
   /** Coordenadas dos vértices do documento A, indexadas pelo nome em maiúsculas. */
   vertices?: Map<string, VertexCoordRow> | undefined;
+  /** Coordenadas dos vértices do documento comparado, indexadas pelo nome. */
+  verticesB?: Map<string, VertexCoordRow> | undefined;
   /** Posição do documento paradigma na ordem de upload: 0 → A, 1 → B... */
   indiceA?: number;
   /** Posição do documento comparado na ordem de upload: 1 → B, 2 → C... */
