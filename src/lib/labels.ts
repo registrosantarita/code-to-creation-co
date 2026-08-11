@@ -96,14 +96,13 @@ function decompor(abs: number, casasSeg: number) {
   return { d, m, s };
 }
 
-/** Segundos sem zeros artificiais: 24,443 / 7 / 12,5 */
-function segundosStr(s: number): string {
-  const intPart = Math.floor(s);
-  const frac = s - intPart;
-  const base = String(intPart).padStart(2, "0");
-  if (frac <= 0) return base;
-  const fracStr = String(frac).slice(2).replace(/0+$/, "");
-  return `${base},${fracStr}`;
+/** Segundos sem zeros artificiais: 24,443 / 07 / 12,5 */
+function segundosStr(s: number, casas: number): string {
+  const txt = s.toFixed(casas);
+  const [int, frac = ""] = txt.split(".");
+  const base = int!.padStart(2, "0");
+  const fracLimpa = frac.replace(/0+$/, "");
+  return fracLimpa ? `${base},${fracLimpa}` : base;
 }
 
 export function degToDms(value: number | string | null): string {
@@ -111,12 +110,24 @@ export function degToDms(value: number | string | null): string {
   const n = typeof value === "string" ? Number(value) : value;
   if (!Number.isFinite(n)) return "—";
   const sinal = n < 0 ? "-" : "";
-  const { d, m, s } = decompor(Math.abs(n), 4);
+  let { d, m, s } = decompor(Math.abs(n), 2);
+  // Ruído de conversão: segundos praticamente inteiros voltam a ser inteiros.
+  const inteiro = Math.round(s);
+  if (Math.abs(s - inteiro) < 0.02) s = inteiro;
+  if (s >= 60) {
+    s -= 60;
+    m += 1;
+  }
+  if (m >= 60) {
+    m -= 60;
+    d += 1;
+  }
   if (m === 0 && s === 0) return `${sinal}${d}°`;
   const mm = String(m).padStart(2, "0");
   if (s === 0) return `${sinal}${d}°${mm}'`;
-  return `${sinal}${d}°${mm}'${segundosStr(s)}"`;
+  return `${sinal}${d}°${mm}'${segundosStr(s, 2)}"`;
 }
+
 
 /** Latitude/longitude em grau, minuto e segundo, com sinal e hemisfério. */
 export function coordToDms(
