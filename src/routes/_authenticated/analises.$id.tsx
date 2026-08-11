@@ -4,7 +4,11 @@ import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { processDocument, runComparison } from "@/lib/registral.functions";
+import {
+  processDocument,
+  runComparison,
+  runLotBatchComparison,
+} from "@/lib/registral.functions";
 import { DEFAULT_TOLERANCES } from "@/lib/comparison-engine";
 import {
   CATEGORIA_DOCUMENTO,
@@ -74,6 +78,7 @@ function AnaliseDetalhe() {
   const navigate = useNavigate();
   const extrair = useServerFn(processDocument);
   const comparar = useServerFn(runComparison);
+  const conferirLoteALote = useServerFn(runLotBatchComparison);
 
   const [texto, setTexto] = useState("");
   const [arquivoPendente, setArquivoPendente] = useState<File | null>(null);
