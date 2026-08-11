@@ -82,10 +82,13 @@ export type TrechoConferido = {
   azimute_b: number | null;
   invertido: boolean;
   ok: boolean;
+  /** Falso quando não havia dado comum (distância/azimute) para conferir. */
+  comparado?: boolean;
   problemas: string[];
   confrontante_a?: string | null;
   confrontante_b?: string | null;
 };
+
 
 function montarTrecho(
   seqA: number,
@@ -113,10 +116,14 @@ function montarTrecho(
           : sb.azimuth_deg,
     invertido,
     ok: problemas.length === 0,
+    comparado:
+      (sa.distance_m !== null && sb.distance_m !== null) ||
+      (sa.azimuth_deg !== null && sb.azimuth_deg !== null),
     problemas,
     confrontante_a: sa.confrontante ?? null,
     confrontante_b: sb.confrontante ?? null,
   };
+
 }
 
 
@@ -426,6 +433,18 @@ export function compareParcels(
     0,
   );
   metrics["divergent_segments"] = divergentSegments;
+  const naoComparados = trechos.filter((t) => t.comparado === false).length;
+  metrics["trechos_nao_comparaveis"] = naoComparados;
+  if (naoComparados > 0) {
+    findings.push({
+      severity: "inconclusive",
+      code: "SEGMENTOS_SEM_DADO_COMUM",
+      title: "Trechos sem dado comum para conferência",
+      description: `${naoComparados} de ${trechos.length} trecho(s) não puderam ser conferidos: os documentos não trazem a mesma grandeza (distância ou azimute) para esses lados. Não se trata de divergência, mas de ausência de elemento comparável.`,
+      evidence: { nao_comparaveis: naoComparados, total: trechos.length },
+    });
+  }
+
   if (n > 0 && divergentSegments === 0) {
     findings.push({
       severity: "informative",

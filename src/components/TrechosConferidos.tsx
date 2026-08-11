@@ -1,4 +1,4 @@
-import { Check, X } from "lucide-react";
+import { Check, Minus, X } from "lucide-react";
 import { fmtMedida, degToDms } from "@/lib/labels";
 import type { TrechoConferido } from "@/lib/comparison-engine";
 import { agruparConfrontantes } from "@/lib/confrontantes";
@@ -15,22 +15,35 @@ type Props = {
   labelB?: string;
 };
 
-function Situacao({ ok, problemas }: { ok: boolean; problemas: string[] }) {
+function Situacao({
+  ok,
+  problemas,
+  comparado = true,
+}: {
+  ok: boolean;
+  problemas: string[];
+  comparado?: boolean;
+}) {
   return (
     <div className="flex flex-col items-center gap-1">
-      {ok ? (
+      {!comparado ? (
+        <Minus className="h-5 w-5 text-muted-foreground" aria-label="Não conferido" />
+      ) : ok ? (
         <Check className="h-5 w-5 text-success" aria-label="Correto" />
       ) : (
         <X className="h-5 w-5 text-destructive" aria-label="Incorreto" />
       )}
-      {problemas.length > 0 && (
-        <span className="max-w-[220px] text-center text-[11px] leading-snug text-muted-foreground">
-          {problemas.join("; ")}
-        </span>
-      )}
+      <span className="max-w-[220px] text-center text-[11px] leading-snug text-muted-foreground">
+        {problemas.length > 0
+          ? problemas.join("; ")
+          : comparado
+            ? ""
+            : "sem dado comum para conferir"}
+      </span>
     </div>
   );
 }
+
 
 /** Conferência trecho a trecho: vértice inicial → final e conformidade. */
 export function TrechosConferidos({ trechos, extensaoM, labelA, labelB }: Props) {
@@ -99,7 +112,7 @@ export function TrechosConferidos({ trechos, extensaoM, labelA, labelB }: Props)
                     {degToDms(t.azimute_a)} / {degToDms(t.azimute_b)}
                   </td>
                   <td className="py-2 pr-3">
-                    <Situacao ok={t.ok} problemas={t.problemas} />
+                    <Situacao ok={t.ok} problemas={t.problemas} comparado={t.comparado ?? true} />
                   </td>
                 </tr>
               ))}

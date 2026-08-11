@@ -4,7 +4,7 @@ import type { Database, Json } from "@/integrations/supabase/types";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { z } from "zod";
 import { isGeoExtension } from "./geo-parser";
-import { parseParcelas } from "./multi-parcel";
+import { parseParcelas, semDescricaoPerimetrica } from "./multi-parcel";
 import {
   DEFAULT_TOLERANCES,
   compareParcels,
@@ -76,12 +76,16 @@ export const processDocument = createServerFn({ method: "POST" })
 
     const parcelas = parseParcelas(text, ehGeometria);
     if (parcelas.length === 0) {
+      const msg = semDescricaoPerimetrica(text)
+        ? "O arquivo não contém descrição perimétrica legível — o texto extraído é de uma planta plotada em CAD (rótulos de grade e legendas). Envie o memorial descritivo correspondente ou a geometria vetorial (KML, KMZ, GeoJSON) da planta."
+        : "Nenhum polígono reconhecido.";
       await supabase
         .from("documents")
-        .update({ status: "failed", error_message: "Nenhum polígono reconhecido." })
+        .update({ status: "failed", error_message: msg })
         .eq("id", doc.id);
-      return { ok: false as const, message: "Nenhum polígono reconhecido." };
+      return { ok: false as const, message: msg };
     }
+
     if (ehGeometria) {
       parcelas.forEach((p) => {
         p.warnings = [

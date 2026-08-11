@@ -1,5 +1,26 @@
 import { parseMemorial, type ParsedParcel } from "./memorial-parser";
 import { parseGeometryPolygons, parseGeometryText } from "./geo-parser";
+import { pareceLoteamento, parseLoteamento } from "./loteamento-parser";
+
+/**
+ * Plantas exportadas de CAD em PDF produzem texto solto (rótulos de grade,
+ * cotas isoladas, legendas), sem descrição perimétrica. Interpretar esse
+ * conteúdo como memorial gera polígonos inexistentes e dezenas de
+ * divergências falsas — por isso o texto é recusado antes do parsing.
+ */
+export function semDescricaoPerimetrica(texto: string): boolean {
+  const linhas = texto.split("\n").filter((l) => l.trim().length > 0);
+  if (linhas.length === 0) return true;
+  const mediaPalavras =
+    linhas.reduce((acc, l) => acc + l.trim().split(/\s+/).length, 0) / linhas.length;
+  const marcadores =
+    (texto.match(/confront/gi) ?? []).length +
+    (texto.match(/at[ée]\s+o\s+(?:v[ée]rtice|ponto)/gi) ?? []).length +
+    (texto.match(/azimute/gi) ?? []).length +
+    (texto.match(/mem(?:orial)?\s+descritiv/gi) ?? []).length;
+  return marcadores < 3 && mediaPalavras < 4;
+}
+
 
 /**
  * Cabeçalhos que costumam iniciar a descrição de um novo polígono dentro do
@@ -52,7 +73,23 @@ export function parseParcelas(text: string, ehGeometria: boolean): ParsedParcel[
     return unico ? [unico] : [];
   }
 
+  if (semDescricaoPerimetrica(text)) return [];
+
+  if (pareceLoteamento(text)) {
+    const lotes = parseLoteamento(text);
+    if (lotes.length > 1) {
+      return lotes.map((p) => ({
+        ...p,
+        warnings: [
+          `Memorial de loteamento com ${lotes.length} descrições perimétricas (lotes e áreas públicas): cada uma foi registrada como um imóvel independente.`,
+          ...p.warnings,
+        ],
+      }));
+    }
+  }
+
   const blocos = blocosDeTexto(text);
+
   if (blocos.length > 1) {
     const parcelas: ParsedParcel[] = [];
     const vistos = new Set<string>();
