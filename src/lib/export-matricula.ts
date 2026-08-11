@@ -172,9 +172,11 @@ export async function exportarMatriculaXlsx(
       perim,
       1,
     );
+    void prox;
 
     const grupos = agruparConfrontacao(segs);
     confrontacoes = grupos.length;
+    // Tabela de confrontação ao lado direito, pulando uma coluna (col. 9).
     montarTabela(
       ws,
       [
@@ -183,8 +185,10 @@ export async function exportarMatriculaXlsx(
         { titulo: "CONFRONTAÇÃO", largura: 60 },
       ],
       grupos.map((g) => [g.de, g.para, g.confrontacao]),
-      prox + 1,
+      1,
+      9,
     );
+
 
     await baixar(wb, nomeArquivo);
     return { sigef, linhas: perim.length, confrontacoes };
