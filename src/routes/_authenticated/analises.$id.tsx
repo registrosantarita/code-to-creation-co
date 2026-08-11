@@ -294,11 +294,15 @@ function AnaliseDetalhe() {
       queryClient.invalidateQueries({ queryKey: ["comparisons", id] });
       queryClient.invalidateQueries({ queryKey: ["findings", id] });
       toast.success(
-        `${res.figuras} figura(s) conferida(s): ${res.divergentes} com divergência, ${res.conformes} conforme(s).` +
+        ("modo" in res && res.modo === "cotas_avulsas"
+          ? "Planta sem rótulos de lote: pareamento feito pela área cotada. "
+          : "") +
+          `${res.figuras} figura(s) conferida(s): ${res.divergentes} com divergência, ${res.conformes} conforme(s).` +
           (res.soNoMemorial || res.soNaPlanta
             ? ` Sem par: ${res.soNoMemorial} no memorial, ${res.soNaPlanta} na planta.`
             : ""),
       );
+
     },
     onError: (e: Error) => toast.error(e.message),
   });

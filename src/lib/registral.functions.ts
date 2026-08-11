@@ -14,6 +14,12 @@ import {
   type Tolerances,
 } from "./comparison-engine";
 import { parearFiguras } from "./lote-key";
+import {
+  compararLoteComBloco,
+  extrairBlocosCotados,
+  parearPorArea,
+} from "./planta-cotas";
+
 
 const ProcessInput = z.object({ documentId: z.string().uuid() });
 
@@ -503,11 +509,89 @@ export const runLotBatchComparison = createServerFn({ method: "POST" })
       .map(montar);
 
     const pareamento = parearFiguras(listaMemorial, listaPlanta);
+
+    // Contingência: plantas em CAD trazem só números soltos (cotas e área),
+    // sem rótulo de quadra/lote. Nesse caso confere-se por área + cotas.
     if (pareamento.pares.length === 0) {
-      throw new Error(
-        "Nenhuma figura pôde ser pareada: os rótulos de quadra/lote não coincidem entre o memorial e a planta.",
-      );
+      const { data: docPlanta } = await supabase
+        .from("documents")
+        .select("extracted_text")
+        .eq("id", data.plantaDocumentId)
+        .maybeSingle();
+      const blocos = extrairBlocosCotados(docPlanta?.extracted_text ?? "");
+      const paresArea = parearPorArea(listaMemorial, blocos, tol.areaPct).slice(0, 400);
+
+      if (paresArea.length === 0) {
+        const exemplosMem = listaMemorial
+          .map((m) => (m.label ?? "").slice(0, 40))
+          .filter(Boolean)
+          .slice(0, 3);
+        throw new Error(
+          `Não foi possível parear as figuras: os rótulos de quadra/lote não coincidem e a planta não traz áreas cotadas legíveis (${blocos.length} bloco(s) detectado(s)). Memorial: ${exemplosMem.join(" | ") || "sem rótulos"}.`,
+        );
+      }
+
+      let divergentesA = 0;
+      let conformesA = 0;
+      for (const par of paresArea) {
+        const resultado = compararLoteComBloco(par.memorial.parcel, par.bloco, tol, {
+          a: `${nomeDoc(data.memorialDocumentId)} — ${par.memorial.label ?? "lote"}`,
+          b: `${nomeDoc(data.plantaDocumentId)} — bloco cotado ${par.bloco.area_m2} m²`,
+        });
+        if (resultado.classification === "incompatible") divergentesA += 1;
+        else if (resultado.classification === "compatible") conformesA += 1;
+
+        const { data: comparacao, error } = await supabase
+          .from("comparisons")
+          .insert({
+            analysis_id: data.analysisId,
+            comparison_type: "memorial_to_plan",
+            status: "completed",
+            classification: resultado.classification,
+            document_a_id: data.memorialDocumentId,
+            document_b_id: data.plantaDocumentId,
+            tolerances: tol,
+            summary: `${(par.memorial.label ?? "Lote").slice(0, 60)}: ${resultado.summary}`,
+            metrics: resultado.metrics as unknown as Json,
+            created_by: userId,
+          })
+          .select("id")
+          .single();
+        if (error || !comparacao) throw new Error("Falha ao registrar a comparação.");
+
+        if (resultado.findings.length > 0) {
+          await supabase.from("findings").insert(
+            resultado.findings.map((f) => ({
+              comparison_id: comparacao.id,
+              analysis_id: data.analysisId,
+              severity: f.severity,
+              code: f.code,
+              title: `${(par.memorial.label ?? "Lote").slice(0, 40)} — ${f.title}`,
+              description: f.description,
+              evidence: f.evidence as unknown as Json,
+            })),
+          );
+        }
+      }
+
+      await supabase.from("audit_logs").insert({
+        actor_id: userId,
+        entity_type: "analysis",
+        entity_id: data.analysisId,
+        action: "run_lot_batch",
+        metadata: { modo: "cotas_avulsas", figuras: paresArea.length, divergentes: divergentesA },
+      });
+
+      return {
+        figuras: paresArea.length,
+        conformes: conformesA,
+        divergentes: divergentesA,
+        soNoMemorial: listaMemorial.length - paresArea.length,
+        soNaPlanta: blocos.length - paresArea.length,
+        modo: "cotas_avulsas" as const,
+      };
     }
+
 
     const pares = pareamento.pares.slice(0, 400);
     let divergentes = 0;
