@@ -116,10 +116,14 @@ function montarTrecho(
           : sb.azimuth_deg,
     invertido,
     ok: problemas.length === 0,
+    comparado:
+      (sa.distance_m !== null && sb.distance_m !== null) ||
+      (sa.azimuth_deg !== null && sb.azimuth_deg !== null),
     problemas,
     confrontante_a: sa.confrontante ?? null,
     confrontante_b: sb.confrontante ?? null,
   };
+
 }
 
 
