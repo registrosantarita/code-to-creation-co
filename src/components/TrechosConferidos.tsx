@@ -15,7 +15,7 @@ type Props = {
   labelA?: string;
   labelB?: string;
   /** Coordenadas dos vértices do documento A, indexadas pelo nome em maiúsculas. */
-  vertices?: Map<string, VertexCoordRow>;
+  vertices?: Map<string, VertexCoordRow> | undefined;
 };
 
 
