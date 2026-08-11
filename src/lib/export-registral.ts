@@ -125,7 +125,7 @@ export function buildDescricaoSheets(parcel: ParcelExport): {
   }
 
   const perimetro: (string | number)[][] = [
-    ["DE", "COORD. N(Y)", "COORD. E(X)", "PARA", "ÂNGULO", "DIST. (m).", "CONFRONTAÇÃO"],
+    ["DE", "COORD. N(Y)", "COORD. E(X)", "ALT (m.)", "PARA", "ÂNGULO", "DIST. (m).", "CONFRONTAÇÃO"],
   ];
   segs.forEach((s) => {
     const v = idx.get(vname(s.from_vertex));
@@ -133,6 +133,7 @@ export function buildDescricaoSheets(parcel: ParcelExport): {
       vname(s.from_vertex),
       v?.north === null || v?.north === undefined ? "" : br(v.north, 3),
       v?.east === null || v?.east === undefined ? "" : br(v.east, 3),
+      altitudeDe(s, v),
       vname(s.to_vertex),
       grau(s.azimuth_deg),
       fmtMedida(s.distance_m),
@@ -278,8 +279,10 @@ export function exportarRelatorioPdf(
     startY: (doc as unknown as { lastAutoTable: { finalY: number } }).lastAutoTable.finalY + 16,
     head: [["Tolerância", "Valor adotado"]],
     body: [
-      ["Área", `${fmtNum(input.tolerancias["areaPct"] ?? null, 2)} %`],
-      ["Perímetro", `${fmtNum(input.tolerancias["perimeterPct"] ?? null, 2)} %`],
+      ["Área (percentual)", `${fmtNum(input.tolerancias["areaPct"] ?? null, 2)} %`],
+      ["Área (medida)", `${fmtNum(input.tolerancias["areaM2"] ?? null, 2)} m²`],
+      ["Perímetro (percentual)", `${fmtNum(input.tolerancias["perimeterPct"] ?? null, 2)} %`],
+      ["Perímetro (medida)", `${fmtNum(input.tolerancias["perimeterM"] ?? null, 3)} m`],
       ["Distância", `${fmtNum(input.tolerancias["distanceM"] ?? null, 3)} m`],
       ["Azimute", `${fmtNum(input.tolerancias["azimuthDeg"] ?? null, 4)} °`],
       ["Altitude", `${fmtNum(input.tolerancias["altitudeM"] ?? null, 2)} m`],
@@ -331,13 +334,14 @@ export function exportarRelatorioPdf(
 
     autoTable(doc, {
       startY: yTop + 24,
-      head: [["#", "Trecho (A)", "Correspondente (B)", "Dist. A/B (m)", "Azimute A/B", "Situação"]],
+      head: [["#", "Trecho (A)", "Correspondente (B)", "Dist. A/B (m)", "Azimute A/B", "Cota A/B (m)", "Situação"]],
       body: trechos.map((t) => [
         String(t.seq_a),
         `${t.de_a ?? "?"} - ${t.ate_a ?? "?"}`,
         `${t.de_b ?? "?"} - ${t.ate_b ?? "?"}`,
         `${fmtMedida(t.distancia_a)} / ${fmtMedida(t.distancia_b)}`,
         `${degToDms(t.azimute_a)} / ${degToDms(t.azimute_b)}`,
+        `${fmtMedida(t.cota_a)} / ${fmtMedida(t.cota_b)}`,
         t.ok ? "OK — correto" : `X — ${t.problemas.join("; ")}`,
       ]),
       theme: "grid",
@@ -345,11 +349,12 @@ export function exportarRelatorioPdf(
       headStyles: { fillColor: [24, 28, 38], textColor: 255 },
       columnStyles: {
         0: { cellWidth: 22 },
-        3: { cellWidth: 84, halign: "right" },
-        4: { cellWidth: 92, halign: "right" },
+        3: { cellWidth: 78, halign: "right" },
+        4: { cellWidth: 86, halign: "right" },
+        5: { cellWidth: 70, halign: "right" },
       },
       didParseCell: (data) => {
-        if (data.section === "body" && data.column.index === 5) {
+        if (data.section === "body" && data.column.index === 6) {
           const ok = trechos[data.row.index]?.ok;
           data.cell.styles.textColor = ok ? [22, 101, 52] : [153, 27, 27];
           data.cell.styles.fontStyle = "bold";

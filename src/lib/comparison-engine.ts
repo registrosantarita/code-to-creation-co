@@ -18,6 +18,10 @@ export type Tolerances = {
   distanceM: number;
   azimuthDeg: number;
   altitudeM: number;
+  /** Tolerância absoluta de área, em metros quadrados. */
+  areaM2: number;
+  /** Tolerância absoluta de perímetro, em metros lineares. */
+  perimeterM: number;
 };
 
 export const DEFAULT_TOLERANCES: Tolerances = {
@@ -26,7 +30,14 @@ export const DEFAULT_TOLERANCES: Tolerances = {
   distanceM: 0,
   azimuthDeg: 0,
   altitudeM: 0,
+  areaM2: 0,
+  perimeterM: 0,
 };
+
+/** Área/perímetro conferem quando ficam dentro do percentual OU da medida absoluta. */
+const dentroDaTolerancia = (diff: number, pct: number, tolPct: number, tolAbs: number) =>
+  pct <= tolPct || diff <= tolAbs;
+
 
 
 export type SegmentInput = {
@@ -80,6 +91,9 @@ export type TrechoConferido = {
   distancia_b: number | null;
   azimute_a: number | null;
   azimute_b: number | null;
+  /** Cota (altitude) do vértice inicial do trecho, em metros. */
+  cota_a: number | null;
+  cota_b: number | null;
   invertido: boolean;
   ok: boolean;
   /** Falso quando não havia dado comum (distância/azimute) para conferir. */
@@ -114,6 +128,8 @@ function montarTrecho(
         : invertido
           ? (sb.azimuth_deg + 180) % 360
           : sb.azimuth_deg,
+    cota_a: sa.altitude_from_m,
+    cota_b: invertido ? sb.altitude_to_m : sb.altitude_from_m,
     invertido,
     ok: problemas.length === 0,
     comparado:
@@ -236,20 +252,20 @@ export function compareParcels(
     const pct = (diff / base) * 100;
     metrics["area_diff_m2"] = diff;
     metrics["area_diff_pct"] = pct;
-    if (pct > tol.areaPct) {
+    if (!dentroDaTolerancia(diff, pct, tol.areaPct, tol.areaM2)) {
       findings.push({
-        severity: pct > tol.areaPct * 4 ? "critical" : "moderate",
+        severity: pct > tol.areaPct * 4 && diff > tol.areaM2 * 4 ? "critical" : "moderate",
         code: "AREA_DIVERGENTE",
         title: "Divergência de área",
-        description: `A área de ${labels.a} (${fmt(a.area_m2)} m²) diverge da de ${labels.b} (${fmt(b.area_m2)} m²) em ${fmt(diff)} m² (${fmt(pct, 3)}%), acima da tolerância de ${tol.areaPct}%.`,
-        evidence: { a: a.area_m2, b: b.area_m2, diff, pct, tolerance: tol.areaPct },
+        description: `A área de ${labels.a} (${fmt(a.area_m2)} m²) diverge da de ${labels.b} (${fmt(b.area_m2)} m²) em ${fmt(diff)} m² (${fmt(pct, 3)}%), acima das tolerâncias de ${tol.areaPct}% e ${fmt(tol.areaM2)} m².`,
+        evidence: { a: a.area_m2, b: b.area_m2, diff, pct, tolerance_pct: tol.areaPct, tolerance_m2: tol.areaM2 },
       });
     } else {
       findings.push({
         severity: "informative",
         code: "AREA_COMPATIVEL",
         title: "Área compatível",
-        description: `Diferença de área de ${fmt(diff)} m² (${fmt(pct, 3)}%), dentro da tolerância de ${tol.areaPct}%.`,
+        description: `Diferença de área de ${fmt(diff)} m² (${fmt(pct, 3)}%), dentro das tolerâncias de ${tol.areaPct}% e ${fmt(tol.areaM2)} m².`,
         evidence: { a: a.area_m2, b: b.area_m2, diff, pct },
       });
     }
@@ -271,7 +287,7 @@ export function compareParcels(
     if (p.declared_perimeter_m !== null && p.computed_perimeter_m !== null) {
       const diff = Math.abs(p.declared_perimeter_m - p.computed_perimeter_m);
       const pct = (diff / (p.declared_perimeter_m || 1)) * 100;
-      if (pct > tol.perimeterPct) {
+      if (!dentroDaTolerancia(diff, pct, tol.perimeterPct, tol.perimeterM)) {
         findings.push({
           severity: "moderate",
           code: "PERIMETRO_INCONSISTENTE",
@@ -296,7 +312,7 @@ export function compareParcels(
     const pct = (diff / (Math.max(pa, pb) || 1)) * 100;
     metrics["perimeter_diff_m"] = diff;
     metrics["perimeter_diff_pct"] = pct;
-    if (pct > tol.perimeterPct) {
+    if (!dentroDaTolerancia(diff, pct, tol.perimeterPct, tol.perimeterM)) {
       findings.push({
         severity: "moderate",
         code: "PERIMETRO_DIVERGENTE",
@@ -972,7 +988,8 @@ export function compareMemorialToPlan(
     metrics["area_diff_m2"] = diff;
     metrics["area_diff_pct"] = pct;
     findings.push(
-      pct > tol.areaPct
+      !dentroDaTolerancia(diff, pct, tol.areaPct, tol.areaM2)
+
         ? {
             severity: "critical",
             code: "AREA_DIVERGENTE",
@@ -1006,7 +1023,7 @@ export function compareMemorialToPlan(
     const diff = Math.abs(pp - pm);
     const pct = (diff / (Math.max(pp, pm) || 1)) * 100;
     metrics["perimeter_diff_m"] = diff;
-    if (pct > tol.perimeterPct) {
+    if (!dentroDaTolerancia(diff, pct, tol.perimeterPct, tol.perimeterM)) {
       findings.push({
         severity: "moderate",
         code: "PERIMETRO_DIVERGENTE",
