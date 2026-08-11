@@ -822,7 +822,103 @@ function AnaliseDetalhe() {
                 )}
               </div>
               <div className="space-y-2">
-                <Label>Tipo de comparação</Label>
+                <div className="flex items-center justify-between gap-2">
+                  <Label>Tipo de comparação</Label>
+                  <Dialog>
+                    <DialogTrigger asChild>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon-sm"
+                        className="h-6 w-6 shrink-0 text-muted-foreground hover:text-foreground"
+                        aria-label="O que cada critério faz?"
+                      >
+                        <HelpCircle className="h-4 w-4" />
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent className="max-w-2xl">
+                      <DialogHeader>
+                        <DialogTitle>Critérios de comparação</DialogTitle>
+                        <DialogDescription>
+                          Escolha o modo conforme a natureza dos documentos que
+                          serão confrontados.
+                        </DialogDescription>
+                      </DialogHeader>
+                      <div className="mt-2 space-y-4 text-sm">
+                        <div className="space-y-2">
+                          <h4 className="font-medium">
+                            {TIPO_COMPARACAO.memorial_to_memorial}
+                          </h4>
+                          <p className="text-muted-foreground">
+                            Confronta dois memoriais descritivos: azimutes/rumbos,
+                            distâncias, cotas, área, perímetro, confrontantes e
+                            sequência de vértices.
+                          </p>
+                        </div>
+                        <div className="space-y-2">
+                          <h4 className="font-medium">
+                            {TIPO_COMPARACAO.memorial_to_plan}
+                          </h4>
+                          <p className="text-muted-foreground">
+                            Compara a descrição textual do memorial com a
+                            geometria da planta (medidas, ângulos e
+                            confrontantes).
+                          </p>
+                        </div>
+                        <div className="space-y-2">
+                          <h4 className="font-medium">
+                            {TIPO_COMPARACAO.plan_to_plan}
+                          </h4>
+                          <p className="text-muted-foreground">
+                            Confronta geometria vetorial/gráfica entre duas
+                            plantas.
+                          </p>
+                        </div>
+                        <div className="space-y-2">
+                          <h4 className="font-medium">
+                            {TIPO_COMPARACAO.memorial_to_title}
+                          </h4>
+                          <p className="text-muted-foreground">
+                            Compara o memorial com a descrição contida em uma
+                            escritura ou outro título dominial.
+                          </p>
+                        </div>
+                        <div className="space-y-2">
+                          <h4 className="font-medium">
+                            {TIPO_COMPARACAO.memorial_to_registry}
+                          </h4>
+                          <p className="text-muted-foreground">
+                            Compara o memorial com os dados de uma matrícula.
+                          </p>
+                        </div>
+                        <div className="space-y-2">
+                          <h4 className="font-medium">
+                            {TIPO_COMPARACAO.boundary_to_boundary}
+                          </h4>
+                          <p className="text-muted-foreground">
+                            Modo vizinhos: confere apenas o trecho de divisa
+                            compartilhada (distâncias, azimutes e cotas),
+                            ignorando nomes de vértices, área, perímetro total e
+                            reciprocidade de confrontantes. Pode ser usado com um
+                            único documento — basta indicar os polígonos no
+                            paradigma e no comparável.
+                          </p>
+                        </div>
+                        <div className="space-y-2">
+                          <h4 className="font-medium">{TIPO_COMPARACAO.custom}</h4>
+                          <p className="text-muted-foreground">
+                            Permite adicionar quantos documentos comparáveis
+                            quiser (B, C, D…), de categorias iguais ou diferentes.
+                            Todos são conferidos contra o mesmo paradigma e o
+                            resultado abre na tabela única “Conferência
+                            consolidada”, com cada documento empilhado na sua
+                            cor.
+                          </p>
+                        </div>
+                      </div>
+                    </DialogContent>
+                  </Dialog>
+                </div>
                 <Select value={tipo} onValueChange={setTipo}>
                   <SelectTrigger>
                     <SelectValue />
@@ -854,7 +950,6 @@ function AnaliseDetalhe() {
                     sua cor.
                   </p>
                 ) : null}
-
               </div>
             </div>
 
