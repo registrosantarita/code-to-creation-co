@@ -161,7 +161,7 @@ export function coordToDms(
   const seg = frac ? `${int.padStart(2, "0")},${frac}` : int.padStart(2, "0");
   const sinal = negativo ? "-" : "";
 
-  return `${sinal}${d}°${String(m).padStart(2, "0")}'${segundosStr(s, casas)}"${hemisferio}`;
+  return `${sinal}${d}°${String(m).padStart(2, "0")}'${seg}"${hemisferio}`;
 }
 
 
