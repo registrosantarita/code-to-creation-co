@@ -177,3 +177,24 @@ export function fmtMedida(value: number | string | null, min = 2, max = 6): stri
 export function fmtAngulo(value: number | string | null): string {
   return degToDms(value === "" ? null : (value as number | string | null));
 }
+
+/** Cor de identificação de cada documento comparado (A, B, C, D, ...). */
+const DOC_CLASSES = [
+  "doc-a",
+  "doc-b",
+  "doc-c",
+  "doc-d",
+  "doc-e",
+  "doc-f",
+  "doc-g",
+  "doc-h",
+] as const;
+
+export function docColor(indice: number): string {
+  return DOC_CLASSES[indice % DOC_CLASSES.length]!;
+}
+
+/** Letra do documento na ordem de comparação: 0 → A, 1 → B, ... */
+export function docLetra(indice: number): string {
+  return String.fromCharCode(65 + (indice % 26));
+}
