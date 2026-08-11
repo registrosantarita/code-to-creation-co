@@ -6,7 +6,7 @@
  *    vértice) + tabela de confrontação (agrupada por confrontante).
  */
 import ExcelJS from "exceljs";
-import { degToDms } from "./labels";
+import { coordToDms, degToDms } from "./labels";
 import { getVertices, isSigefGeodesico, type ParcelExport, type SegmentRow, type VertexCoordRow } from "./export-registral";
 
 const FONTE = { name: "Montserrat", size: 9 } as const;
