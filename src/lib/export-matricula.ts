@@ -12,7 +12,6 @@ import { getVertices, isSigefGeodesico, type ParcelExport, type SegmentRow, type
 const FONTE = { name: "Montserrat", size: 9 } as const;
 const FMT2 = "#,##0.00";
 const FMT3 = "#,##0.000";
-const FMT8 = "#,##0.00000000";
 
 const num = (v: number | string | null | undefined): number | null => {
   if (v === null || v === undefined || v === "") return null;
