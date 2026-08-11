@@ -142,6 +142,49 @@ function Relatorio() {
     },
   });
 
+  // Tabela consolidada: todas as comparações que partem do mesmo paradigma.
+  const consolidado = useQuery({
+    enabled: !!comparison.data?.document_a_id,
+    queryKey: [
+      "comparison-consolidado",
+      comparison.data?.analysis_id,
+      comparison.data?.document_a_id,
+    ],
+    queryFn: async () => {
+      const docAId = comparison.data!.document_a_id!;
+      const { data: comps, error: e1 } = await supabase
+        .from("comparisons")
+        .select("id, document_a_id, document_b_id, metrics, created_at")
+        .eq("analysis_id", comparison.data!.analysis_id)
+        .eq("document_a_id", docAId)
+        .order("created_at", { ascending: true });
+      if (e1) throw e1;
+
+      const bIds = (comps ?? [])
+        .map((c) => c.document_b_id)
+        .filter((v): v is string => !!v);
+      const ids = Array.from(new Set([docAId, ...bIds]));
+
+      const { data: parcelas, error: e2 } = await supabase
+        .from("parcels")
+        .select("document_id, raw_extraction")
+        .in("document_id", ids);
+      if (e2) throw e2;
+
+      const mapas = new Map<string, Map<string, VertexCoordRow>>();
+      (parcelas ?? []).forEach((p) => {
+        const m = mapas.get(p.document_id) ?? new Map<string, VertexCoordRow>();
+        getVertices({ raw_extraction: p.raw_extraction } as never).forEach((v) => {
+          const key = String(v.name ?? "").trim().replace(/[.,;]+$/, "").toUpperCase();
+          if (key && !m.has(key)) m.set(key, v);
+        });
+        mapas.set(p.document_id, m);
+      });
+
+      return { comps: comps ?? [], mapas };
+    },
+  });
+
 
   if (comparison.isLoading || !comparison.data) {
     return (
