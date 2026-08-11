@@ -296,6 +296,7 @@ function Relatorio() {
         labelA={nomeDoc(c.document_a_id)}
         labelB={nomeDoc(c.document_b_id)}
         vertices={vertices.data}
+        verticesB={verticesB.data}
         indiceA={indiceA}
         indiceB={indiceB}
       />
