@@ -4,7 +4,11 @@ import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { processDocument, runComparison } from "@/lib/registral.functions";
+import {
+  processDocument,
+  runComparison,
+  runLotBatchComparison,
+} from "@/lib/registral.functions";
 import { DEFAULT_TOLERANCES } from "@/lib/comparison-engine";
 import {
   CATEGORIA_DOCUMENTO,
@@ -74,6 +78,7 @@ function AnaliseDetalhe() {
   const navigate = useNavigate();
   const extrair = useServerFn(processDocument);
   const comparar = useServerFn(runComparison);
+  const conferirLoteALote = useServerFn(runLotBatchComparison);
 
   const [texto, setTexto] = useState("");
   const [arquivoPendente, setArquivoPendente] = useState<File | null>(null);
@@ -272,6 +277,32 @@ function AnaliseDetalhe() {
     },
     onError: (e: Error) => toast.error(e.message),
   });
+
+  const conferirLotes = useMutation({
+    mutationFn: async () => {
+      if (!docA || !docB) throw new Error("Selecione o memorial e a planta.");
+      return conferirLoteALote({
+        data: {
+          analysisId: id,
+          memorialDocumentId: docA,
+          plantaDocumentId: docB,
+          tolerances: tol,
+        },
+      });
+    },
+    onSuccess: (res) => {
+      queryClient.invalidateQueries({ queryKey: ["comparisons", id] });
+      queryClient.invalidateQueries({ queryKey: ["findings", id] });
+      toast.success(
+        `${res.figuras} figura(s) conferida(s): ${res.divergentes} com divergência, ${res.conformes} conforme(s).` +
+          (res.soNoMemorial || res.soNaPlanta
+            ? ` Sem par: ${res.soNoMemorial} no memorial, ${res.soNaPlanta} na planta.`
+            : ""),
+      );
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
 
   const extraidos = (documents.data ?? []).filter((d) => d.status === "parsed");
 
@@ -755,15 +786,40 @@ function AnaliseDetalhe() {
               ))}
             </div>
 
-            <Button
-              className="mt-6"
-              disabled={executarComparacao.isPending}
-              onClick={() => executarComparacao.mutate()}
-            >
-              {executarComparacao.isPending
-                ? "Comparando..."
-                : "Executar comparação"}
-            </Button>
+            <div className="mt-6 flex flex-wrap items-center gap-3">
+              <Button
+                disabled={executarComparacao.isPending}
+                onClick={() => executarComparacao.mutate()}
+              >
+                {executarComparacao.isPending
+                  ? "Comparando..."
+                  : "Executar comparação"}
+              </Button>
+
+              {tipo === "memorial_to_plan" && (
+                <Button
+                  variant="outline"
+                  disabled={conferirLotes.isPending}
+                  onClick={() => conferirLotes.mutate()}
+                >
+                  {conferirLotes.isPending
+                    ? "Conferindo lote a lote..."
+                    : "Conferir todos os lotes/quadras"}
+                </Button>
+              )}
+            </div>
+
+            {tipo === "memorial_to_plan" && (
+              <p className="mt-3 text-xs leading-relaxed text-muted-foreground">
+                Na conferência lote a lote, cada figura do memorial (quadra e
+                lote, áreas públicas) é pareada com a mesma figura da planta pelo
+                rótulo. A planta é representação gráfica: a medida que ela não
+                traz não é apontada como erro; a medida que ela traz precisa
+                coincidir com a do memorial. Documento A = memorial, documento B
+                = planta.
+              </p>
+            )}
+
           </section>
 
           <section>

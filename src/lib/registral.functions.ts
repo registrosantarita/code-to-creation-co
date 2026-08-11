@@ -9,9 +9,11 @@ import {
   DEFAULT_TOLERANCES,
   compareParcels,
   compareSharedBoundary,
+  compareMemorialToPlan,
   type ParcelInput,
   type Tolerances,
 } from "./comparison-engine";
+import { parearFiguras } from "./lote-key";
 
 const ProcessInput = z.object({ documentId: z.string().uuid() });
 
@@ -400,4 +402,176 @@ export const runComparison = createServerFn({ method: "POST" })
     });
 
     return { comparisonId: comparison.id, classification: result.classification };
+  });
+
+const BatchInput = z.object({
+  analysisId: z.string().uuid(),
+  memorialDocumentId: z.string().uuid(),
+  plantaDocumentId: z.string().uuid(),
+  tolerances: z
+    .object({
+      areaPct: z.number().min(0).max(100),
+      perimeterPct: z.number().min(0).max(100),
+      distanceM: z.number().min(0).max(1000),
+      azimuthDeg: z.number().min(0).max(180),
+      altitudeM: z.number().min(0).max(10000),
+    })
+    .optional(),
+});
+
+/**
+ * Confere, lote a lote (e quadra a quadra), o memorial contra a planta:
+ * as figuras são pareadas pelo rótulo e só as medidas cotadas na planta
+ * são confrontadas.
+ */
+export const runLotBatchComparison = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) => BatchInput.parse(input))
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    const tol: Tolerances = data.tolerances ?? DEFAULT_TOLERANCES;
+
+    if (data.memorialDocumentId === data.plantaDocumentId) {
+      throw new Error("Selecione o memorial e a planta em documentos distintos.");
+    }
+
+    const { data: docs } = await supabase
+      .from("documents")
+      .select("id, file_name")
+      .in("id", [data.memorialDocumentId, data.plantaDocumentId]);
+    const nomeDoc = (id: string) =>
+      docs?.find((d) => d.id === id)?.file_name ?? "Documento";
+
+    const { data: parcelas } = await supabase
+      .from("parcels")
+      .select("*")
+      .in("document_id", [data.memorialDocumentId, data.plantaDocumentId])
+      .order("created_at");
+    const todas = parcelas ?? [];
+    if (todas.length === 0) {
+      throw new Error("Os dois documentos precisam ter extração concluída.");
+    }
+
+    const { data: segmentos } = await supabase
+      .from("segments")
+      .select("*")
+      .in(
+        "parcel_id",
+        todas.map((p) => p.id),
+      )
+      .order("seq");
+    const porParcela = new Map<string, ParcelInput["segments"]>();
+    (segmentos ?? []).forEach((s) => {
+      const lista = porParcela.get(s.parcel_id) ?? [];
+      lista.push({
+        seq: s.seq,
+        from_vertex: s.from_vertex,
+        to_vertex: s.to_vertex,
+        azimuth_deg: s.azimuth_deg === null ? null : Number(s.azimuth_deg),
+        distance_m: s.distance_m === null ? null : Number(s.distance_m),
+        altitude_from_m: s.altitude_from_m === null ? null : Number(s.altitude_from_m),
+        altitude_to_m: s.altitude_to_m === null ? null : Number(s.altitude_to_m),
+        confrontante: s.confrontante,
+      });
+      porParcela.set(s.parcel_id, lista);
+    });
+
+    const montar = (p: (typeof todas)[number]) => ({
+      id: p.id,
+      label: p.label,
+      parcel: {
+        label: p.label,
+        area_m2: p.area_m2 === null ? null : Number(p.area_m2),
+        declared_perimeter_m:
+          p.declared_perimeter_m === null ? null : Number(p.declared_perimeter_m),
+        computed_perimeter_m:
+          p.computed_perimeter_m === null ? null : Number(p.computed_perimeter_m),
+        vertex_count: p.vertex_count,
+        altitude_min_m: p.altitude_min_m === null ? null : Number(p.altitude_min_m),
+        altitude_max_m: p.altitude_max_m === null ? null : Number(p.altitude_max_m),
+        altitude_mean_m: p.altitude_mean_m === null ? null : Number(p.altitude_mean_m),
+        confrontantes: p.confrontantes ?? [],
+        segments: porParcela.get(p.id) ?? [],
+      } satisfies ParcelInput,
+    });
+
+    const listaMemorial = todas
+      .filter((p) => p.document_id === data.memorialDocumentId)
+      .map(montar);
+    const listaPlanta = todas
+      .filter((p) => p.document_id === data.plantaDocumentId)
+      .map(montar);
+
+    const pareamento = parearFiguras(listaMemorial, listaPlanta);
+    if (pareamento.pares.length === 0) {
+      throw new Error(
+        "Nenhuma figura pôde ser pareada: os rótulos de quadra/lote não coincidem entre o memorial e a planta.",
+      );
+    }
+
+    const pares = pareamento.pares.slice(0, 400);
+    let divergentes = 0;
+    let conformes = 0;
+
+    for (const par of pares) {
+      const resultado = compareMemorialToPlan(par.a.parcel, par.b.parcel, tol, {
+        a: `${nomeDoc(data.memorialDocumentId)} — ${par.a.label ?? par.chave}`,
+        b: `${nomeDoc(data.plantaDocumentId)} — ${par.b.label ?? par.chave}`,
+      });
+      if (resultado.classification === "incompatible") divergentes += 1;
+      else if (resultado.classification === "compatible") conformes += 1;
+
+      const { data: comparacao, error } = await supabase
+        .from("comparisons")
+        .insert({
+          analysis_id: data.analysisId,
+          comparison_type: "memorial_to_plan",
+          status: "completed",
+          classification: resultado.classification,
+          document_a_id: data.memorialDocumentId,
+          document_b_id: data.plantaDocumentId,
+          tolerances: tol,
+          summary: `${par.a.label ?? par.chave}: ${resultado.summary}`,
+          metrics: { ...resultado.metrics, figura: par.chave } as unknown as Json,
+          created_by: userId,
+        })
+        .select("id")
+        .single();
+      if (error || !comparacao) throw new Error("Falha ao registrar a comparação.");
+
+      if (resultado.findings.length > 0) {
+        await supabase.from("findings").insert(
+          resultado.findings.map((f) => ({
+            comparison_id: comparacao.id,
+            analysis_id: data.analysisId,
+            severity: f.severity,
+            code: f.code,
+            title: `${par.a.label ?? par.chave} — ${f.title}`,
+            description: f.description,
+            evidence: f.evidence as unknown as Json,
+          })),
+        );
+      }
+    }
+
+    await supabase.from("audit_logs").insert({
+      actor_id: userId,
+      entity_type: "analysis",
+      entity_id: data.analysisId,
+      action: "run_lot_batch",
+      metadata: {
+        figuras: pares.length,
+        divergentes,
+        so_no_memorial: pareamento.soNoA.length,
+        so_na_planta: pareamento.soNoB.length,
+      },
+    });
+
+    return {
+      figuras: pares.length,
+      conformes,
+      divergentes,
+      soNoMemorial: pareamento.soNoA.length,
+      soNaPlanta: pareamento.soNoB.length,
+    };
   });

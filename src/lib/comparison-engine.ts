@@ -899,3 +899,257 @@ function findingsAltitudeZero(p: ParcelInput, rotulo: string): Finding[] {
     },
   ];
 }
+
+// ---------------------------------------------------------------------------
+// Modo "memorial x planta" (conferência parcial)
+//
+// A planta é representação gráfica: pode cotar apenas algumas medidas. A
+// AUSÊNCIA de medida na planta não é divergência. Já a medida COTADA na planta
+// não pode divergir da descrita no memorial.
+
+/** Melhor correspondente do segmento da planta entre os trechos do memorial. */
+function melhorCorrespondente(
+  sp: SegmentInput,
+  memorial: SegmentInput[],
+  usados: Set<number>,
+  tol: Tolerances,
+): { idx: number; custo: number; invertido: boolean } | null {
+  let melhor: { idx: number; custo: number; invertido: boolean } | null = null;
+  memorial.forEach((sm, i) => {
+    if (usados.has(i)) return;
+    for (const invertido of [false, true]) {
+      let custo = 0;
+      let comparavel = false;
+      if (sp.distance_m !== null && sm.distance_m !== null) {
+        comparavel = true;
+        custo += Math.abs(sp.distance_m - sm.distance_m);
+      }
+      if (sp.azimuth_deg !== null && sm.azimuth_deg !== null) {
+        comparavel = true;
+        const az = invertido ? (sp.azimuth_deg + 180) % 360 : sp.azimuth_deg;
+        custo += angleDiff(sm.azimuth_deg, az) / 10;
+      }
+      if (!comparavel) continue;
+      if (!melhor || custo < melhor.custo) melhor = { idx: i, custo, invertido };
+    }
+  });
+  return melhor;
+}
+
+/**
+ * Confere um lote/quadra do memorial contra a mesma figura na planta,
+ * considerando APENAS as grandezas efetivamente cotadas na planta.
+ */
+export function compareMemorialToPlan(
+  memorial: ParcelInput,
+  planta: ParcelInput,
+  tol: Tolerances = DEFAULT_TOLERANCES,
+  labels: { a: string; b: string } = { a: "Memorial", b: "Planta" },
+): ComparisonResult {
+  const findings: Finding[] = [];
+  const metrics: Record<string, unknown> = {
+    modo: "memorial_x_planta",
+    segments_a: memorial.segments.length,
+    segments_b: planta.segments.length,
+  };
+
+  findings.push({
+    severity: "informative",
+    code: "MODO_MEMORIAL_PLANTA",
+    title: "Conferência memorial × planta (medidas parciais)",
+    description:
+      "A planta é representação gráfica e pode não cotar todas as medidas: a ausência de cota não é tratada como divergência. Confere-se apenas cada medida efetivamente representada na planta (distância, azimute, cota altimétrica, área e perímetro), que deve coincidir com a do memorial.",
+    evidence: {
+      segmentos_memorial: memorial.segments.length,
+      segmentos_planta: planta.segments.length,
+    },
+  });
+
+  // --- Área: só se a planta declarar ---
+  if (planta.area_m2 !== null && memorial.area_m2 !== null) {
+    const diff = Math.abs(planta.area_m2 - memorial.area_m2);
+    const pct = (diff / (Math.max(planta.area_m2, memorial.area_m2) || 1)) * 100;
+    metrics["area_diff_m2"] = diff;
+    metrics["area_diff_pct"] = pct;
+    findings.push(
+      pct > tol.areaPct
+        ? {
+            severity: "critical",
+            code: "AREA_DIVERGENTE",
+            title: "Área da planta diverge do memorial",
+            description: `Área no memorial: ${fmt(memorial.area_m2)} m²; na planta: ${fmt(planta.area_m2)} m². Diferença de ${fmt(diff)} m² (${fmt(pct, 3)}%).`,
+            evidence: { memorial: memorial.area_m2, planta: planta.area_m2, diff, pct },
+          }
+        : {
+            severity: "informative",
+            code: "AREA_COMPATIVEL",
+            title: "Área compatível",
+            description: `A área cotada na planta coincide com a do memorial (${fmt(memorial.area_m2)} m²).`,
+            evidence: { memorial: memorial.area_m2, planta: planta.area_m2 },
+          },
+    );
+  } else if (planta.area_m2 === null) {
+    findings.push({
+      severity: "informative",
+      code: "AREA_NAO_COTADA",
+      title: "Área não cotada na planta",
+      description:
+        "A planta não traz a área da figura. Por ser representação gráfica, a ausência não constitui divergência.",
+      evidence: { memorial: memorial.area_m2 },
+    });
+  }
+
+  // --- Perímetro: só se a planta trouxer ---
+  const pp = planta.declared_perimeter_m ?? planta.computed_perimeter_m;
+  const pm = memorial.declared_perimeter_m ?? memorial.computed_perimeter_m;
+  if (pp !== null && pm !== null && planta.segments.length === memorial.segments.length) {
+    const diff = Math.abs(pp - pm);
+    const pct = (diff / (Math.max(pp, pm) || 1)) * 100;
+    metrics["perimeter_diff_m"] = diff;
+    if (pct > tol.perimeterPct) {
+      findings.push({
+        severity: "moderate",
+        code: "PERIMETRO_DIVERGENTE",
+        title: "Perímetro divergente",
+        description: `Perímetro no memorial: ${fmt(pm)} m; na planta: ${fmt(pp)} m (Δ ${fmt(diff)} m). As duas descrições têm o mesmo número de lados, de modo que o total é comparável.`,
+        evidence: { memorial: pm, planta: pp, diff, pct },
+      });
+    }
+  }
+
+  // --- Medida a medida, a partir da planta ---
+  const usados = new Set<number>();
+  const trechos: TrechoConferido[] = [];
+  let divergentes = 0;
+  let conferidos = 0;
+  let semCorrespondente = 0;
+
+  planta.segments.forEach((sp, ip) => {
+    if (sp.distance_m === null && sp.azimuth_deg === null) return;
+    const match = melhorCorrespondente(sp, memorial.segments, usados, tol);
+    if (!match) {
+      semCorrespondente += 1;
+      return;
+    }
+    usados.add(match.idx);
+    const sm = memorial.segments[match.idx]!;
+    const problemas: string[] = [];
+
+    if (sp.distance_m !== null && sm.distance_m !== null) {
+      const d = Math.abs(sp.distance_m - sm.distance_m);
+      if (d > tol.distanceM) {
+        problemas.push(
+          `distância memorial ${fmtMedida(sm.distance_m)} m x planta ${fmtMedida(sp.distance_m)} m (Δ ${fmtMedida(d)} m)`,
+        );
+      }
+    }
+    if (sp.azimuth_deg !== null && sm.azimuth_deg !== null) {
+      const azP = match.invertido ? (sp.azimuth_deg + 180) % 360 : sp.azimuth_deg;
+      const d = angleDiff(sm.azimuth_deg, azP);
+      if (d > tol.azimuthDeg) {
+        problemas.push(
+          `azimute memorial ${degToDms(sm.azimuth_deg)} x planta ${degToDms(azP)} (Δ ${degToDms(d)})`,
+        );
+      }
+    }
+    ([
+      [sm.altitude_from_m, sp.altitude_from_m, "vértice inicial"],
+      [sm.altitude_to_m, sp.altitude_to_m, "vértice final"],
+    ] as [number | null, number | null, string][]).forEach(([vm, vp, rotulo]) => {
+      if (vm === null || vp === null) return;
+      const d = Math.abs(vm - vp);
+      if (d > tol.altitudeM) {
+        problemas.push(
+          `altitude do ${rotulo} memorial ${fmtMedida(vm)} m x planta ${fmtMedida(vp)} m (Δ ${fmtMedida(d)} m)`,
+        );
+      }
+    });
+
+    conferidos += 1;
+    trechos.push(
+      montarTrecho(match.idx + 1, ip + 1, sm, sp, match.invertido, problemas),
+    );
+
+    if (problemas.length > 0) {
+      divergentes += 1;
+      findings.push({
+        severity: "critical",
+        code: "MEDIDA_PLANTA_DIVERGENTE",
+        title: `Medida da planta divergente (lado ${ip + 1})`,
+        description: `O lado ${ip + 1} cotado na planta não confere com o trecho ${match.idx + 1} do memorial (${sm.from_vertex ?? "?"}→${sm.to_vertex ?? "?"}): ${problemas.join("; ")}.`,
+        evidence: { planta: sp, memorial: sm, problemas, invertido: match.invertido },
+      });
+    }
+  });
+
+  const naoCotados = Math.max(0, memorial.segments.length - conferidos);
+  metrics["trechos"] = trechos;
+  metrics["trechos_conformes"] = trechos.filter((t) => t.ok).length;
+  metrics["medidas_conferidas"] = conferidos;
+  metrics["medidas_divergentes"] = divergentes;
+  metrics["lados_nao_cotados_na_planta"] = naoCotados;
+  metrics["extensao_conferida_m"] = trechos.reduce(
+    (acc, t) => acc + (t.distancia_a ?? 0),
+    0,
+  );
+
+  if (naoCotados > 0) {
+    findings.push({
+      severity: "informative",
+      code: "LADOS_NAO_COTADOS",
+      title: "Lados sem cota na planta",
+      description: `${naoCotados} lado(s) descritos no memorial não têm medida representada na planta e, portanto, não foram conferidos. Isso não constitui divergência.`,
+      evidence: { nao_cotados: naoCotados, conferidos },
+    });
+  }
+  if (semCorrespondente > 0) {
+    findings.push({
+      severity: "moderate",
+      code: "MEDIDA_SEM_CORRESPONDENTE",
+      title: "Medida da planta sem correspondente no memorial",
+      description: `${semCorrespondente} medida(s) cotada(s) na planta não encontraram lado correspondente no memorial. Verifique se a figura conferida é a mesma.`,
+      evidence: { sem_correspondente: semCorrespondente },
+    });
+  }
+  if (conferidos === 0) {
+    findings.push({
+      severity: "inconclusive",
+      code: "PLANTA_SEM_MEDIDAS",
+      title: "Planta sem medidas comparáveis",
+      description:
+        "A planta não trouxe medidas passíveis de conferência para esta figura. Nada foi confrontado.",
+      evidence: {},
+    });
+  }
+
+  findings.push(...findingsAltitudeZero(memorial, labels.a));
+  findings.push(...findingsAltitudeZero(planta, labels.b));
+
+  const counts = {
+    critical: findings.filter((f) => f.severity === "critical").length,
+    moderate: findings.filter((f) => f.severity === "moderate").length,
+    informative: findings.filter((f) => f.severity === "informative").length,
+    inconclusive: findings.filter((f) => f.severity === "inconclusive").length,
+  };
+  metrics["counts"] = counts;
+
+  let classification: Classification;
+  if (conferidos === 0) classification = "inconclusive";
+  else if (counts.critical > 0) classification = "incompatible";
+  else if (counts.moderate > 0) classification = "compatible_with_remarks";
+  else classification = "compatible";
+
+  const resumo: Record<Classification, string> = {
+    compatible: `Todas as ${conferidos} medida(s) cotada(s) na planta conferem com o memorial${naoCotados ? `; ${naoCotados} lado(s) não têm cota na planta e não foram conferidos` : ""}.`,
+    compatible_with_remarks: `As medidas cotadas na planta conferem com o memorial, com ressalvas a verificar.`,
+    incompatible: `${divergentes} medida(s) cotada(s) na planta divergem do memorial.`,
+    inconclusive: "Não havia medida cotada na planta para conferir.",
+  };
+
+  return {
+    classification,
+    summary: `${resumo[classification]} Achados: ${counts.critical} crítico(s), ${counts.moderate} moderado(s), ${counts.informative} informativo(s).`,
+    metrics,
+    findings,
+  };
+}
