@@ -233,7 +233,7 @@ function extrairCadeia(t: string): Cadeia {
     folha: primeiro(t, /(?:folhas?|fls?\.?)\s*(?:n[º°.]?\s*)?[:\-]?\s*([\d./\-]{1,12})/i),
     registro_anterior: primeiro(
       t,
-      /registro\s+anterior\s*[:\-]?\s*([^\n.;]{3,120})/i,
+      /registro\s+anterior\s*[:\-]?\s*([^\n;]{3,160}?)(?=\.\s+[A-ZÁÉÍÓÚ]|[;\n]|\.$|$)/i,
     ),
   };
 }
@@ -260,8 +260,11 @@ function extrairPessoas(t: string): Pessoa[] {
     else p.cpf = bruto;
 
     // Nome: último nome próprio antes do documento.
-    const nomes = antes.match(new RegExp(NOME, "g"));
-    p.nome = nomes?.length ? nomes[nomes.length - 1]!.trim() : null;
+    // O titular é o primeiro nome próprio da sentença que contém o documento
+    // (nomes posteriores costumam ser o cônjuge ou o representante).
+    const sentenca = antes.split(/(?<=[.;])\s+(?=[A-ZÁÉÍÓÚ])/).pop() ?? antes;
+    const nomes = sentenca.match(new RegExp(NOME, "g"));
+    p.nome = nomes?.length ? nomes[0]!.trim() : null;
 
     p.rg = primeiro(janela, /(?:RG|C[ée]dula de Identidade|identidade)\s*(?:n[º°.]?\s*)?[:\-]?\s*([\d.\-\/A-Za-z]{5,15})/i);
     p.orgao_rg = primeiro(janela, /(?:SSP|SESP|SJS|DETRAN|PC|IFP|IIRGD)[\s/-]{0,3}([A-Z]{2})/);
@@ -276,7 +279,7 @@ function extrairPessoas(t: string): Pessoa[] {
     );
     p.endereco = primeiro(
       janela,
-      /(?:residente e domiciliad[oa](?: [àna]{1,3})?|endere[çc]o\s*[:\-]?|com sede (?:na|em|à))\s*([^\n;]{8,160})/i,
+      /(?:residente e domiciliad[oa](?: [àna]{1,3})?|endere[çc]o\s*[:\-]?|com sede (?:na|em|à))\s*([^\n;]{8,160}?)(?=\.\s+[A-ZÁÉÍÓÚ]|[;\n]|\.$|$)/i,
     );
 
     const ec = ESTADOS_CIVIS.find((e) => new RegExp(`\\b${e}\\b`, "i").test(janela));
@@ -291,7 +294,7 @@ function extrairPessoas(t: string): Pessoa[] {
     );
     p.conjuge = primeiro(
       janela,
-      new RegExp(`(?:c[ôo]njuge|casad[oa]\\s+com|esposa|esposo|marido)\\s*[:\\-]?\\s*(${NOME})`, "i"),
+      new RegExp(`(?:c[ôo]njuge|esposa|esposo|marido|casad[oa][^.;\\n]{0,90}?\\bcom)\\s*[:\\-]?\\s*(${NOME})`, "i"),
     );
 
     pessoas.push(p);
