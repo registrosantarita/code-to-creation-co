@@ -15,7 +15,14 @@ export type IndexAto = {
   numero: string | null;
   data: string | null;
   descricao: string;
+  /** Gravame identificado (hipoteca, penhora…), quando o ato for ônus. */
+  gravame?: string | null;
+  /** false quando houver averbação de cancelamento/baixa do gravame. */
+  vigente?: boolean;
+  /** Ato que cancelou o gravame (ex.: AV-7). */
+  cancelado_por?: string | null;
 };
+
 
 export type IndexCadastros = {
   cadastro_municipal: string | null;
