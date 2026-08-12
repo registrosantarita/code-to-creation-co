@@ -4,6 +4,7 @@
  * XLSX e JSON.
  */
 import type { IndexAto, IndexCadastros, IndexProprietario } from "./matricula-index-parser";
+import { rotuloAto } from "./matricula-index-parser";
 
 export type RegistroIndexado = {
   id: string;
@@ -123,8 +124,7 @@ const lista = <T,>(v: unknown): T[] => (Array.isArray(v) ? (v as T[]) : []);
 
 /** Rótulo do ônus: R.04 (HIPOTECA) — legível pelo importador do cartório. */
 const rotuloOnus = (o: IndexAto): string => {
-  const num = String(o.numero ?? "");
-  const base = `${texto(o.tipo)}.${num}`;
+  const base = rotuloAto(texto(o.tipo), o.numero);
   const grav = texto(o.gravame).toUpperCase();
   return grav ? `${base} (${grav})` : base;
 };

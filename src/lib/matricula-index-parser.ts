@@ -228,10 +228,10 @@ const ehCancelamento = (t: string): boolean => {
 
 /** Referências a atos anteriores citadas no corpo da averbação (R.04, AV.07…). */
 function referenciasInternas(descricao: string): string[] {
-  return [...descricao.matchAll(/\b(R|AV|Av|R\.|AV\.)\s*[-.\s]?\s*(\d+)\b/g)]
+  return [...descricao.matchAll(/\b(R|AV|Av|R\.|AV\.)\s*[-.\s]?\s*(\d{1,3}(?:\.\d{3})+|\d+)\b/g)]
     .map((m) => {
       const tipo = (m[1] ?? "").toUpperCase().startsWith("A") ? "AV" : "R";
-      return `${tipo}.${String(m[2] ?? "")}`;
+      return rotuloAto(tipo, m[2] ?? "");
     })
     .slice(1); // o primeiro marcador é o próprio número do ato
 }
@@ -257,7 +257,7 @@ function aplicarVigencia(atos: IndexAto[]): { onus: IndexAto[]; onusCancelados: 
       cancelado_por: null,
     }));
 
-  const chave = (a: IndexAto) => `${a.tipo}.${String(a.numero)}`;
+  const chave = (a: IndexAto) => rotuloAto(a.tipo, a.numero);
 
   for (const ato of atos) {
     if (!ehCancelamento(ato.descricao)) continue;
@@ -289,7 +289,7 @@ function aplicarVigencia(atos: IndexAto[]): { onus: IndexAto[]; onusCancelados: 
 /** Localiza os atos (R.01, AV.02, AV.03…) e classifica os que representam ônus. */
 function extrairAtos(texto: string): { atos: IndexAto[]; onus: IndexAto[]; onusCancelados: IndexAto[] } {
   const atos: IndexAto[] = [];
-  const marcador = /\b(R|AV|Av|R\.|AV\.)\s*[-.\s]?\s*(\d+)\b/g;
+  const marcador = /\b(R|AV|Av|R\.|AV\.)\s*[-.\s]?\s*(\d{1,3}(?:\.\d{3})+|\d+)\b/g;
   const posicoes: { idx: number; tipo: string; numero: string }[] = [];
   let m: RegExpExecArray | null;
   while ((m = marcador.exec(texto))) {
@@ -303,7 +303,7 @@ function extrairAtos(texto: string): { atos: IndexAto[]; onus: IndexAto[]; onusC
     if (trecho.length < 20) continue;
     atos.push({
       tipo: posicoes[i]!.tipo,
-      numero: posicoes[i]!.numero,
+      numero: formatarNumeroMatricula(posicoes[i]!.numero),
       data: normalizarData(trecho),
       descricao: trecho.slice(0, 600),
     });
@@ -405,7 +405,7 @@ export function extrairIndiceMatricula(textoBruto: string): MatriculaIndexada {
     matriculas_abertas: extrairMatriculasAbertas(compacto),
     ...partes,
     prenotacao: extrairPrenotacao(compacto),
-    ato: ultimoAto ? `${ultimoAto.tipo}.${ultimoAto.numero}` : null,
+    ato: ultimoAto ? rotuloAto(ultimoAto.tipo, ultimoAto.numero) : null,
     data_ato: ultimoAto?.data ?? null,
     selo: extrairSelo(compacto),
     cadastros,
@@ -477,6 +477,13 @@ function extrairSelo(texto: string): string | null {
   ]);
 }
 
+/** Rótulo do ato com separador de milhar (R.1, AV.2.058). */
+export function rotuloAto(tipo: string | null | undefined, numero: string | number | null | undefined): string {
+  const n = numero === null || numero === undefined ? "" : String(numero);
+  const t = tipo ?? "";
+  return n ? `${t}.${formatarNumeroMatricula(n)}` : t;
+}
+
 /** Formata número de matrícula com separador de milhar (10345 -> 10.345). */
 export function formatarNumeroMatricula(valor: string): string {
   const d = digitos(valor);
@@ -507,7 +514,7 @@ function extrairRegistroAnterior(texto: string): string | null {
     "";
   if (!janela) return null;
 
-  const ato = janela.match(/\b(R|AV|TR)\b[.\-\s]*\s*(\d{1,6})/i);
+  const ato = janela.match(/\b(R|AV|TR)\b[.\-\s]*\s*(\d{1,3}(?:\.\d{3})+|\d{1,9})/i);
   const origem =
     janela.match(/\b(?:matr[íi]cula|M)\b[.\s]*(?:n[.º°]*)?\s*([\d.]{1,12})/i) ??
     janela.match(/\btranscri[çc][ãa]o\b[.\s]*(?:n[.º°]*)?\s*([\d.]{1,12})/i);
@@ -516,7 +523,7 @@ function extrairRegistroAnterior(texto: string): string | null {
   const tipo = (ato?.[1] ?? "R").toUpperCase();
   const numeroAto = ato?.[2] ? formatarNumeroMatricula(ato[2]) : "";
   const alvo = origem?.[1] ? `M.${formatarNumeroMatricula(origem[1])}` : "";
-  const esquerda = numeroAto ? `${tipo}.${ato?.[2]?.length === 1 ? `0${numeroAto}` : numeroAto}` : tipo;
+  const esquerda = numeroAto ? `${tipo}.${numeroAto}` : tipo;
   return alvo ? `${esquerda}/${alvo}` : esquerda;
 }
 

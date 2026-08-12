@@ -16,6 +16,7 @@ import {
   obterLote,
 } from "@/lib/checkindex.functions";
 import { exportarCsv, exportarJson, exportarXlsx, type RegistroIndexado } from "@/lib/export-index";
+import { rotuloAto } from "@/lib/matricula-index-parser";
 
 export const Route = createFileRoute("/_authenticated/indexacao/$id")({
   head: () => ({
@@ -364,14 +365,14 @@ function LoteDetalhe() {
                   <ul className="mt-3 space-y-1 text-sm">
                     {todosOnus.map((o, i) => (
                       <li
-                        key={`${o.tipo}.${String(o.numero)}-${i}`}
+                        key={`${rotuloAto(o.tipo, o.numero)}-${i}`}
                         className={
                           o.vigente === false
                             ? "text-muted-foreground line-through"
                             : "text-foreground"
                         }
                       >
-                        {o.tipo}.{String(o.numero)}
+                        {rotuloAto(o.tipo, o.numero)}
                         {o.gravame ? ` — ${o.gravame.toUpperCase()}` : ""}
                         {o.vigente === false
                           ? ` (cancelado${o.cancelado_por ? ` por ${o.cancelado_por}` : ""})`
