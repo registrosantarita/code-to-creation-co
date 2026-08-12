@@ -85,6 +85,7 @@ export const COLUNAS_EXPORT = [
   "DOCUMENTOS_PROPRIETARIOS",
   "QTD_ATOS",
   "ONUS",
+  "ONUS_CANCELADOS",
   "ULTIMAFICHA",
   "CERTIFICACAO",
   "REGISTROANTERIOR",
@@ -116,11 +117,21 @@ function encerramento(r: RegistroIndexado): string {
 
 const lista = <T,>(v: unknown): T[] => (Array.isArray(v) ? (v as T[]) : []);
 
+/** Rótulo do ônus: R-4 (HIPOTECA) — legível pelo importador do cartório. */
+const rotuloOnus = (o: IndexAto): string => {
+  const base = `${texto(o.tipo)}-${texto(o.numero)}`;
+  const grav = texto(o.gravame).toUpperCase();
+  return grav ? `${base} (${grav})` : base;
+};
+
 export function linhaDoRegistro(r: RegistroIndexado): (string | number)[] {
   const cad = (r.cadastros ?? {}) as Record<string, unknown>;
   const props = lista<IndexProprietario>(r.proprietarios);
-  const onus = lista<IndexAto>(r.onus);
+  const todosOnus = lista<IndexAto>(r.onus);
+  const onus = todosOnus.filter((o) => o.vigente !== false);
+  const onusCancelados = todosOnus.filter((o) => o.vigente === false);
   const atos = lista<IndexAto>(r.atos);
+
   return [
     texto(r.matricula_numero),
     texto(r.livro),
@@ -152,7 +163,10 @@ export function linhaDoRegistro(r: RegistroIndexado): (string | number)[] {
     props.map((p) => texto(p.nome)).filter(Boolean).join(" | "),
     props.map((p) => texto(p.cpf_cnpj)).filter(Boolean).join(" | "),
     atos.length,
-    onus.map((o) => `${texto(o.tipo)}-${texto(o.numero)}`).join(" | "),
+    onus.map(rotuloOnus).join(" | "),
+    onusCancelados
+      .map((o) => `${rotuloOnus(o)}${o.cancelado_por ? ` cancelado por ${o.cancelado_por}` : " cancelado"}`)
+      .join(" | "),
     texto(r.ultima_ficha).toUpperCase(),
     texto(r.certificacao),
     texto(r.registro_anterior),

@@ -15,7 +15,14 @@ export type IndexAto = {
   numero: string | null;
   data: string | null;
   descricao: string;
+  /** Gravame identificado (hipoteca, penhora…), quando o ato for ônus. */
+  gravame?: string | null;
+  /** false quando houver averbação de cancelamento/baixa do gravame. */
+  vigente?: boolean;
+  /** Ato que cancelou o gravame (ex.: AV-7). */
+  cancelado_por?: string | null;
 };
+
 
 export type IndexCadastros = {
   cadastro_municipal: string | null;
@@ -78,7 +85,11 @@ export type MatriculaIndexada = {
   cadastros: IndexCadastros;
   proprietarios: IndexProprietario[];
   atos: IndexAto[];
+  /** Ônus ainda vigentes (cancelados são excluídos daqui). */
   onus: IndexAto[];
+  /** Ônus baixados/cancelados, mantidos para auditoria. */
+  onus_cancelados: IndexAto[];
+
 };
 
 
@@ -166,8 +177,79 @@ const ONUS_TERMOS = [
   "bem de família", "reserva legal", "citação", "protesto", "compromisso de compra e venda",
 ];
 
+/** Linguagem padronizada de baixa/cancelamento averbada nas matrículas. */
+const CANCELAMENTO_TERMOS = [
+  "cancel", // cancelo, cancelada, cancelamento
+  "baixa d", "baixa da", "baixa do", "dou baixa", "procedo à baixa", "procedo a baixa",
+  "extin", // extinção, extinto o usufruto
+  "levantamento", "liberação", "liberacao", "libero", "remissão", "remissao",
+  "insubsist", "sem efeito", "nada consta", "quitação da dívida", "quitacao da divida",
+];
+
+const ehCancelamento = (t: string): boolean => {
+  const s = t.toLowerCase();
+  return CANCELAMENTO_TERMOS.some((c) => s.includes(c));
+};
+
+/** Referências a atos anteriores citadas no corpo da averbação (R-4, AV.7…). */
+function referenciasInternas(descricao: string): string[] {
+  return [...descricao.matchAll(/\b(R|AV|Av|R\.|AV\.)\s*[-.\s]?\s*(\d{1,3})\b/g)]
+    .map((m) => `${(m[1] ?? "").toUpperCase().startsWith("A") ? "AV" : "R"}-${m[2]}`)
+    .slice(1); // o primeiro marcador é o próprio número do ato
+}
+
+/** Gravame identificado no texto do ato (hipoteca, penhora…). */
+function gravameDe(descricao: string): string | null {
+  const s = descricao.toLowerCase();
+  return ONUS_TERMOS.find((t) => s.includes(t)) ?? null;
+}
+
+/**
+ * Marca cada ônus como vigente ou cancelado. O cancelamento é ligado ao ato de
+ * origem pela referência interna ("cancelo o R-4"); sem referência explícita,
+ * casa-se pelo mesmo tipo de gravame ainda vigente mais recente.
+ */
+function aplicarVigencia(atos: IndexAto[]): { onus: IndexAto[]; onusCancelados: IndexAto[] } {
+  const onus = atos
+    .filter((a) => !ehCancelamento(a.descricao) && gravameDe(a.descricao))
+    .map<IndexAto>((a) => ({
+      ...a,
+      gravame: gravameDe(a.descricao),
+      vigente: true,
+      cancelado_por: null,
+    }));
+
+  const chave = (a: IndexAto) => `${a.tipo}-${a.numero}`;
+
+  for (const ato of atos) {
+    if (!ehCancelamento(ato.descricao)) continue;
+    const refs = referenciasInternas(ato.descricao);
+    const alvos = onus.filter((o) => refs.includes(chave(o)));
+    if (alvos.length) {
+      for (const alvo of alvos) {
+        alvo.vigente = false;
+        alvo.cancelado_por = chave(ato);
+      }
+      continue;
+    }
+    const grav = gravameDe(ato.descricao);
+    if (!grav) continue;
+    const candidatos = onus.filter((o) => o.vigente !== false && o.gravame === grav);
+    const alvo = candidatos.length ? candidatos[candidatos.length - 1] : null;
+    if (alvo) {
+      alvo.vigente = false;
+      alvo.cancelado_por = chave(ato);
+    }
+  }
+
+  return {
+    onus: onus.filter((o) => o.vigente !== false),
+    onusCancelados: onus.filter((o) => o.vigente === false),
+  };
+}
+
 /** Localiza os atos (R-1, AV-2, Av.3…) e classifica os que representam ônus. */
-function extrairAtos(texto: string): { atos: IndexAto[]; onus: IndexAto[] } {
+function extrairAtos(texto: string): { atos: IndexAto[]; onus: IndexAto[]; onusCancelados: IndexAto[] } {
   const atos: IndexAto[] = [];
   const marcador = /\b(R|AV|Av|R\.|AV\.)\s*[-.\s]?\s*(\d{1,3})\b/g;
   const posicoes: { idx: number; tipo: string; numero: string }[] = [];
@@ -188,11 +270,9 @@ function extrairAtos(texto: string): { atos: IndexAto[]; onus: IndexAto[] } {
       descricao: trecho.slice(0, 600),
     });
   }
-  const onus = atos.filter((a) =>
-    ONUS_TERMOS.some((t) => a.descricao.toLowerCase().includes(t)),
-  );
-  return { atos, onus };
+  return { atos, ...aplicarVigencia(atos) };
 }
+
 
 export function extrairIndiceMatricula(textoBruto: string): MatriculaIndexada {
   const texto = textoBruto.replace(/\r/g, "");
@@ -260,7 +340,7 @@ export function extrairIndiceMatricula(textoBruto: string): MatriculaIndexada {
     /(?:im[óo]vel|descri[çc][ãa]o)\s*[:\-]?\s*([^]{40,900}?)(?:propriet[áa]ri|registro anterior|R-1|AV-1|$)/i,
   );
 
-  const { atos, onus } = extrairAtos(texto);
+  const { atos, onus, onusCancelados } = extrairAtos(texto);
   const partes = extrairPartes(compacto);
   const ultimoAto = atos.length ? atos[atos.length - 1]! : null;
 
@@ -294,6 +374,7 @@ export function extrairIndiceMatricula(textoBruto: string): MatriculaIndexada {
     proprietarios: extrairProprietarios(compacto),
     atos,
     onus,
+    onus_cancelados: onusCancelados,
   };
 }
 
