@@ -97,8 +97,7 @@ function Index() {
                 e-Qualifica
               </p>
               <p className="mt-0.5 text-xs text-muted-foreground">
-                GeoConfronto (memorial e planta) · CheckTítulo (títulos e
-                matrículas)
+                Qualificação Registral Assistida
               </p>
               <p className="mt-0.5 text-xs italic text-muted-foreground">
                 desenvolvido por Abrahão Jesus de Souza
