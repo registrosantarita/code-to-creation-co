@@ -18,6 +18,7 @@ import {
 import { conferirQualificacao, type LinhaConferencia } from "@/lib/qualificacao-compare";
 import { camposFaltantes, qualificacaoVazia, type Qualificacao } from "@/lib/qualificacao-parser";
 import { docColor, docLetra, TONE_CLASS } from "@/lib/labels";
+import checktituloLogo from "@/assets/checktitulo-logo.png.asset.json";
 
 export const Route = createFileRoute("/_authenticated/qualificacao/$id")({
   head: () => ({
@@ -141,8 +142,17 @@ function QualificacaoDetalhe() {
 
   return (
     <main className="mx-auto max-w-6xl px-6 py-10">
-      <p className="eyebrow">CheckTítulo — Conferência de dados de qualificação</p>
-      <h1 className="font-display text-2xl text-foreground">{data?.conjunto.title}</h1>
+      <div className="flex items-center gap-3">
+        <img
+          src={checktituloLogo.url}
+          alt="CheckTítulo"
+          className="h-10 w-auto object-contain"
+        />
+        <div>
+          <p className="eyebrow">CheckTítulo — Conferência de dados de qualificação</p>
+          <h1 className="font-display text-2xl text-foreground">{data?.conjunto.title}</h1>
+        </div>
+      </div>
       <p className="mt-1 text-xs uppercase tracking-wide text-muted-foreground">
         {modo === "titulo_x_titulo" ? "Título x Título" : "Título x Matrícula(s)"}
       </p>
