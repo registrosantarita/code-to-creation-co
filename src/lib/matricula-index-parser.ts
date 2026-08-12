@@ -85,7 +85,11 @@ export type MatriculaIndexada = {
   cadastros: IndexCadastros;
   proprietarios: IndexProprietario[];
   atos: IndexAto[];
+  /** Ônus ainda vigentes (cancelados são excluídos daqui). */
   onus: IndexAto[];
+  /** Ônus baixados/cancelados, mantidos para auditoria. */
+  onus_cancelados: IndexAto[];
+
 };
 
 
