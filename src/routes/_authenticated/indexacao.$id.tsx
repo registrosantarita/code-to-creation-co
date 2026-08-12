@@ -243,7 +243,15 @@ function LoteDetalhe() {
           {registros.map((r) => {
             const cad = (r.cadastros ?? {}) as Record<string, string | null>;
             const props = Array.isArray(r.proprietarios) ? r.proprietarios : [];
-            const onus = Array.isArray(r.onus) ? r.onus : [];
+            const todosOnus = (Array.isArray(r.onus) ? r.onus : []) as {
+              tipo?: string | null;
+              numero?: string | null;
+              gravame?: string | null;
+              vigente?: boolean;
+              cancelado_por?: string | null;
+            }[];
+            const onus = todosOnus.filter((o) => o.vigente !== false);
+            const onusCancelados = todosOnus.filter((o) => o.vigente === false);
             const atos = Array.isArray(r.atos) ? r.atos : [];
             return (
               <article key={r.id} className="rounded-lg border border-border bg-card p-5">
