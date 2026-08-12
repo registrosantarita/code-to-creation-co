@@ -19,7 +19,7 @@ export type IndexAto = {
   gravame?: string | null;
   /** false quando houver averbação de cancelamento/baixa do gravame. */
   vigente?: boolean;
-  /** Ato que cancelou o gravame (ex.: AV-7). */
+  /** Ato que cancelou o gravame (ex.: AV.07). */
   cancelado_por?: string | null;
 };
 
@@ -191,10 +191,13 @@ const ehCancelamento = (t: string): boolean => {
   return CANCELAMENTO_TERMOS.some((c) => s.includes(c));
 };
 
-/** Referências a atos anteriores citadas no corpo da averbação (R-4, AV.7…). */
+/** Referências a atos anteriores citadas no corpo da averbação (R.04, AV.07…). */
 function referenciasInternas(descricao: string): string[] {
   return [...descricao.matchAll(/\b(R|AV|Av|R\.|AV\.)\s*[-.\s]?\s*(\d{1,3})\b/g)]
-    .map((m) => `${(m[1] ?? "").toUpperCase().startsWith("A") ? "AV" : "R"}-${m[2]}`)
+    .map((m) => {
+      const tipo = (m[1] ?? "").toUpperCase().startsWith("A") ? "AV" : "R";
+      return `${tipo}.${String(m[2] ?? "").padStart(2, "0")}`;
+    })
     .slice(1); // o primeiro marcador é o próprio número do ato
 }
 
@@ -206,7 +209,7 @@ function gravameDe(descricao: string): string | null {
 
 /**
  * Marca cada ônus como vigente ou cancelado. O cancelamento é ligado ao ato de
- * origem pela referência interna ("cancelo o R-4"); sem referência explícita,
+ * origem pela referência interna ("cancelo o R.04"); sem referência explícita,
  * casa-se pelo mesmo tipo de gravame ainda vigente mais recente.
  */
 function aplicarVigencia(atos: IndexAto[]): { onus: IndexAto[]; onusCancelados: IndexAto[] } {
@@ -219,7 +222,7 @@ function aplicarVigencia(atos: IndexAto[]): { onus: IndexAto[]; onusCancelados: 
       cancelado_por: null,
     }));
 
-  const chave = (a: IndexAto) => `${a.tipo}-${a.numero}`;
+  const chave = (a: IndexAto) => `${a.tipo}.${String(a.numero).padStart(2, "0")}`;
 
   for (const ato of atos) {
     if (!ehCancelamento(ato.descricao)) continue;
@@ -248,7 +251,7 @@ function aplicarVigencia(atos: IndexAto[]): { onus: IndexAto[]; onusCancelados: 
   };
 }
 
-/** Localiza os atos (R-1, AV-2, Av.3…) e classifica os que representam ônus. */
+/** Localiza os atos (R.01, AV.02, AV.03…) e classifica os que representam ônus. */
 function extrairAtos(texto: string): { atos: IndexAto[]; onus: IndexAto[]; onusCancelados: IndexAto[] } {
   const atos: IndexAto[] = [];
   const marcador = /\b(R|AV|Av|R\.|AV\.)\s*[-.\s]?\s*(\d{1,3})\b/g;
@@ -256,7 +259,7 @@ function extrairAtos(texto: string): { atos: IndexAto[]; onus: IndexAto[]; onusC
   let m: RegExpExecArray | null;
   while ((m = marcador.exec(texto))) {
     const tipo = (m[1] ?? "").toUpperCase().startsWith("A") ? "AV" : "R";
-    posicoes.push({ idx: m.index, tipo, numero: m[2] ?? "" });
+    posicoes.push({ idx: m.index, tipo, numero: String(m[2] ?? "").padStart(2, "0") });
   }
   for (let i = 0; i < posicoes.length; i++) {
     const inicio = posicoes[i]!.idx;
@@ -337,7 +340,7 @@ export function extrairIndiceMatricula(textoBruto: string): MatriculaIndexada {
   };
 
   const descricaoMatch = compacto.match(
-    /(?:im[óo]vel|descri[çc][ãa]o)\s*[:\-]?\s*([^]{40,900}?)(?:propriet[áa]ri|registro anterior|R-1|AV-1|$)/i,
+    /(?:im[óo]vel|descri[çc][ãa]o)\s*[:\-]?\s*([^]{40,900}?)(?:propriet[áa]ri|registro anterior|R\.01|AV\.01|$)/i,
   );
 
   const { atos, onus, onusCancelados } = extrairAtos(texto);
@@ -367,7 +370,7 @@ export function extrairIndiceMatricula(textoBruto: string): MatriculaIndexada {
     matriculas_abertas: extrairMatriculasAbertas(compacto),
     ...partes,
     prenotacao: extrairPrenotacao(compacto),
-    ato: ultimoAto ? `${ultimoAto.tipo}-${ultimoAto.numero}` : null,
+    ato: ultimoAto ? `${ultimoAto.tipo}.${ultimoAto.numero}` : null,
     data_ato: ultimoAto?.data ?? null,
     selo: extrairSelo(compacto),
     cadastros,
