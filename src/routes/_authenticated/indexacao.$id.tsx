@@ -279,6 +279,15 @@ function LoteDetalhe() {
                     ["Município", r.municipio],
                     ["UF", r.uf],
                     ["Área (m²)", r.area_m2],
+                    ["Última ficha", r.ultima_ficha],
+                    ["Certificação (INCRA)", r.certificacao],
+                    ["Registro anterior", r.registro_anterior],
+                    [
+                      "Encerrada",
+                      r.encerrada
+                        ? `ENCERRADA:${(r.matriculas_abertas ?? []).join(";")}`
+                        : null,
+                    ],
                     ["Cadastro municipal", cad['cadastro_municipal']],
                     ["CIB", cad['cib']],
                     ["CCIR", cad['ccir']],
