@@ -340,7 +340,7 @@ export function extrairIndiceMatricula(textoBruto: string): MatriculaIndexada {
     /(?:im[óo]vel|descri[çc][ãa]o)\s*[:\-]?\s*([^]{40,900}?)(?:propriet[áa]ri|registro anterior|R-1|AV-1|$)/i,
   );
 
-  const { atos, onus } = extrairAtos(texto);
+  const { atos, onus, onusCancelados } = extrairAtos(texto);
   const partes = extrairPartes(compacto);
   const ultimoAto = atos.length ? atos[atos.length - 1]! : null;
 
