@@ -8,11 +8,7 @@ import { dedupeRing, extremosCoincidem, linesToRings } from "./cad-entities";
 import { isDxfText, limparMText, parseDxf } from "./dxf-reader";
 import { cadParaMemorial, type CadConversao } from "./cad-to-memorial";
 
-export const CAD_EXTENSIONS = ["dwg", "dxf"];
-
-export function isCadExtension(ext: string | null | undefined): boolean {
-  return CAD_EXTENSIONS.includes((ext ?? "").toLowerCase().replace(".", ""));
-}
+export { CAD_EXTENSIONS, isCadExtension } from "./cad-ext";
 
 type AnyEntity = Record<string, unknown>;
 

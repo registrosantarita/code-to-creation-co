@@ -10,7 +10,7 @@ import {
   runLotBatchComparison,
 } from "@/lib/registral.functions";
 import { DEFAULT_TOLERANCES } from "@/lib/comparison-engine";
-import { isCadExtension } from "@/lib/cad-reader.client";
+import { isCadExtension } from "@/lib/cad-ext";
 import {
   CATEGORIA_DOCUMENTO,
   CLASSIFICACAO,
@@ -228,7 +228,7 @@ function AnaliseDetalhe() {
       /** DWG/DXF são convertidos no navegador em memorial tabular. */
       let textoCad: string | null = null;
       if (isCadExtension(ext)) {
-        const { lerArquivoCad } = await import("@/lib/cad-reader.client");
+        const { lerArquivoCad } = await import("@/lib/cad-reader.browser");
         const conv = await lerArquivoCad(file);
         if (!conv.text.trim())
           throw new Error(
