@@ -228,7 +228,7 @@ function AnaliseDetalhe() {
       /** DWG/DXF são convertidos no navegador em memorial tabular. */
       let textoCad: string | null = null;
       if (isCadExtension(ext)) {
-        const { lerArquivoCad } = await import("@/lib/cad-reader.client");
+        const { lerArquivoCad } = await import("@/lib/cad-reader.browser");
         const conv = await lerArquivoCad(file);
         if (!conv.text.trim())
           throw new Error(
