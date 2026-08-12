@@ -10,6 +10,7 @@ import {
   runLotBatchComparison,
 } from "@/lib/registral.functions";
 import { DEFAULT_TOLERANCES } from "@/lib/comparison-engine";
+import { isCadExtension } from "@/lib/cad-reader.client";
 import {
   CATEGORIA_DOCUMENTO,
   CLASSIFICACAO,
@@ -223,6 +224,20 @@ function AnaliseDetalhe() {
       if (file.size > 25 * 1024 * 1024)
         throw new Error("Arquivo acima de 25 MB.");
       const ext = file.name.split(".").pop()?.toLowerCase() ?? "";
+
+      /** DWG/DXF são convertidos no navegador em memorial tabular. */
+      let textoCad: string | null = null;
+      if (isCadExtension(ext)) {
+        const { lerArquivoCad } = await import("@/lib/cad-reader.client");
+        const conv = await lerArquivoCad(file);
+        if (!conv.text.trim())
+          throw new Error(
+            conv.aviso ?? "Não foi possível extrair geometria do arquivo CAD.",
+          );
+        if (conv.aviso) toast.warning(conv.aviso);
+        textoCad = conv.text.slice(0, 200000);
+      }
+
       const path = `${uid}/${id}/${crypto.randomUUID()}.${ext}`;
       const { error: upErr } = await supabase.storage
         .from("documentos")
@@ -239,6 +254,7 @@ function AnaliseDetalhe() {
           file_size_bytes: file.size,
           storage_path: path,
           document_category: categoria as never,
+          ...(textoCad ? { original_text: textoCad } : {}),
           created_by: uid,
         })
         .select("id")
@@ -450,7 +466,7 @@ function AnaliseDetalhe() {
                       id="arquivo"
                       type="file"
                       className="flex-1"
-                      accept=".pdf,.txt,.csv,.md,.docx,.xlsx,.png,.jpg,.jpeg,.tif,.tiff,.webp,.kml,.kmz,.geojson,.json,.dwg"
+                      accept=".pdf,.txt,.csv,.md,.docx,.xlsx,.png,.jpg,.jpeg,.tif,.tiff,.webp,.kml,.kmz,.geojson,.json,.dwg,.dxf"
                       disabled={enviarArquivo.isPending}
                       onChange={(e) => {
                         const f = e.target.files?.[0];
@@ -473,7 +489,10 @@ function AnaliseDetalhe() {
                   <p className="text-xs leading-relaxed text-muted-foreground">
                     PDFs digitalizados e imagens passam por OCR assistido por IA.
                     Arquivos KML, KMZ e GeoJSON têm o perímetro, os azimutes e a
-                    área calculados diretamente da geometria (WGS-84).
+                    área calculados diretamente da geometria (WGS-84). Arquivos
+                    CAD (DWG e DXF) são lidos no próprio navegador: as
+                    polilinhas fechadas do espaço do modelo viram perímetro,
+                    azimutes, distâncias e área, sem consumo de créditos de IA.
                   </p>
                 </div>
                 {arquivoPendente && (

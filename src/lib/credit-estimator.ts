@@ -49,6 +49,7 @@ const EXT_SEM_IA = [
   "geojson",
   "json",
   "dwg",
+  "dxf",
 ];
 
 export type ProbabilidadeOcr = "nenhuma" | "possivel" | "certa";
