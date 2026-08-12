@@ -122,6 +122,28 @@ export async function extractTextFromFile(
   if (TEXT_EXTENSIONS.includes(ext)) {
     return { text: decodeText(bytes) };
   }
+  if (ext === "dxf") {
+    const { parseDxf, isDxfText } = await import("./dxf-reader");
+    const { cadParaMemorial } = await import("./cad-to-memorial");
+    const raw = decodeText(bytes);
+    if (isDxfText(raw)) {
+      const conv = cadParaMemorial(parseDxf(raw), "desenho.dxf");
+      if (conv.text.trim()) {
+        return { text: conv.text, ...(conv.aviso ? { note: conv.aviso } : {}) };
+      }
+      return { text: "", note: conv.aviso ?? "Nenhuma polilinha fechada no DXF." };
+    }
+    return {
+      text: "",
+      note: "DXF binário não suportado: salve como DXF ASCII ou envie o DWG original.",
+    };
+  }
+  if (ext === "dwg") {
+    return {
+      text: "",
+      note: "A geometria do DWG é lida no navegador no momento do envio. Reenvie o arquivo pela tela de upload para reprocessar o desenho.",
+    };
+  }
   return {
     text: "",
     note: `Leitura automática de arquivos .${ext} ainda não está no escopo do MVP. O arquivo foi arquivado com rastreabilidade; cole o texto correspondente para extrair os dados técnicos.`,
