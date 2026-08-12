@@ -65,7 +65,7 @@ async function lerDwg(bytes: ArrayBuffer): Promise<CadDrawing> {
   const { LibreDwg, createModule } = await import("@mlightcad/libredwg-web");
   // WebAssembly do libredwg servido estaticamente (baixado só ao abrir um DWG).
   const wasmInstance = await createModule({
-    locateFile: () => "/cad/libredwg-web.wasm",
+    locateFile: () => "/wasm/libredwg-web.wasm",
   });
   const libredwg = LibreDwg.createByWasmInstance(wasmInstance);
   const ptr = libredwg.dwg_read_data(bytes, 0);
