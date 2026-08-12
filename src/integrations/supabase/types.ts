@@ -396,10 +396,12 @@ export type Database = {
           batch_id: string
           cadastros: Json
           cartorio: string | null
+          certificacao: string | null
           created_at: string
           created_by: string
           data_abertura: string | null
           descricao: string
+          encerrada: boolean
           endereco: string
           extracted: Json
           extraction_source: string
@@ -410,14 +412,17 @@ export type Database = {
           label: string
           livro: string | null
           matricula_numero: string | null
+          matriculas_abertas: string[]
           municipio: string | null
           natureza: string
           onus: Json
           proprietarios: Json
           raw_text: string
+          registro_anterior: string | null
           review_status: string
           source_type: string
           uf: string | null
+          ultima_ficha: string | null
           updated_at: string
         }
         Insert: {
@@ -426,10 +431,12 @@ export type Database = {
           batch_id: string
           cadastros?: Json
           cartorio?: string | null
+          certificacao?: string | null
           created_at?: string
           created_by: string
           data_abertura?: string | null
           descricao?: string
+          encerrada?: boolean
           endereco?: string
           extracted?: Json
           extraction_source?: string
@@ -440,14 +447,17 @@ export type Database = {
           label?: string
           livro?: string | null
           matricula_numero?: string | null
+          matriculas_abertas?: string[]
           municipio?: string | null
           natureza?: string
           onus?: Json
           proprietarios?: Json
           raw_text?: string
+          registro_anterior?: string | null
           review_status?: string
           source_type?: string
           uf?: string | null
+          ultima_ficha?: string | null
           updated_at?: string
         }
         Update: {
@@ -456,10 +466,12 @@ export type Database = {
           batch_id?: string
           cadastros?: Json
           cartorio?: string | null
+          certificacao?: string | null
           created_at?: string
           created_by?: string
           data_abertura?: string | null
           descricao?: string
+          encerrada?: boolean
           endereco?: string
           extracted?: Json
           extraction_source?: string
@@ -470,14 +482,17 @@ export type Database = {
           label?: string
           livro?: string | null
           matricula_numero?: string | null
+          matriculas_abertas?: string[]
           municipio?: string | null
           natureza?: string
           onus?: Json
           proprietarios?: Json
           raw_text?: string
+          registro_anterior?: string | null
           review_status?: string
           source_type?: string
           uf?: string | null
+          ultima_ficha?: string | null
           updated_at?: string
         }
         Relationships: [
