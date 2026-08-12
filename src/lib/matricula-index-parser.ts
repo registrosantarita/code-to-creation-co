@@ -46,6 +46,18 @@ export type MatriculaIndexada = {
   encerrada: boolean;
   /** Matrículas abertas a partir desta, quando encerrada. */
   matriculas_abertas: string[];
+  /** Partes do último ato registrado. */
+  adquirente: string | null;
+  conjuge_adq: string | null;
+  transmitente: string | null;
+  conjuge_transm: string | null;
+  usufrutuario: string | null;
+  conjuge_usu: string | null;
+  /** Dados do protocolo/ato. */
+  prenotacao: string | null;
+  ato: string | null;
+  data_ato: string | null;
+  selo: string | null;
   cadastros: IndexCadastros;
   proprietarios: IndexProprietario[];
   atos: IndexAto[];
@@ -232,6 +244,8 @@ export function extrairIndiceMatricula(textoBruto: string): MatriculaIndexada {
   );
 
   const { atos, onus } = extrairAtos(texto);
+  const partes = extrairPartes(compacto);
+  const ultimoAto = atos.length ? atos[atos.length - 1]! : null;
 
   return {
     matricula_numero: matricula,
@@ -250,11 +264,77 @@ export function extrairIndiceMatricula(textoBruto: string): MatriculaIndexada {
     registro_anterior: extrairRegistroAnterior(compacto),
     encerrada: ENCERRAMENTO.test(compacto),
     matriculas_abertas: extrairMatriculasAbertas(compacto),
+    ...partes,
+    prenotacao: extrairPrenotacao(compacto),
+    ato: ultimoAto ? `${ultimoAto.tipo}-${ultimoAto.numero}` : null,
+    data_ato: ultimoAto?.data ?? null,
+    selo: extrairSelo(compacto),
     cadastros,
     proprietarios: extrairProprietarios(compacto),
     atos,
     onus,
   };
+}
+
+/** Nome próprio logo após um rótulo de parte (adquirente, transmitente…). */
+function nomeApos(texto: string, rotulos: string[]): string | null {
+  for (const rot of rotulos) {
+    const m = texto.match(
+      new RegExp(`${rot}\\s*(?:\\(a\\))?\\s*[:\\-]?\\s*([A-ZÀ-Ÿ][A-Za-zÀ-ÿ'’.\\- ]{5,80})`, "i"),
+    );
+    const v = limpar(m?.[1]);
+    if (v && v.split(" ").length >= 2) return v.toUpperCase();
+  }
+  return null;
+}
+
+/** Cônjuge citado na sequência do nome da parte ("casado com FULANA"). */
+function conjugeDe(texto: string, nome: string | null): string | null {
+  if (!nome) return null;
+  const idx = texto.toUpperCase().indexOf(nome);
+  if (idx < 0) return null;
+  const janela = texto.slice(idx, idx + 400);
+  const m = janela.match(
+    /(?:casad[oa]\s+(?:com|de)|c[ôo]njuge|e\s+sua\s+(?:esposa|mulher)|e\s+seu\s+marido)\s*[:\-]?\s*([A-ZÀ-Ÿ][A-Za-zÀ-ÿ'’.\- ]{5,80})/i,
+  );
+  const v = limpar(m?.[1]);
+  return v && v.split(" ").length >= 2 ? v.toUpperCase() : null;
+}
+
+function extrairPartes(texto: string) {
+  const adquirente = nomeApos(texto, [
+    "adquirente",
+    "comprador(?:a)?",
+    "outorgad[oa] comprador(?:a)?",
+    "cession[áa]ri[oa]",
+  ]);
+  const transmitente = nomeApos(texto, [
+    "transmitente",
+    "vendedor(?:a)?",
+    "outorgante vendedor(?:a)?",
+    "cedente",
+  ]);
+  const usufrutuario = nomeApos(texto, ["usufrutu[áa]ri[oa]", "usufruto\\s+em\\s+favor\\s+de"]);
+  return {
+    adquirente,
+    conjuge_adq: conjugeDe(texto, adquirente),
+    transmitente,
+    conjuge_transm: conjugeDe(texto, transmitente),
+    usufrutuario,
+    conjuge_usu: conjugeDe(texto, usufrutuario),
+  };
+}
+
+function extrairPrenotacao(texto: string): string | null {
+  return capturar(texto, [
+    /(?:prenota[çc][ãa]o|protocolo)\s*(?:sob\s*(?:o\s*)?)?(?:n[.º°]*)?\s*[:\-]?\s*([\d.\-/]{2,20})/i,
+  ]);
+}
+
+function extrairSelo(texto: string): string | null {
+  return capturar(texto, [
+    /selo\s*(?:digital|de\s+fiscaliza[çc][ãa]o)?\s*(?:n[.º°]*)?\s*[:\-]?\s*([A-Z0-9.\-]{6,40})/i,
+  ]);
 }
 
 /** Formata número de matrícula com separador de milhar (10345 -> 10.345). */

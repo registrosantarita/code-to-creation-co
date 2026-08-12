@@ -28,6 +28,16 @@ export type RegistroIndexado = {
   registro_anterior: string | null;
   encerrada: boolean | null;
   matriculas_abertas: string[] | null;
+  adquirente: string | null;
+  conjuge_adq: string | null;
+  transmitente: string | null;
+  conjuge_transm: string | null;
+  usufrutuario: string | null;
+  conjuge_usu: string | null;
+  prenotacao: string | null;
+  ato: string | null;
+  data_ato: string | null;
+  selo: string | null;
   review_status: string;
 };
 
@@ -55,6 +65,16 @@ export const COLUNAS_EXPORT = [
   "CERTIFICAÇÃO",
   "REGISTROANTERIOR",
   "ENCERRADA",
+  "ADQUIRENTE",
+  "CONJUGE_ADQ",
+  "TRANSMITENTE",
+  "CONJUGE_TRANSM",
+  "USUFRUTUARIO",
+  "CONJUGE_USU",
+  "PRENOTACAO",
+  "ATO",
+  "DATA_ATO",
+  "SELO",
   "SITUACAO",
 ] as const;
 
@@ -98,6 +118,16 @@ export function linhaDoRegistro(r: RegistroIndexado): (string | number)[] {
     texto(r.certificacao),
     texto(r.registro_anterior),
     encerramento(r),
+    texto(r.adquirente),
+    texto(r.conjuge_adq),
+    texto(r.transmitente),
+    texto(r.conjuge_transm),
+    texto(r.usufrutuario),
+    texto(r.conjuge_usu),
+    texto(r.prenotacao),
+    texto(r.ato),
+    texto(r.data_ato),
+    texto(r.selo),
     texto(r.review_status).toUpperCase(),
   ];
 }

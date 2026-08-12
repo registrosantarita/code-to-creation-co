@@ -391,15 +391,21 @@ export type Database = {
       }
       index_records: {
         Row: {
+          adquirente: string | null
           area_m2: number | null
+          ato: string | null
           atos: Json
           batch_id: string
           cadastros: Json
           cartorio: string | null
           certificacao: string | null
+          conjuge_adq: string | null
+          conjuge_transm: string | null
+          conjuge_usu: string | null
           created_at: string
           created_by: string
           data_abertura: string | null
+          data_ato: string | null
           descricao: string
           encerrada: boolean
           endereco: string
@@ -416,25 +422,35 @@ export type Database = {
           municipio: string | null
           natureza: string
           onus: Json
+          prenotacao: string | null
           proprietarios: Json
           raw_text: string
           registro_anterior: string | null
           review_status: string
+          selo: string | null
           source_type: string
+          transmitente: string | null
           uf: string | null
           ultima_ficha: string | null
           updated_at: string
+          usufrutuario: string | null
         }
         Insert: {
+          adquirente?: string | null
           area_m2?: number | null
+          ato?: string | null
           atos?: Json
           batch_id: string
           cadastros?: Json
           cartorio?: string | null
           certificacao?: string | null
+          conjuge_adq?: string | null
+          conjuge_transm?: string | null
+          conjuge_usu?: string | null
           created_at?: string
           created_by: string
           data_abertura?: string | null
+          data_ato?: string | null
           descricao?: string
           encerrada?: boolean
           endereco?: string
@@ -451,25 +467,35 @@ export type Database = {
           municipio?: string | null
           natureza?: string
           onus?: Json
+          prenotacao?: string | null
           proprietarios?: Json
           raw_text?: string
           registro_anterior?: string | null
           review_status?: string
+          selo?: string | null
           source_type?: string
+          transmitente?: string | null
           uf?: string | null
           ultima_ficha?: string | null
           updated_at?: string
+          usufrutuario?: string | null
         }
         Update: {
+          adquirente?: string | null
           area_m2?: number | null
+          ato?: string | null
           atos?: Json
           batch_id?: string
           cadastros?: Json
           cartorio?: string | null
           certificacao?: string | null
+          conjuge_adq?: string | null
+          conjuge_transm?: string | null
+          conjuge_usu?: string | null
           created_at?: string
           created_by?: string
           data_abertura?: string | null
+          data_ato?: string | null
           descricao?: string
           encerrada?: boolean
           endereco?: string
@@ -486,14 +512,18 @@ export type Database = {
           municipio?: string | null
           natureza?: string
           onus?: Json
+          prenotacao?: string | null
           proprietarios?: Json
           raw_text?: string
           registro_anterior?: string | null
           review_status?: string
+          selo?: string | null
           source_type?: string
+          transmitente?: string | null
           uf?: string | null
           ultima_ficha?: string | null
           updated_at?: string
+          usufrutuario?: string | null
         }
         Relationships: [
           {
