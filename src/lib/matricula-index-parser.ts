@@ -322,5 +322,8 @@ export const CAMPOS_INDICE: { chave: keyof MatriculaIndexada; rotulo: string }[]
   { chave: "municipio", rotulo: "Município" },
   { chave: "uf", rotulo: "UF" },
   { chave: "area_m2", rotulo: "Área (m²)" },
+  { chave: "ultima_ficha", rotulo: "Última ficha" },
+  { chave: "certificacao", rotulo: "Certificação (INCRA)" },
+  { chave: "registro_anterior", rotulo: "Registro anterior" },
   { chave: "descricao", rotulo: "Descrição" },
 ];
