@@ -1,8 +1,11 @@
 import { LibreDwg } from "@mlightcad/libredwg-web";
 import { cadParaMemorial } from "./src/lib/cad-to-memorial";
-const mod = await import("./src/lib/cad-reader.client");
+import { databaseParaDrawing } from "./src/lib/cad-reader.client";
 const bytes = await Bun.file("/tmp/cad/s.dwg").arrayBuffer();
 const lib = await LibreDwg.create("/dev-server/node_modules/@mlightcad/libredwg-web/wasm");
 const db = lib.convert(lib.dwg_read_data(bytes, 0)!);
-const fn = (mod as any).databaseParaDrawing;
-console.log("exported?", typeof fn);
+const d = databaseParaDrawing(db.entities as any);
+console.log("polys", d.polylines.length, "fechadas", d.polylines.filter(p=>p.closed).length, "textos", d.texts.length);
+const c = cadParaMemorial(d, "s.dwg");
+console.log(c.poligonos, c.georreferenciado, c.aviso);
+console.log(c.text.split("\n").slice(0,10).join("\n"));

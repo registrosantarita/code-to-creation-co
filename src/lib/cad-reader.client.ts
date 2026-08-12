@@ -22,7 +22,7 @@ const ponto = (v: unknown): CadPoint => {
 };
 
 /** Converte o banco de dados do libredwg no formato interno do app. */
-function databaseParaDrawing(entities: AnyEntity[]): CadDrawing {
+export function databaseParaDrawing(entities: AnyEntity[]): CadDrawing {
   const drawing: CadDrawing = { polylines: [], texts: [] };
   const linhas: { layer: string; a: CadPoint; b: CadPoint }[] = [];
 
