@@ -168,7 +168,9 @@ export const indexarMatricula = createServerFn({ method: "POST" })
         cadastros: JSON.parse(JSON.stringify(dados.cadastros)),
         proprietarios: JSON.parse(JSON.stringify(dados.proprietarios)),
         atos: JSON.parse(JSON.stringify(dados.atos)),
-        onus: JSON.parse(JSON.stringify(dados.onus)),
+        // Vigentes e cancelados no mesmo campo; o flag `vigente` separa os dois
+        // na exportação e na tela de revisão.
+        onus: JSON.parse(JSON.stringify([...dados.onus, ...dados.onus_cancelados])),
         extracted: JSON.parse(JSON.stringify(dados)),
         extraction_source: "deterministico",
         raw_text: texto.slice(0, 400000),
