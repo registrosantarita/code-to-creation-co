@@ -5,7 +5,8 @@ import { Button } from "@/components/ui/button";
 import logoAsset from "@/assets/equalifica-logo.png.asset.json";
 import geoLogo from "@/assets/geoconfronto-logo.png.asset.json";
 import checkLogo from "@/assets/checktitulo-logo.png.asset.json";
-import checkindexLogo from "@/assets/checkindex-logo.png";
+import checkindexLogoAsset from "@/assets/checkindex-logo.png.asset.json";
+const checkindexLogo = checkindexLogoAsset.url;
 
 export const Route = createFileRoute("/")({
   head: () => ({
