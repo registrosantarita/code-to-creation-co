@@ -364,14 +364,14 @@ function LoteDetalhe() {
                   <ul className="mt-3 space-y-1 text-sm">
                     {todosOnus.map((o, i) => (
                       <li
-                        key={`${o.tipo}.${String(o.numero).padStart(2, "0")}-${i}`}
+                        key={`${o.tipo}.${String(o.numero)}-${i}`}
                         className={
                           o.vigente === false
                             ? "text-muted-foreground line-through"
                             : "text-foreground"
                         }
                       >
-                        {o.tipo}.{String(o.numero).padStart(2, "0")}
+                        {o.tipo}.{String(o.numero)}
                         {o.gravame ? ` — ${o.gravame.toUpperCase()}` : ""}
                         {o.vigente === false
                           ? ` (cancelado${o.cancelado_por ? ` por ${o.cancelado_por}` : ""})`
