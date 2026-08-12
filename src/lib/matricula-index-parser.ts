@@ -478,9 +478,10 @@ function extrairSelo(texto: string): string | null {
 }
 
 /** Rótulo do ato com separador de milhar (R.1, AV.2.058). */
-export function rotuloAto(tipo: string, numero: string | number | null): string {
+export function rotuloAto(tipo: string | null | undefined, numero: string | number | null | undefined): string {
   const n = numero === null || numero === undefined ? "" : String(numero);
-  return n ? `${tipo}.${formatarNumeroMatricula(n)}` : String(tipo);
+  const t = tipo ?? "";
+  return n ? `${t}.${formatarNumeroMatricula(n)}` : t;
 }
 
 /** Formata número de matrícula com separador de milhar (10345 -> 10.345). */
