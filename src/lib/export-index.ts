@@ -163,7 +163,10 @@ export function linhaDoRegistro(r: RegistroIndexado): (string | number)[] {
     props.map((p) => texto(p.nome)).filter(Boolean).join(" | "),
     props.map((p) => texto(p.cpf_cnpj)).filter(Boolean).join(" | "),
     atos.length,
-    onus.map((o) => `${texto(o.tipo)}-${texto(o.numero)}`).join(" | "),
+    onus.map(rotuloOnus).join(" | "),
+    onusCancelados
+      .map((o) => `${rotuloOnus(o)}${o.cancelado_por ? ` cancelado por ${o.cancelado_por}` : " cancelado"}`)
+      .join(" | "),
     texto(r.ultima_ficha).toUpperCase(),
     texto(r.certificacao),
     texto(r.registro_anterior),
