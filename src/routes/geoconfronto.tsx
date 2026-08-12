@@ -27,7 +27,7 @@ export const Route = createFileRoute("/geoconfronto")({
 });
 
 const CAPACIDADES = [
-  ["Ingestão", "Upload de PDF, DOCX, XLSX, TXT, CSV, KML/KMZ e GeoJSON, além de texto colado."],
+  ["Ingestão", "Upload de PDF, DOCX, XLSX, TXT, CSV, KML/KMZ, GeoJSON e CAD (DWG/DXF), além de texto colado."],
   ["Extração", "Área, perímetro, vértices, coordenadas, altitude, rumos, azimutes e confrontantes."],
   ["Normalização", "Rumo para azimute, padronização de unidades e ordenação de segmentos."],
   [
