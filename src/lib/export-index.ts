@@ -1,0 +1,138 @@
+/**
+ * CheckIndex — exportação dos dados indexados em formatos legíveis por
+ * sistemas de cartório: CSV (delimitado por ponto e vírgula, UTF-8 com BOM),
+ * XLSX e JSON.
+ */
+import type { IndexAto, IndexCadastros, IndexProprietario } from "./matricula-index-parser";
+
+export type RegistroIndexado = {
+  id: string;
+  label: string;
+  matricula_numero: string | null;
+  livro: string | null;
+  folha: string | null;
+  cartorio: string | null;
+  data_abertura: string | null;
+  natureza: string;
+  descricao: string;
+  endereco: string;
+  municipio: string | null;
+  uf: string | null;
+  area_m2: number | string | null;
+  cadastros: IndexCadastros | Record<string, unknown> | null;
+  proprietarios: IndexProprietario[] | unknown;
+  atos: IndexAto[] | unknown;
+  onus: IndexAto[] | unknown;
+  review_status: string;
+};
+
+export const COLUNAS_EXPORT = [
+  "MATRICULA",
+  "LIVRO",
+  "FOLHA",
+  "CARTORIO",
+  "DATA_ABERTURA",
+  "NATUREZA",
+  "ENDERECO",
+  "MUNICIPIO",
+  "UF",
+  "AREA_M2",
+  "CADASTRO_MUNICIPAL",
+  "CIB",
+  "CCIR",
+  "CAR",
+  "INSCRICAO_ESTADUAL",
+  "PROPRIETARIOS",
+  "DOCUMENTOS_PROPRIETARIOS",
+  "QTD_ATOS",
+  "ONUS",
+  "SITUACAO",
+] as const;
+
+const texto = (v: unknown): string => (v === null || v === undefined ? "" : String(v));
+
+const lista = <T,>(v: unknown): T[] => (Array.isArray(v) ? (v as T[]) : []);
+
+export function linhaDoRegistro(r: RegistroIndexado): (string | number)[] {
+  const cad = (r.cadastros ?? {}) as Record<string, unknown>;
+  const props = lista<IndexProprietario>(r.proprietarios);
+  const onus = lista<IndexAto>(r.onus);
+  const atos = lista<IndexAto>(r.atos);
+  return [
+    texto(r.matricula_numero),
+    texto(r.livro),
+    texto(r.folha),
+    texto(r.cartorio),
+    texto(r.data_abertura),
+    texto(r.natureza).toUpperCase(),
+    texto(r.endereco),
+    texto(r.municipio),
+    texto(r.uf),
+    r.area_m2 === null || r.area_m2 === undefined || r.area_m2 === "" ? "" : Number(r.area_m2),
+    texto(cad['cadastro_municipal']),
+    texto(cad['cib']),
+    texto(cad['ccir']),
+    texto(cad['car']),
+    texto(cad['inscricao_estadual']),
+    props.map((p) => texto(p.nome)).filter(Boolean).join(" | "),
+    props.map((p) => texto(p.cpf_cnpj)).filter(Boolean).join(" | "),
+    atos.length,
+    onus.map((o) => `${texto(o.tipo)}-${texto(o.numero)}`).join(" | "),
+    texto(r.review_status).toUpperCase(),
+  ];
+}
+
+function baixar(blob: Blob, nome: string) {
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = nome;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+export function exportarCsv(registros: RegistroIndexado[], nomeArquivo: string) {
+  const escape = (v: string | number) => {
+    const s = String(v).replace(/"/g, '""').replace(/\r?\n/g, " ");
+    return `"${s}"`;
+  };
+  const linhas = [
+    COLUNAS_EXPORT.join(";"),
+    ...registros.map((r) => linhaDoRegistro(r).map(escape).join(";")),
+  ];
+  baixar(new Blob(["\uFEFF" + linhas.join("\r\n")], { type: "text/csv;charset=utf-8" }), nomeArquivo);
+}
+
+export function exportarJson(registros: RegistroIndexado[], nomeArquivo: string) {
+  const payload = registros.map((r) =>
+    Object.fromEntries(COLUNAS_EXPORT.map((c, i) => [c, linhaDoRegistro(r)[i] ?? ""])),
+  );
+  baixar(
+    new Blob([JSON.stringify({ gerado_em: new Date().toISOString(), registros: payload }, null, 2)], {
+      type: "application/json;charset=utf-8",
+    }),
+    nomeArquivo,
+  );
+}
+
+export async function exportarXlsx(registros: RegistroIndexado[], nomeArquivo: string) {
+  const ExcelJS = (await import("exceljs")).default;
+  const wb = new ExcelJS.Workbook();
+  const ws = wb.addWorksheet("Índice");
+  ws.addRow([...COLUNAS_EXPORT]);
+  ws.getRow(1).font = { name: "Montserrat", size: 9, bold: true };
+  for (const r of registros) ws.addRow(linhaDoRegistro(r));
+  ws.eachRow((row, i) => {
+    if (i > 1) row.font = { name: "Montserrat", size: 9 };
+  });
+  ws.columns.forEach((c) => {
+    c.width = 22;
+  });
+  const buffer = await wb.xlsx.writeBuffer();
+  baixar(
+    new Blob([buffer], {
+      type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    }),
+    nomeArquivo,
+  );
+}
