@@ -8,6 +8,8 @@ export type IndexProprietario = {
   nome: string | null;
   cpf_cnpj: string | null;
   fracao: string | null;
+  /** ATIVO = proprietário atual; INATIVO = titular anterior (transmitente). */
+  situacao?: "ATIVO" | "INATIVO";
 };
 
 export type IndexAto = {
@@ -164,6 +166,39 @@ function extrairProprietarios(texto: string): IndexProprietario[] {
   }
   return [...encontrados.values()];
 }
+
+/** Normaliza nome para comparação (sem acento, caixa alta, espaços simples). */
+const chaveNome = (n: string | null | undefined): string =>
+  (n ?? "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toUpperCase()
+    .replace(/[^A-Z ]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+
+/**
+ * Marca cada proprietário como ATIVO (titular atual) ou INATIVO (titular
+ * anterior). Regra determinística: quem consta como transmitente/cônjuge do
+ * transmitente é INATIVO; havendo adquirente identificado, só ele e seu cônjuge
+ * ficam ATIVO. Sem partes identificadas, todos permanecem ATIVO.
+ */
+function aplicarSituacaoProprietarios(
+  props: IndexProprietario[],
+  partes: { adquirente: string | null; conjuge_adq: string | null; transmitente: string | null; conjuge_transm: string | null },
+): IndexProprietario[] {
+  const atuais = [partes.adquirente, partes.conjuge_adq].map(chaveNome).filter(Boolean);
+  const anteriores = [partes.transmitente, partes.conjuge_transm].map(chaveNome).filter(Boolean);
+  return props.map((p) => {
+    const k = chaveNome(p.nome);
+    let situacao: "ATIVO" | "INATIVO" = "ATIVO";
+    if (k && anteriores.some((a) => a === k || a.includes(k) || k.includes(a))) situacao = "INATIVO";
+    else if (k && atuais.length && !atuais.some((a) => a === k || a.includes(k) || k.includes(a)))
+      situacao = "INATIVO";
+    return { ...p, situacao };
+  });
+}
+
 
 export function formatarDoc(doc: string): string {
   if (doc.length === 11) return doc.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, "$1.$2.$3-$4");
@@ -374,7 +409,7 @@ export function extrairIndiceMatricula(textoBruto: string): MatriculaIndexada {
     data_ato: ultimoAto?.data ?? null,
     selo: extrairSelo(compacto),
     cadastros,
-    proprietarios: extrairProprietarios(compacto),
+    proprietarios: aplicarSituacaoProprietarios(extrairProprietarios(compacto), partes),
     atos,
     onus,
     onus_cancelados: onusCancelados,
