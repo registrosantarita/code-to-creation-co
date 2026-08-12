@@ -45,6 +45,8 @@ const SITUACAO: Record<LinhaConferencia["situacao"], { label: string; tone: stri
   invalido: { label: "Inválido", tone: "destructive" },
 };
 
+type Papel = "titulo" | "matricula";
+
 function toBase64(buffer: ArrayBuffer): string {
   const bytes = new Uint8Array(buffer);
   let bin = "";
@@ -61,54 +63,12 @@ function QualificacaoDetalhe() {
   const excluir = useServerFn(excluirDocumento);
   const complementar = useServerFn(complementarComIA);
 
-  const fileRef = useRef<HTMLInputElement>(null);
-  const [texto, setTexto] = useState("");
-  const [rotulo, setRotulo] = useState("");
-
   const { data, isLoading } = useQuery({
     queryKey: ["qualificacao", id],
     queryFn: () => obter({ data: { id } }),
   });
 
   const invalidar = () => queryClient.invalidateQueries({ queryKey: ["qualificacao", id] });
-
-  const upload = useMutation({
-    mutationFn: async (files: FileList) => {
-      for (const file of Array.from(files)) {
-        const ext = file.name.split(".").pop() ?? "";
-        await adicionar({
-          data: {
-            setId: id,
-            label: rotulo || file.name,
-            fileName: file.name,
-            extension: ext,
-            base64: toBase64(await file.arrayBuffer()),
-          },
-        });
-      }
-    },
-    onSuccess: async () => {
-      setRotulo("");
-      if (fileRef.current) fileRef.current.value = "";
-      await invalidar();
-      toast.success("Documento processado.");
-    },
-    onError: (e: Error) => toast.error(e.message),
-  });
-
-  const colar = useMutation({
-    mutationFn: async () => {
-      if (texto.trim().length < 20) throw new Error("Cole o texto do documento.");
-      return adicionar({ data: { setId: id, label: rotulo || "Texto colado", texto } });
-    },
-    onSuccess: async () => {
-      setTexto("");
-      setRotulo("");
-      await invalidar();
-      toast.success("Texto processado.");
-    },
-    onError: (e: Error) => toast.error(e.message),
-  });
 
   const remover = useMutation({
     mutationFn: (docId: string) => excluir({ data: { id: docId } }),
@@ -129,12 +89,35 @@ function QualificacaoDetalhe() {
     onError: (e: Error) => toast.error(e.message),
   });
 
-  const documentos = data?.documentos ?? [];
+  const modo = (data?.conjunto.mode ?? "titulo_x_matricula") as
+    | "titulo_x_matricula"
+    | "titulo_x_titulo";
+
+  const documentos = useMemo(() => data?.documentos ?? [], [data]);
+  const titulos = useMemo(
+    () => documentos.filter((d) => (d.doc_role ?? "titulo") === "titulo"),
+    [documentos],
+  );
+  const matriculas = useMemo(
+    () => documentos.filter((d) => d.doc_role === "matricula"),
+    [documentos],
+  );
+
+  // A ordem das colunas segue os títulos e, depois, as matrículas.
+  const ordenados = useMemo(
+    () => (modo === "titulo_x_titulo" ? titulos : [...titulos, ...matriculas]),
+    [modo, titulos, matriculas],
+  );
+
+  const prontoParaConferir =
+    modo === "titulo_x_titulo"
+      ? titulos.length >= 2
+      : titulos.length >= 1 && matriculas.length >= 1;
 
   const resultado = useMemo(() => {
-    if (documentos.length < 2) return null;
+    if (!prontoParaConferir || ordenados.length < 2) return null;
     return conferirQualificacao(
-      documentos.map((d, i) => ({
+      ordenados.map((d, i) => ({
         rotulo: `Doc. ${docLetra(i)}`,
         dados: {
           ...qualificacaoVazia(),
@@ -142,7 +125,7 @@ function QualificacaoDetalhe() {
         },
       })),
     );
-  }, [documentos]);
+  }, [ordenados, prontoParaConferir]);
 
   const blocos = useMemo(() => {
     const map = new Map<string, LinhaConferencia[]>();
@@ -160,115 +143,74 @@ function QualificacaoDetalhe() {
     <main className="mx-auto max-w-6xl px-6 py-10">
       <p className="eyebrow">Conferência Automática de Dados de Qualificação</p>
       <h1 className="font-display text-2xl text-foreground">{data?.conjunto.title}</h1>
+      <p className="mt-1 text-xs uppercase tracking-wide text-muted-foreground">
+        {modo === "titulo_x_titulo" ? "Título x Título" : "Título x Matrícula(s)"}
+      </p>
       {data?.conjunto.note && (
         <p className="mt-1 text-sm text-muted-foreground">{data.conjunto.note}</p>
       )}
 
-      <section className="mt-8 grid gap-6 md:grid-cols-2">
-        <div className="rounded-md border border-border bg-card p-5">
-          <h2 className="font-display text-sm text-foreground">Enviar documento</h2>
-          <div className="mt-3 space-y-3">
-            <div className="space-y-2">
-              <Label htmlFor="rotulo">Rótulo (opcional)</Label>
-              <Input
-                id="rotulo"
-                value={rotulo}
-                onChange={(e) => setRotulo(e.target.value)}
-                placeholder="Ex.: Escritura pública"
-              />
-            </div>
-            <div className="flex items-center gap-2">
-              <Input
-                ref={fileRef}
-                type="file"
-                multiple
-                accept=".pdf,.docx,.doc,.txt,.rtf,.xlsx,.xls,.csv"
-                onChange={(e) => e.target.files?.length && upload.mutate(e.target.files)}
-              />
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => fileRef.current?.click()}
-                disabled={upload.isPending}
-              >
-                <Upload className="mr-2 h-4 w-4" /> Procurar…
-              </Button>
-            </div>
-            {upload.isPending && <p className="text-xs text-muted-foreground">Processando arquivo…</p>}
-          </div>
-        </div>
-
-        <div className="rounded-md border border-border bg-card p-5">
-          <h2 className="font-display text-sm text-foreground">Colar texto do documento</h2>
-          <Textarea
-            className="mt-3"
-            rows={6}
-            value={texto}
-            onChange={(e) => setTexto(e.target.value)}
-            placeholder="Cole aqui a qualificação das partes, os cadastros do imóvel e a cadeia registral."
+      <section className="mt-8 grid gap-6 lg:grid-cols-2">
+        <PainelEnvio
+          papel="titulo"
+          titulo="Títulos"
+          descricao="Escritura, requerimento, instrumento particular, título judicial e afins."
+          exemploRotulo="Ex.: Escritura pública de compra e venda"
+          setId={id}
+          adicionar={adicionar}
+          onDone={invalidar}
+        />
+        {modo === "titulo_x_matricula" ? (
+          <PainelEnvio
+            papel="matricula"
+            titulo="Matrículas"
+            descricao="Uma ou mais matrículas do registro de imóveis, sem limite de quantidade."
+            exemploRotulo="Ex.: Matrícula 12.345 — 1º RI"
+            setId={id}
+            adicionar={adicionar}
+            onDone={invalidar}
           />
-          <Button className="mt-3" onClick={() => colar.mutate()} disabled={colar.isPending}>
-            {colar.isPending ? "Processando…" : "Processar texto"}
-          </Button>
-        </div>
+        ) : (
+          <PainelEnvio
+            papel="titulo"
+            titulo="Títulos comparáveis"
+            descricao="Demais títulos que serão confrontados com o primeiro."
+            exemploRotulo="Ex.: Instrumento particular de cessão"
+            setId={id}
+            adicionar={adicionar}
+            onDone={invalidar}
+          />
+        )}
       </section>
 
-      <section className="mt-8">
-        <h2 className="font-display text-sm text-foreground">Documentos conferidos</h2>
-        <div className="mt-3 space-y-2">
-          {!documentos.length && (
-            <p className="rounded-md border border-border bg-card p-5 text-sm text-muted-foreground">
-              Envie ao menos dois documentos para gerar a conferência.
-            </p>
-          )}
-          {documentos.map((d, i) => {
-            const dados = {
-              ...qualificacaoVazia(),
-              ...((d.extracted ?? {}) as unknown as Qualificacao),
-            };
-            const faltas = camposFaltantes(dados);
-            return (
-              <div
-                key={d.id}
-                className="flex flex-wrap items-center justify-between gap-3 rounded-md border border-border bg-card p-4"
-              >
-                <div>
-                  <p className={`font-display text-sm ${docColor(i)}`}>
-                    Doc. {docLetra(i)} — {d.label}
-                  </p>
-                  <p className="text-xs text-muted-foreground">
-                    {dados.pessoas.length} parte(s) identificada(s) · extração: {d.extraction_source}
-                    {faltas.length > 0 && ` · ${faltas.length} campo(s) não localizado(s)`}
-                  </p>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => ia.mutate(d.id)}
-                    disabled={ia.isPending || faltas.length === 0}
-                    title={
-                      faltas.length === 0
-                        ? "Nenhum campo pendente — IA desnecessária"
-                        : "Complementar apenas os campos não localizados (consome créditos)"
-                    }
-                  >
-                    <Sparkles className="mr-2 h-4 w-4" /> Complementar com IA
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    aria-label="Remover documento"
-                    onClick={() => remover.mutate(d.id)}
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                </div>
-              </div>
-            );
-          })}
-        </div>
+      <section className="mt-8 grid gap-6 lg:grid-cols-2">
+        <ListaDocumentos
+          titulo="Títulos enviados"
+          docs={titulos}
+          offset={0}
+          onRemover={(docId) => remover.mutate(docId)}
+          onIA={(docId) => ia.mutate(docId)}
+          iaPendente={ia.isPending}
+        />
+        {modo === "titulo_x_matricula" && (
+          <ListaDocumentos
+            titulo="Matrículas enviadas"
+            docs={matriculas}
+            offset={titulos.length}
+            onRemover={(docId) => remover.mutate(docId)}
+            onIA={(docId) => ia.mutate(docId)}
+            iaPendente={ia.isPending}
+          />
+        )}
       </section>
+
+      {!prontoParaConferir && (
+        <p className="mt-6 rounded-md border border-border bg-card p-5 text-sm text-muted-foreground">
+          {modo === "titulo_x_titulo"
+            ? "Envie ao menos dois títulos para gerar a conferência."
+            : "Envie ao menos um título e uma matrícula para gerar a conferência."}
+        </p>
+      )}
 
       {resultado && (
         <section className="mt-10">
@@ -292,9 +234,12 @@ function QualificacaoDetalhe() {
                 <thead>
                   <tr className="border-b border-border text-left text-muted-foreground">
                     <th className="px-3 py-2 font-normal">CAMPO</th>
-                    {documentos.map((d, i) => (
+                    {ordenados.map((d, i) => (
                       <th key={d.id} className={`px-3 py-2 font-normal ${docColor(i)}`}>
                         DOC. {docLetra(i)}
+                        <span className="block text-[10px] uppercase tracking-wide">
+                          {d.doc_role === "matricula" ? "Matrícula" : "Título"}
+                        </span>
                       </th>
                     ))}
                     <th className="px-3 py-2 font-normal">SITUAÇÃO</th>
@@ -327,5 +272,208 @@ function QualificacaoDetalhe() {
         </section>
       )}
     </main>
+  );
+}
+
+type DocLinha = {
+  id: string;
+  label: string;
+  doc_role: string;
+  extraction_source: string;
+  extracted: unknown;
+};
+
+function ListaDocumentos({
+  titulo,
+  docs,
+  offset,
+  onRemover,
+  onIA,
+  iaPendente,
+}: {
+  titulo: string;
+  docs: DocLinha[];
+  offset: number;
+  onRemover: (id: string) => void;
+  onIA: (id: string) => void;
+  iaPendente: boolean;
+}) {
+  return (
+    <div>
+      <h2 className="font-display text-sm text-foreground">{titulo}</h2>
+      <div className="mt-3 space-y-2">
+        {!docs.length && (
+          <p className="rounded-md border border-border bg-card p-4 text-sm text-muted-foreground">
+            Nenhum documento enviado aqui ainda.
+          </p>
+        )}
+        {docs.map((d, i) => {
+          const dados = {
+            ...qualificacaoVazia(),
+            ...((d.extracted ?? {}) as unknown as Qualificacao),
+          };
+          const faltas = camposFaltantes(dados);
+          const indice = offset + i;
+          return (
+            <div
+              key={d.id}
+              className="flex flex-wrap items-center justify-between gap-3 rounded-md border border-border bg-card p-4"
+            >
+              <div>
+                <p className={`font-display text-sm ${docColor(indice)}`}>
+                  Doc. {docLetra(indice)} — {d.label}
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  {dados.pessoas.length} parte(s) identificada(s) · extração: {d.extraction_source}
+                  {faltas.length > 0 && ` · ${faltas.length} campo(s) não localizado(s)`}
+                </p>
+              </div>
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => onIA(d.id)}
+                  disabled={iaPendente || faltas.length === 0}
+                  title={
+                    faltas.length === 0
+                      ? "Nenhum campo pendente — IA desnecessária"
+                      : "Complementar apenas os campos não localizados (consome créditos)"
+                  }
+                >
+                  <Sparkles className="mr-2 h-4 w-4" /> Complementar com IA
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  aria-label="Remover documento"
+                  onClick={() => onRemover(d.id)}
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+function PainelEnvio({
+  papel,
+  titulo,
+  descricao,
+  exemploRotulo,
+  setId,
+  adicionar,
+  onDone,
+}: {
+  papel: Papel;
+  titulo: string;
+  descricao: string;
+  exemploRotulo: string;
+  setId: string;
+  adicionar: ReturnType<typeof useServerFn<typeof adicionarDocumento>>;
+  onDone: () => Promise<unknown>;
+}) {
+  const fileRef = useRef<HTMLInputElement>(null);
+  const [rotulo, setRotulo] = useState("");
+  const [texto, setTexto] = useState("");
+
+  const upload = useMutation({
+    mutationFn: async (files: FileList) => {
+      for (const file of Array.from(files)) {
+        const ext = file.name.split(".").pop() ?? "";
+        await adicionar({
+          data: {
+            setId,
+            docRole: papel,
+            label: rotulo || file.name,
+            fileName: file.name,
+            extension: ext,
+            base64: toBase64(await file.arrayBuffer()),
+          },
+        });
+      }
+    },
+    onSuccess: async () => {
+      setRotulo("");
+      if (fileRef.current) fileRef.current.value = "";
+      await onDone();
+      toast.success("Documento processado.");
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const colar = useMutation({
+    mutationFn: async () => {
+      if (texto.trim().length < 20) throw new Error("Cole o texto do documento.");
+      return adicionar({
+        data: {
+          setId,
+          docRole: papel,
+          label: rotulo || (papel === "matricula" ? "Matrícula (texto)" : "Título (texto)"),
+          texto,
+        },
+      });
+    },
+    onSuccess: async () => {
+      setTexto("");
+      setRotulo("");
+      await onDone();
+      toast.success("Texto processado.");
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  return (
+    <div className="rounded-md border border-border bg-card p-5">
+      <h2 className="font-display text-sm text-foreground">{titulo}</h2>
+      <p className="mt-1 text-xs text-muted-foreground">{descricao}</p>
+
+      <div className="mt-4 space-y-3">
+        <div className="space-y-2">
+          <Label htmlFor={`rotulo-${papel}-${titulo}`}>Rótulo (opcional)</Label>
+          <Input
+            id={`rotulo-${papel}-${titulo}`}
+            value={rotulo}
+            onChange={(e) => setRotulo(e.target.value)}
+            placeholder={exemploRotulo}
+          />
+        </div>
+        <div className="flex items-center gap-2">
+          <Input
+            ref={fileRef}
+            type="file"
+            multiple
+            accept=".pdf,.docx,.doc,.txt,.rtf,.xlsx,.xls,.csv"
+            onChange={(e) => e.target.files?.length && upload.mutate(e.target.files)}
+          />
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => fileRef.current?.click()}
+            disabled={upload.isPending}
+          >
+            <Upload className="mr-2 h-4 w-4" /> Procurar…
+          </Button>
+        </div>
+        {upload.isPending && <p className="text-xs text-muted-foreground">Processando arquivo…</p>}
+
+        <div className="space-y-2 pt-2">
+          <Label htmlFor={`texto-${papel}-${titulo}`}>Ou cole o texto</Label>
+          <Textarea
+            id={`texto-${papel}-${titulo}`}
+            rows={5}
+            value={texto}
+            onChange={(e) => setTexto(e.target.value)}
+            placeholder="Cole aqui a qualificação das partes, os cadastros do imóvel e a cadeia registral."
+          />
+          <Button variant="secondary" onClick={() => colar.mutate()} disabled={colar.isPending}>
+            {colar.isPending ? "Processando…" : "Processar texto"}
+          </Button>
+        </div>
+      </div>
+    </div>
   );
 }
