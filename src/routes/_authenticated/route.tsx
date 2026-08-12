@@ -44,7 +44,7 @@ function AuthenticatedLayout() {
         <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-6 py-4">
           <div className="flex items-center gap-4">
             <NavArrows showHome={false} />
-            <Link to="/painel" className="flex items-center gap-3">
+            <Link to="/" className="flex items-center gap-3">
               <img
                 src={logoAsset.url}
                 alt="e-Qualifica"
