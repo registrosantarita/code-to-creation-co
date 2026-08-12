@@ -9,7 +9,7 @@ export const listarConjuntos = createServerFn({ method: "POST" })
   .handler(async ({ context }) => {
     const { data, error } = await context.supabase
       .from("qualification_sets")
-      .select("id, title, note, created_at, updated_at")
+      .select("id, title, note, mode, created_at, updated_at")
       .order("updated_at", { ascending: false });
     if (error) throw new Error(error.message);
     return data ?? [];
@@ -18,12 +18,18 @@ export const listarConjuntos = createServerFn({ method: "POST" })
 export const criarConjunto = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) =>
-    z.object({ title: z.string().trim().min(1).max(160), note: z.string().max(2000).default("") }).parse(input),
+    z
+      .object({
+        title: z.string().trim().min(1).max(160),
+        note: z.string().max(2000).default(""),
+        mode: z.enum(["titulo_x_matricula", "titulo_x_titulo"]).default("titulo_x_matricula"),
+      })
+      .parse(input),
   )
   .handler(async ({ data, context }) => {
     const { data: row, error } = await context.supabase
       .from("qualification_sets")
-      .insert({ title: data.title, note: data.note, created_by: context.userId })
+      .insert({ title: data.title, note: data.note, mode: data.mode, created_by: context.userId })
       .select("id")
       .single();
     if (error || !row) throw new Error(error?.message ?? "Falha ao criar a conferência.");
@@ -47,7 +53,9 @@ export const obterConjunto = createServerFn({ method: "POST" })
       context.supabase.from("qualification_sets").select("*").eq("id", data.id).maybeSingle(),
       context.supabase
         .from("qualification_docs")
-        .select("id, label, file_name, file_extension, source_type, extracted, extraction_source, created_at")
+        .select(
+          "id, label, file_name, file_extension, source_type, doc_role, extracted, extraction_source, created_at",
+        )
         .eq("set_id", data.id)
         .order("created_at", { ascending: true }),
     ]);
@@ -67,6 +75,7 @@ export const adicionarDocumento = createServerFn({ method: "POST" })
         fileName: z.string().max(255).optional(),
         extension: z.string().max(12).optional(),
         base64: z.string().optional(),
+        docRole: z.enum(["titulo", "matricula"]).default("titulo"),
         texto: z.string().max(500000).optional(),
       })
       .parse(input),
@@ -96,6 +105,7 @@ export const adicionarDocumento = createServerFn({ method: "POST" })
         file_name: data.fileName ?? null,
         file_extension: (data.extension ?? "").replace(".", "").toLowerCase() || null,
         source_type: data.base64 ? "upload" : "pasted_text",
+        doc_role: data.docRole,
         raw_text: texto.slice(0, 400000),
         extracted: JSON.parse(JSON.stringify(dados)),
         extraction_source: "deterministico",
