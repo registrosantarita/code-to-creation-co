@@ -49,6 +49,9 @@ function QualificacaoLista() {
   const [open, setOpen] = useState(false);
   const [title, setTitle] = useState("");
   const [note, setNote] = useState("");
+  const [mode, setMode] = useState<"titulo_x_matricula" | "titulo_x_titulo">(
+    "titulo_x_matricula",
+  );
 
   const { data, isLoading } = useQuery({
     queryKey: ["qualificacao-sets"],
@@ -58,7 +61,7 @@ function QualificacaoLista() {
   const create = useMutation({
     mutationFn: async () => {
       if (title.trim().length < 3) throw new Error("Informe um título com ao menos 3 caracteres.");
-      return criar({ data: { title: title.trim(), note: note.trim() } });
+      return criar({ data: { title: title.trim(), note: note.trim(), mode } });
     },
     onSuccess: async () => {
       setOpen(false);
@@ -119,6 +122,39 @@ function QualificacaoLista() {
                 />
               </div>
               <div className="space-y-2">
+                <Label>Tipo de confronto</Label>
+                <div className="grid gap-2">
+                  {(
+                    [
+                      [
+                        "titulo_x_matricula",
+                        "Título x Matrícula(s)",
+                        "Escritura, requerimento, instrumento particular ou título judicial confrontado com uma ou mais matrículas.",
+                      ],
+                      [
+                        "titulo_x_titulo",
+                        "Título x Título",
+                        "Confronto entre dois ou mais títulos, sem matrícula.",
+                      ],
+                    ] as const
+                  ).map(([valor, rotulo, desc]) => (
+                    <button
+                      key={valor}
+                      type="button"
+                      onClick={() => setMode(valor)}
+                      className={`rounded-md border p-3 text-left text-xs transition ${
+                        mode === valor
+                          ? "border-primary bg-primary/5 text-foreground"
+                          : "border-border text-muted-foreground hover:border-primary/40"
+                      }`}
+                    >
+                      <span className="block font-display text-sm text-foreground">{rotulo}</span>
+                      {desc}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div className="space-y-2">
                 <Label htmlFor="obs">Observação</Label>
                 <Textarea id="obs" value={note} onChange={(e) => setNote(e.target.value)} rows={3} />
               </div>
@@ -152,6 +188,9 @@ function QualificacaoLista() {
               <ShieldCheck className="mt-0.5 h-4 w-4 text-muted-foreground" />
               <div>
                 <p className="font-display text-sm text-foreground">{c.title}</p>
+                <p className="text-[11px] uppercase tracking-wide text-muted-foreground">
+                  {c.mode === "titulo_x_titulo" ? "Título x Título" : "Título x Matrícula(s)"}
+                </p>
                 {c.note && <p className="text-xs text-muted-foreground">{c.note}</p>}
                 <p className="mt-1 text-[11px] text-muted-foreground">
                   Atualizada em {new Date(c.updated_at).toLocaleString("pt-BR")}
