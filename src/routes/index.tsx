@@ -2,182 +2,106 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { NavArrows } from "@/components/NavArrows";
 import logoAsset from "@/assets/equalifica-logo.png.asset.json";
-
+import geoLogo from "@/assets/geoconfronto-logo.png.asset.json";
+import checkLogo from "@/assets/checktitulo-logo.png.asset.json";
 
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "e-Qualifica — Qualificação registral assistida" },
+      { title: "e-Qualifica — Qualificação Registral Assistida" },
       {
         name: "description",
         content:
-          "Extração, normalização e comparação auditável de memoriais descritivos, divisas e confrontações para apoio à qualificação registral.",
+          "Plataforma com dois módulos: GeoConfronto, para memoriais e plantas, e CheckTítulo, para conferência de títulos e matrículas.",
       },
-      {
-        property: "og:title",
-        content: "e-Qualifica — Qualificação registral assistida",
-      },
+      { property: "og:title", content: "e-Qualifica — Qualificação Registral Assistida" },
       {
         property: "og:description",
-        content:
-          "Compare memoriais, valide divisas e gere relatórios auditáveis sem substituir a decisão do Oficial.",
+        content: "GeoConfronto (memorial e planta) e CheckTítulo (títulos e matrículas).",
       },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
     ],
   }),
   component: Index,
 });
-
-const CAPACIDADES = [
-  {
-    titulo: "Ingestão",
-    texto:
-      "Upload de PDF, TXT, CSV e demais formatos, além de texto colado diretamente pelo analista.",
-  },
-  {
-    titulo: "Extração",
-    texto:
-      "Leitura de área, perímetro, vértices, rumos, azimutes, distâncias e confrontantes do memorial.",
-  },
-  {
-    titulo: "Normalização",
-    texto:
-      "Conversão de rumo para azimute, padronização de unidades e organização de segmentos e vértices.",
-  },
-  {
-    titulo: "Comparação",
-    texto:
-      "Memorial x memorial, memorial x planta, planta x planta, memorial x escritura/matrícula e divisa comum entre confrontantes, com tolerâncias técnicas configuráveis.",
-  },
-  {
-    titulo: "Achados",
-    texto:
-      "Divergências classificadas em críticas, moderadas, informativas e inconclusivas.",
-  },
-  {
-    titulo: "Auditoria",
-    texto:
-      "Toda conclusão é rastreável até a evidência de origem, com trilha completa de processamento.",
-  },
-];
-
-const PRINCIPIOS = [
-  ["Apoio à decisão", "O sistema não substitui a qualificação jurídica do Oficial."],
-  ["Explicabilidade", "Cada achado demonstra como foi obtido e sobre qual trecho incide."],
-  ["Equivalência técnica", "A comparação prioriza sentido geométrico, não literalidade textual."],
-  ["Human-in-the-loop", "Toda automação relevante admite revisão humana registrada."],
-];
 
 function Index() {
   const [signedIn, setSignedIn] = useState(false);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => setSignedIn(!!data.session));
-    const { data } = supabase.auth.onAuthStateChange((_e, session) =>
-      setSignedIn(!!session),
-    );
+    const { data } = supabase.auth.onAuthStateChange((_e, session) => setSignedIn(!!session));
     return () => data.subscription.unsubscribe();
   }, []);
 
   return (
     <div className="min-h-screen bg-background">
-      <header className="border-b border-border">
-        <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-8">
-          <div className="flex items-center gap-4">
-            <NavArrows showHome={false} />
-            <img
-              src={logoAsset.url}
-              alt="e-Qualifica"
-              className="h-16 w-16 object-contain"
-            />
-
-            <div className="leading-tight">
-              <p className="font-display text-2xl text-foreground md:text-3xl">
-                e-Qualifica
-              </p>
-              <p className="mt-0.5 text-xs text-muted-foreground">
-                Qualificação Registral Assistida
-              </p>
-              <p className="mt-0.5 text-xs italic text-muted-foreground">
-                desenvolvido por Abrahão Jesus de Souza
-              </p>
-            </div>
-          </div>
-          {signedIn ? (
-            <Button asChild size="sm">
-              <Link to="/painel">Abrir painel</Link>
-            </Button>
-          ) : (
-            <Button asChild size="sm">
-              <Link to="/auth">Entrar</Link>
-            </Button>
-          )}
+      <section className="bg-ink text-ink-foreground">
+        <div className="mx-auto flex max-w-5xl flex-col items-center px-6 py-20 text-center md:py-28">
+          <img
+            src={logoAsset.url}
+            alt="e-Qualifica"
+            className="h-40 w-40 object-contain md:h-56 md:w-56"
+          />
+          <h1 className="mt-8 font-display text-4xl md:text-6xl">e-Qualifica</h1>
+          <div className="rule-gold mt-6 w-40" />
+          <p className="mt-6 text-base tracking-wide text-ink-foreground/80 md:text-lg">
+            Qualificação Registral Assistida
+          </p>
+          <p className="mt-2 text-xs italic text-ink-foreground/60">
+            desenvolvido por Abrahão Jesus de Souza
+          </p>
+          <Button asChild size="lg" variant="secondary" className="mt-10">
+            <Link to={signedIn ? "/painel" : "/auth"}>{signedIn ? "Entrar no sistema" : "Entrar"}</Link>
+          </Button>
         </div>
-      </header>
+      </section>
 
-      <main>
-        <section className="border-b border-border bg-ink text-ink-foreground">
-          <div className="mx-auto max-w-6xl px-6 py-20 md:py-28">
-            <p className="eyebrow text-accent">Qualificação registral assistida</p>
-            <h1 className="mt-5 max-w-3xl text-4xl leading-tight md:text-6xl">
-              Leitura, normalização e comparação auditável de documentos
-              técnicos e registrais.
-            </h1>
-            <div className="rule-gold mt-8 w-40" />
-            <p className="mt-8 max-w-2xl text-base leading-relaxed text-ink-foreground/75">
-              A plataforma extrai área, perímetro, vértices, azimutes,
-              distâncias e confrontantes; aplica tolerâncias técnicas; e produz
-              relatórios rastreáveis até a evidência de origem — sem substituir a
-              decisão jurídica e técnica humana.
+      <main className="mx-auto max-w-5xl px-6 py-16">
+        <p className="eyebrow text-center">Módulos</p>
+        <div className="mt-8 grid gap-6 md:grid-cols-2">
+          <Link
+            to="/geoconfronto"
+            className="group flex flex-col items-center rounded-lg border border-border bg-card p-10 text-center transition hover:border-accent"
+          >
+            <img
+              src={geoLogo.url}
+              alt="GeoConfronto"
+              className="h-32 w-auto object-contain md:h-40"
+            />
+            <h2 className="mt-6 font-display text-2xl text-foreground">GeoConfronto</h2>
+            <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
+              Memoriais descritivos, plantas e divisas: extração, normalização e comparação
+              geométrica auditável.
             </p>
-            <div className="mt-10 flex flex-wrap gap-3">
-              <Button asChild size="lg" variant="secondary">
-                <Link to={signedIn ? "/painel" : "/auth"}>
-                  {signedIn ? "Ir para minhas análises" : "Começar uma análise"}
-                </Link>
-              </Button>
-            </div>
-          </div>
-        </section>
+            <span className="mt-6 text-xs uppercase tracking-wide text-accent">Acessar módulo</span>
+          </Link>
 
-        <section className="mx-auto max-w-6xl px-6 py-20">
-          <p className="eyebrow">Escopo do MVP</p>
-          <h2 className="mt-3 text-3xl">Capacidades operacionais</h2>
-          <div className="mt-10 grid gap-px overflow-hidden rounded-lg border border-border bg-border md:grid-cols-3">
-            {CAPACIDADES.map((c) => (
-              <article key={c.titulo} className="bg-card p-7">
-                <h3 className="text-xl text-foreground">{c.titulo}</h3>
-                <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
-                  {c.texto}
-                </p>
-              </article>
-            ))}
-          </div>
-        </section>
-
-        <section className="border-y border-border bg-secondary">
-          <div className="mx-auto max-w-6xl px-6 py-20">
-            <p className="eyebrow">Princípios do sistema</p>
-            <h2 className="mt-3 text-3xl">Como a plataforma se comporta</h2>
-            <dl className="mt-10 grid gap-8 md:grid-cols-2">
-              {PRINCIPIOS.map(([titulo, texto]) => (
-                <div key={titulo} className="border-l-2 border-accent pl-5">
-                  <dt className="font-display text-lg text-foreground">{titulo}</dt>
-                  <dd className="mt-1.5 text-sm leading-relaxed text-muted-foreground">
-                    {texto}
-                  </dd>
-                </div>
-              ))}
-            </dl>
-          </div>
-        </section>
+          <Link
+            to="/checktitulo"
+            className="group flex flex-col items-center rounded-lg border border-border bg-card p-10 text-center transition hover:border-accent"
+          >
+            <img
+              src={checkLogo.url}
+              alt="CheckTítulo"
+              className="h-32 w-auto object-contain md:h-40"
+            />
+            <h2 className="mt-6 font-display text-2xl text-foreground">CheckTítulo</h2>
+            <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
+              Títulos e matrículas: conferência de partes, documentos, estado civil, cadastros do
+              imóvel e cadeia registral.
+            </p>
+            <span className="mt-6 text-xs uppercase tracking-wide text-accent">Acessar módulo</span>
+          </Link>
+        </div>
       </main>
 
-      <footer className="mx-auto max-w-6xl px-6 py-10">
-        <p className="text-xs text-muted-foreground">
-          e-Qualifica — plataforma de conferência registral, geométrica e
-          normativa — apoio à decisão, com trilha de auditoria integral.
+      <footer className="mx-auto max-w-5xl px-6 pb-12">
+        <p className="text-center text-xs text-muted-foreground">
+          e-Qualifica — apoio à decisão, com trilha de auditoria integral. O sistema não substitui a
+          qualificação jurídica do Oficial.
         </p>
       </footer>
     </div>
