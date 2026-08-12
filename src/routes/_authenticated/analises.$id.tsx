@@ -450,7 +450,7 @@ function AnaliseDetalhe() {
                       id="arquivo"
                       type="file"
                       className="flex-1"
-                      accept=".pdf,.txt,.csv,.md,.docx,.xlsx,.png,.jpg,.jpeg,.tif,.tiff,.webp,.kml,.kmz,.geojson,.json,.dwg"
+                      accept=".pdf,.txt,.csv,.md,.docx,.xlsx,.png,.jpg,.jpeg,.tif,.tiff,.webp,.kml,.kmz,.geojson,.json,.dwg,.dxf"
                       disabled={enviarArquivo.isPending}
                       onChange={(e) => {
                         const f = e.target.files?.[0];
@@ -473,7 +473,10 @@ function AnaliseDetalhe() {
                   <p className="text-xs leading-relaxed text-muted-foreground">
                     PDFs digitalizados e imagens passam por OCR assistido por IA.
                     Arquivos KML, KMZ e GeoJSON têm o perímetro, os azimutes e a
-                    área calculados diretamente da geometria (WGS-84).
+                    área calculados diretamente da geometria (WGS-84). Arquivos
+                    CAD (DWG e DXF) são lidos no próprio navegador: as
+                    polilinhas fechadas do espaço do modelo viram perímetro,
+                    azimutes, distâncias e área, sem consumo de créditos de IA.
                   </p>
                 </div>
                 {arquivoPendente && (
