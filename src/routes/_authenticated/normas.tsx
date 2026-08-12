@@ -25,13 +25,13 @@ import {
 export const Route = createFileRoute("/_authenticated/normas")({
   head: () => ({
     meta: [
-      { title: "Acervo normativo — GeoConfronto" },
+      { title: "Acervo normativo — e-Qualifica" },
       {
         name: "description",
         content:
           "Cadastre leis, provimentos, normas de serviço e decisões administrativas e consulte o acervo por busca semântica.",
       },
-      { property: "og:title", content: "Acervo normativo — GeoConfronto" },
+      { property: "og:title", content: "Acervo normativo — e-Qualifica" },
       {
         property: "og:description",
         content:

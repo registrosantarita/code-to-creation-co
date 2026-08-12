@@ -6,7 +6,7 @@ import { fmtCreditos } from "@/lib/credit-estimator";
 export const Route = createFileRoute("/_authenticated/creditos")({
   head: () => ({
     meta: [
-      { title: "Consumo de créditos — GeoConfronto" },
+      { title: "Consumo de créditos — e-Qualifica" },
       {
         name: "description",
         content:
@@ -14,7 +14,7 @@ export const Route = createFileRoute("/_authenticated/creditos")({
       },
       {
         property: "og:title",
-        content: "Consumo de créditos — GeoConfronto",
+        content: "Consumo de créditos — e-Qualifica",
       },
       {
         property: "og:description",

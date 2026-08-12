@@ -13,13 +13,13 @@ import {
 export const Route = createFileRoute("/_authenticated/admin")({
   head: () => ({
     meta: [
-      { title: "Administração — GeoConfronto" },
+      { title: "Administração — e-Qualifica" },
       {
         name: "description",
         content:
           "Painel do administrador: usuários cadastrados, papéis de acesso e histórico de análises executadas por cada operador.",
       },
-      { property: "og:title", content: "Administração — GeoConfronto" },
+      { property: "og:title", content: "Administração — e-Qualifica" },
       {
         property: "og:description",
         content: "Gestão de usuários, papéis e auditoria das análises registrais.",
