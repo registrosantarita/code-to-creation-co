@@ -54,8 +54,11 @@ function Index() {
             desenvolvido por Abrahão Jesus de Souza
           </p>
           <Button asChild size="lg" variant="secondary" className="mt-10">
-            <Link to={signedIn ? "/painel" : "/auth"}>{signedIn ? "Entrar no sistema" : "Entrar"}</Link>
+            <Link to={signedIn ? "/conta" : "/auth"}>
+              {signedIn ? "Minha conta" : "Entrar"}
+            </Link>
           </Button>
+
         </div>
       </section>
 
