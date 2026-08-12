@@ -111,8 +111,8 @@ function blocoPoligono(
     const para = `V${((i + 1) % ring.length) + 1}`;
     const az = grausParaDms(azimutePlano(p, q));
     const dist = fmt(distanciaPlana(p, q), 3);
-    const alt = p.z ? fmt(p.z, 2) : "";
-    const conf = confrontanteDoSegmento(drawing, p, q, raioMax) ?? "";
+    const alt = p.z ? fmt(p.z, 2) : "-";
+    const conf = confrontanteDoSegmento(drawing, p, q, raioMax) ?? "-";
     return utm
       ? `${de} | ${para} | ${fmt(p.y, 3)} | ${fmt(p.x, 3)} | ${alt} | ${az} | ${dist} | ${conf}`
       : `${de} | ${para} | ${alt} | ${az} | ${dist} | ${conf}`;
