@@ -117,9 +117,10 @@ function encerramento(r: RegistroIndexado): string {
 
 const lista = <T,>(v: unknown): T[] => (Array.isArray(v) ? (v as T[]) : []);
 
-/** Rótulo do ônus: R-4 (HIPOTECA) — legível pelo importador do cartório. */
+/** Rótulo do ônus: R.04 (HIPOTECA) — legível pelo importador do cartório. */
 const rotuloOnus = (o: IndexAto): string => {
-  const base = `${texto(o.tipo)}-${texto(o.numero)}`;
+  const num = String(o.numero ?? "").padStart(2, "0");
+  const base = `${texto(o.tipo)}.${num}`;
   const grav = texto(o.gravame).toUpperCase();
   return grav ? `${base} (${grav})` : base;
 };
