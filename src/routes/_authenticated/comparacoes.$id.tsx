@@ -19,7 +19,7 @@ import { getVertices, type VertexCoordRow } from "@/lib/export-registral";
 export const Route = createFileRoute("/_authenticated/comparacoes/$id")({
   head: () => ({
     meta: [
-      { title: "Relatório de comparação — GeoConfronto" },
+      { title: "Relatório de comparação — GeoConfronto · e-Qualifica" },
       {
         name: "description",
         content:
@@ -27,7 +27,7 @@ export const Route = createFileRoute("/_authenticated/comparacoes/$id")({
       },
       {
         property: "og:title",
-        content: "Relatório de comparação — GeoConfronto",
+        content: "Relatório de comparação — GeoConfronto · e-Qualifica",
       },
       {
         property: "og:description",

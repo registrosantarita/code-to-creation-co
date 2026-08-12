@@ -17,13 +17,13 @@ export const Route = createFileRoute("/auth")({
 
   head: () => ({
     meta: [
-      { title: "Acesso — GeoConfronto" },
+      { title: "Acesso — e-Qualifica" },
       {
         name: "description",
         content:
           "Entre ou cadastre-se para acessar as análises de conferência registral.",
       },
-      { property: "og:title", content: "Acesso — GeoConfronto" },
+      { property: "og:title", content: "Acesso — e-Qualifica" },
       {
         property: "og:description",
         content: "Área restrita da plataforma de conferência registral.",
@@ -153,10 +153,10 @@ function AuthPage() {
         <Link to="/" className="flex items-center gap-3">
           <img
             src={logoAsset.url}
-            alt="GeoConfronto"
+            alt="e-Qualifica"
             className="h-9 w-9 object-contain"
           />
-          <span className="font-display text-base">GeoConfronto</span>
+          <span className="font-display text-base">e-Qualifica</span>
         </Link>
         <div>
           <div className="rule-gold w-32" />

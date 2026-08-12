@@ -9,7 +9,7 @@ import logoAsset from "@/assets/geoconfronto-logo.png.asset.json";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "GeoConfronto — Qualificação técnica assistida" },
+      { title: "e-Qualifica — Qualificação registral assistida" },
       {
         name: "description",
         content:
@@ -17,7 +17,7 @@ export const Route = createFileRoute("/")({
       },
       {
         property: "og:title",
-        content: "GeoConfronto — Qualificação técnica assistida",
+        content: "e-Qualifica — Qualificação registral assistida",
       },
       {
         property: "og:description",
@@ -88,13 +88,17 @@ function Index() {
             <NavArrows showHome={false} />
             <img
               src={logoAsset.url}
-              alt="GeoConfronto"
+              alt="e-Qualifica"
               className="h-16 w-16 object-contain"
             />
 
             <div className="leading-tight">
               <p className="font-display text-2xl text-foreground md:text-3xl">
-                GeoConfronto
+                e-Qualifica
+              </p>
+              <p className="mt-0.5 text-xs text-muted-foreground">
+                GeoConfronto (memorial e planta) · CheckTítulo (títulos e
+                matrículas)
               </p>
               <p className="mt-0.5 text-xs italic text-muted-foreground">
                 desenvolvido por Abrahão Jesus de Souza
@@ -173,7 +177,7 @@ function Index() {
 
       <footer className="mx-auto max-w-6xl px-6 py-10">
         <p className="text-xs text-muted-foreground">
-          GeoConfronto — plataforma de conferência registral, geométrica e
+          e-Qualifica — plataforma de conferência registral, geométrica e
           normativa — apoio à decisão, com trilha de auditoria integral.
         </p>
       </footer>

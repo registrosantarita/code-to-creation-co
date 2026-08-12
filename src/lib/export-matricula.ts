@@ -137,7 +137,7 @@ export async function exportarMatriculaXlsx(
   const sigef = isSigefGeodesico(parcel);
 
   const wb = new ExcelJS.Workbook();
-  wb.creator = "GeoConfronto";
+  wb.creator = "e-Qualifica";
   wb.created = new Date();
 
   let confrontacoes = 0;

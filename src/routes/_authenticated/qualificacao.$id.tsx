@@ -22,13 +22,13 @@ import { docColor, docLetra, TONE_CLASS } from "@/lib/labels";
 export const Route = createFileRoute("/_authenticated/qualificacao/$id")({
   head: () => ({
     meta: [
-      { title: "Conferência de qualificação — GeoConfronto" },
+      { title: "CheckTítulo — Conferência de qualificação — e-Qualifica" },
       {
         name: "description",
         content:
           "Resultado do confronto de dados de qualificação das partes, cadastros do imóvel e cadeia registral.",
       },
-      { property: "og:title", content: "Conferência de qualificação — GeoConfronto" },
+      { property: "og:title", content: "CheckTítulo — Conferência de qualificação — e-Qualifica" },
       {
         property: "og:description",
         content: "Divergências cadastrais e pessoais entre os documentos conferidos.",
@@ -141,7 +141,7 @@ function QualificacaoDetalhe() {
 
   return (
     <main className="mx-auto max-w-6xl px-6 py-10">
-      <p className="eyebrow">Conferência Automática de Dados de Qualificação</p>
+      <p className="eyebrow">CheckTítulo — Conferência de dados de qualificação</p>
       <h1 className="font-display text-2xl text-foreground">{data?.conjunto.title}</h1>
       <p className="mt-1 text-xs uppercase tracking-wide text-muted-foreground">
         {modo === "titulo_x_titulo" ? "Título x Título" : "Título x Matrícula(s)"}

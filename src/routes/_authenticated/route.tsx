@@ -47,14 +47,16 @@ function AuthenticatedLayout() {
             <Link to="/painel" className="flex items-center gap-3">
               <img
                 src={logoAsset.url}
-                alt="GeoConfronto"
+                alt="e-Qualifica"
                 className="h-8 w-8 object-contain"
               />
               <div className="leading-tight">
                 <p className="font-display text-sm text-foreground">
-                  GeoConfronto
+                  e-Qualifica
                 </p>
-                <p className="eyebrow hidden sm:block">Painel de análises</p>
+                <p className="eyebrow hidden sm:block">
+                  GeoConfronto · CheckTítulo
+                </p>
               </div>
             </Link>
           </div>
@@ -69,10 +71,16 @@ function AuthenticatedLayout() {
               </Link>
             )}
             <Link
+              to="/painel"
+              className="text-xs text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
+            >
+              GeoConfronto
+            </Link>
+            <Link
               to="/qualificacao"
               className="text-xs text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
             >
-              Qualificação
+              CheckTítulo
             </Link>
             <Link
               to="/normas"

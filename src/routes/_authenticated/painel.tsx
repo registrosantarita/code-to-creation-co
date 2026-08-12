@@ -24,13 +24,13 @@ import { STATUS_ANALISE } from "@/lib/labels";
 export const Route = createFileRoute("/_authenticated/painel")({
   head: () => ({
     meta: [
-      { title: "Painel de análises — GeoConfronto" },
+      { title: "Painel de análises — GeoConfronto · e-Qualifica" },
       {
         name: "description",
         content:
           "Acompanhe suas análises de conferência registral, documentos e comparações técnicas.",
       },
-      { property: "og:title", content: "Painel de análises — GeoConfronto" },
+      { property: "og:title", content: "Painel de análises — GeoConfronto · e-Qualifica" },
       {
         property: "og:description",
         content: "Gestão de casos de conferência registral e geométrica.",
@@ -114,7 +114,7 @@ function Painel() {
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
           <p className="eyebrow">Casos de conferência</p>
-          <h1 className="mt-2 text-4xl">Minhas análises</h1>
+          <h1 className="mt-2 text-4xl">GeoConfronto — Minhas análises</h1>
           <p className="mt-3 max-w-xl text-sm text-muted-foreground">
             O envio de arquivos e a colagem de texto livre acontecem dentro de
             uma análise. Crie ou abra um caso para enviar memoriais, plantas,

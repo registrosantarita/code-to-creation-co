@@ -22,7 +22,7 @@ import { criarConjunto, excluirConjunto, listarConjuntos } from "@/lib/qualifica
 export const Route = createFileRoute("/_authenticated/qualificacao/")({
   head: () => ({
     meta: [
-      { title: "Conferência Automática de Dados de Qualificação — GeoConfronto" },
+      { title: "CheckTítulo — Conferência de Dados de Qualificação — e-Qualifica" },
       {
         name: "description",
         content:
@@ -30,7 +30,7 @@ export const Route = createFileRoute("/_authenticated/qualificacao/")({
       },
       {
         property: "og:title",
-        content: "Conferência Automática de Dados de Qualificação — GeoConfronto",
+        content: "CheckTítulo — Conferência de Dados de Qualificação — e-Qualifica",
       },
       {
         property: "og:description",
@@ -88,7 +88,7 @@ function QualificacaoLista() {
         <div>
           <p className="eyebrow">Módulo cadastral</p>
           <h1 className="font-display text-2xl text-foreground">
-            Conferência Automática de Dados de Qualificação
+            CheckTítulo — Conferência de dados de qualificação
           </h1>
           <p className="mt-2 max-w-3xl text-sm text-muted-foreground">
             Confronta partes (nome, CPF/CNPJ, RG, endereço, estado civil, regime de bens e data do

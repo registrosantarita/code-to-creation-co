@@ -38,7 +38,7 @@ function createWindow() {
     minWidth: 1024,
     minHeight: 700,
     backgroundColor: "#0B0B0C",
-    title: "GeoConfronto",
+    title: "e-Qualifica",
     icon: path.join(__dirname, "build", "icon.png"),
     autoHideMenuBar: false,
     webPreferences: {
