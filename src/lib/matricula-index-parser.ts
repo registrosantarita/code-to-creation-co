@@ -37,6 +37,17 @@ export type MatriculaIndexada = {
   municipio: string | null;
   uf: string | null;
   area_m2: number | null;
+  /** Endereço decomposto (urbanos) e identificação rural. */
+  cep: string | null;
+  tipo_logradouro: string | null;
+  logradouro: string | null;
+  numero_logradouro: string | null;
+  tipo_rural: string | null;
+  denominacao_rural: string | null;
+  lote: string | null;
+  quadra: string | null;
+  /** Cadastro imobiliário municipal. */
+  cim: string | null;
   /** Última ficha física da matrícula (alfanumérico: 6, 6V…). */
   ultima_ficha: string | null;
   /** Código de certificação do INCRA (rurais georreferenciados). */
