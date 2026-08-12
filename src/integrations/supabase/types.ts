@@ -392,6 +392,8 @@ export type Database = {
       index_records: {
         Row: {
           adquirente: string | null
+          area_construida_m2: number | null
+          area_hectare: number | null
           area_m2: number | null
           ato: string | null
           atos: Json
@@ -428,6 +430,7 @@ export type Database = {
           natureza: string
           numero_logradouro: string | null
           onus: Json
+          perimetro_m: number | null
           prenotacao: string | null
           proprietarios: Json
           quadra: string | null
@@ -446,6 +449,8 @@ export type Database = {
         }
         Insert: {
           adquirente?: string | null
+          area_construida_m2?: number | null
+          area_hectare?: number | null
           area_m2?: number | null
           ato?: string | null
           atos?: Json
@@ -482,6 +487,7 @@ export type Database = {
           natureza?: string
           numero_logradouro?: string | null
           onus?: Json
+          perimetro_m?: number | null
           prenotacao?: string | null
           proprietarios?: Json
           quadra?: string | null
@@ -500,6 +506,8 @@ export type Database = {
         }
         Update: {
           adquirente?: string | null
+          area_construida_m2?: number | null
+          area_hectare?: number | null
           area_m2?: number | null
           ato?: string | null
           atos?: Json
@@ -536,6 +544,7 @@ export type Database = {
           natureza?: string
           numero_logradouro?: string | null
           onus?: Json
+          perimetro_m?: number | null
           prenotacao?: string | null
           proprietarios?: Json
           quadra?: string | null

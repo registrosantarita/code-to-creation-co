@@ -19,6 +19,9 @@ export type RegistroIndexado = {
   municipio: string | null;
   uf: string | null;
   area_m2: number | string | null;
+  area_hectare: number | string | null;
+  perimetro_m: number | string | null;
+  area_construida_m2: number | string | null;
   cep: string | null;
   tipo_logradouro: string | null;
   logradouro: string | null;
@@ -70,6 +73,9 @@ export const COLUNAS_EXPORT = [
   "MUNICIPIO",
   "UF",
   "AREA_M2",
+  "AREA_HECTARE",
+  "PERIMETRO",
+  "AREA_CONSTRUIDA",
   "CADASTRO_MUNICIPAL",
   "CIB",
   "CCIR",
@@ -95,6 +101,9 @@ export const COLUNAS_EXPORT = [
   "SELO",
   "SITUACAO",
 ] as const;
+
+const numero = (v: unknown): string | number =>
+  v === null || v === undefined || v === "" ? "" : Number(v);
 
 const texto = (v: unknown): string => (v === null || v === undefined ? "" : String(v));
 
@@ -131,7 +140,10 @@ export function linhaDoRegistro(r: RegistroIndexado): (string | number)[] {
     texto(r.cim),
     texto(r.municipio),
     texto(r.uf),
-    r.area_m2 === null || r.area_m2 === undefined || r.area_m2 === "" ? "" : Number(r.area_m2),
+    numero(r.area_m2),
+    numero(r.area_hectare),
+    numero(r.perimetro_m),
+    numero(r.area_construida_m2),
     texto(cad['cadastro_municipal']),
     texto(cad['cib']),
     texto(cad['ccir']),
