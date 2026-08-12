@@ -35,6 +35,16 @@ export function shoelaceArea(points: CadPoint[]): number {
   return Math.abs(acc / 2);
 }
 
+/** Polilinha desenhada sem o flag de fechamento, mas com extremos coincidentes. */
+export function extremosCoincidem(points: CadPoint[], tolerance = 0.02): boolean {
+  const first = points[0];
+  const last = points[points.length - 1];
+  if (!first || !last || points.length < 4) return false;
+  return (
+    Math.abs(first.x - last.x) <= tolerance && Math.abs(first.y - last.y) <= tolerance
+  );
+}
+
 /** Remove o vértice final repetido (polígono já fechado no desenho). */
 export function dedupeRing(points: CadPoint[]): CadPoint[] {
   const ring = points.filter(

@@ -4,7 +4,7 @@
  */
 
 import type { CadDrawing, CadPoint } from "./cad-entities";
-import { dedupeRing, linesToRings } from "./cad-entities";
+import { dedupeRing, extremosCoincidem, linesToRings } from "./cad-entities";
 import { isDxfText, limparMText, parseDxf } from "./dxf-reader";
 import { cadParaMemorial, type CadConversao } from "./cad-to-memorial";
 
@@ -41,7 +41,7 @@ export function databaseParaDrawing(entities: AnyEntity[]): CadDrawing {
       if (pts.length >= 2) {
         drawing.polylines.push({
           layer,
-          closed: (flag & 1) === 1 || (flag & 32) === 32,
+          closed: (flag & 1) === 1 || (flag & 32) === 32 || extremosCoincidem(pts),
           points: dedupeRing(pts),
         });
       }

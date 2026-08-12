@@ -5,7 +5,7 @@
  */
 
 import type { CadDrawing, CadPoint, CadPolyline, CadText } from "./cad-entities";
-import { dedupeRing, linesToRings } from "./cad-entities";
+import { dedupeRing, extremosCoincidem, linesToRings } from "./cad-entities";
 
 type Pair = { code: number; value: string };
 
@@ -85,7 +85,7 @@ export function parseDxf(raw: string): CadDrawing {
       if (pts.length >= 2) {
         polylines.push({
           layer: layerDe(campos),
-          closed: (flag & 1) === 1,
+          closed: (flag & 1) === 1 || extremosCoincidem(pts),
           points: dedupeRing(pts),
         });
       }
@@ -103,7 +103,11 @@ export function parseDxf(raw: string): CadDrawing {
         seguinte = lerEntidade();
       }
       if (pts.length >= 2) {
-        polylines.push({ layer, closed: (flag & 1) === 1, points: dedupeRing(pts) });
+        polylines.push({
+          layer,
+          closed: (flag & 1) === 1 || extremosCoincidem(pts),
+          points: dedupeRing(pts),
+        });
       }
       entidade = seguinte && seguinte.tipo !== "SEQEND" ? seguinte : lerEntidade();
       continue;
