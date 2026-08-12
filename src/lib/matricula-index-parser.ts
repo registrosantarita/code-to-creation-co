@@ -374,6 +374,7 @@ export function extrairIndiceMatricula(textoBruto: string): MatriculaIndexada {
     proprietarios: extrairProprietarios(compacto),
     atos,
     onus,
+    onus_cancelados: onusCancelados,
   };
 }
 
