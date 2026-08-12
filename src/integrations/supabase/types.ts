@@ -556,6 +556,86 @@ export type Database = {
         }
         Relationships: []
       }
+      qualification_docs: {
+        Row: {
+          created_at: string
+          created_by: string
+          extracted: Json
+          extraction_source: string
+          file_extension: string | null
+          file_name: string | null
+          id: string
+          label: string
+          raw_text: string
+          set_id: string
+          source_type: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          extracted?: Json
+          extraction_source?: string
+          file_extension?: string | null
+          file_name?: string | null
+          id?: string
+          label?: string
+          raw_text?: string
+          set_id: string
+          source_type?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          extracted?: Json
+          extraction_source?: string
+          file_extension?: string | null
+          file_name?: string | null
+          id?: string
+          label?: string
+          raw_text?: string
+          set_id?: string
+          source_type?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "qualification_docs_set_id_fkey"
+            columns: ["set_id"]
+            isOneToOne: false
+            referencedRelation: "qualification_sets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      qualification_sets: {
+        Row: {
+          created_at: string
+          created_by: string
+          id: string
+          note: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          id?: string
+          note?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          id?: string
+          note?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       segments: {
         Row: {
           altitude_from_m: number | null

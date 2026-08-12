@@ -69,11 +69,18 @@ function AuthenticatedLayout() {
               </Link>
             )}
             <Link
+              to="/qualificacao"
+              className="text-xs text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
+            >
+              Qualificação
+            </Link>
+            <Link
               to="/normas"
               className="text-xs text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
             >
               Acervo normativo
             </Link>
+
 
             <Link
               to="/creditos"

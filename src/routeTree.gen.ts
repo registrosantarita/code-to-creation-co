@@ -24,6 +24,8 @@ import { Route as DotlovableOauthConsentRouteImport } from './routes/[.]lovable.
 import { Route as Char91DotmcpChar93InvokeToolToolRouteImport } from './routes/[.mcp]/invoke-tool/$tool'
 import { Route as AuthenticatedAnalisesIdRouteImport } from './routes/_authenticated/analises.$id'
 import { Route as AuthenticatedComparacoesIdRouteImport } from './routes/_authenticated/comparacoes.$id'
+import { Route as AuthenticatedQualificacaoIndexRouteImport } from './routes/_authenticated/qualificacao.index'
+import { Route as AuthenticatedQualificacaoIdRouteImport } from './routes/_authenticated/qualificacao.$id'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -103,6 +105,18 @@ const AuthenticatedComparacoesIdRoute =
     path: '/comparacoes/$id',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedQualificacaoIndexRoute =
+  AuthenticatedQualificacaoIndexRouteImport.update({
+    id: '/qualificacao/',
+    path: '/qualificacao/',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedQualificacaoIdRoute =
+  AuthenticatedQualificacaoIdRouteImport.update({
+    id: '/qualificacao/$id',
+    path: '/qualificacao/$id',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -119,6 +133,8 @@ export interface FileRoutesByFullPath {
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
   '/analises/$id': typeof AuthenticatedAnalisesIdRoute
   '/comparacoes/$id': typeof AuthenticatedComparacoesIdRoute
+  '/qualificacao/$id': typeof AuthenticatedQualificacaoIdRoute
+  '/qualificacao/': typeof AuthenticatedQualificacaoIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -135,6 +151,8 @@ export interface FileRoutesByTo {
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
   '/analises/$id': typeof AuthenticatedAnalisesIdRoute
   '/comparacoes/$id': typeof AuthenticatedComparacoesIdRoute
+  '/qualificacao/$id': typeof AuthenticatedQualificacaoIdRoute
+  '/qualificacao': typeof AuthenticatedQualificacaoIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -153,6 +171,8 @@ export interface FileRoutesById {
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
   '/_authenticated/analises/$id': typeof AuthenticatedAnalisesIdRoute
   '/_authenticated/comparacoes/$id': typeof AuthenticatedComparacoesIdRoute
+  '/_authenticated/qualificacao/$id': typeof AuthenticatedQualificacaoIdRoute
+  '/_authenticated/qualificacao/': typeof AuthenticatedQualificacaoIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -171,6 +191,8 @@ export interface FileRouteTypes {
     | '/.mcp/invoke-tool/$tool'
     | '/analises/$id'
     | '/comparacoes/$id'
+    | '/qualificacao/$id'
+    | '/qualificacao/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -187,6 +209,8 @@ export interface FileRouteTypes {
     | '/.mcp/invoke-tool/$tool'
     | '/analises/$id'
     | '/comparacoes/$id'
+    | '/qualificacao/$id'
+    | '/qualificacao'
   id:
     | '__root__'
     | '/'
@@ -204,6 +228,8 @@ export interface FileRouteTypes {
     | '/.mcp/invoke-tool/$tool'
     | '/_authenticated/analises/$id'
     | '/_authenticated/comparacoes/$id'
+    | '/_authenticated/qualificacao/$id'
+    | '/_authenticated/qualificacao/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -325,6 +351,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedComparacoesIdRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/qualificacao/': {
+      id: '/_authenticated/qualificacao/'
+      path: '/qualificacao'
+      fullPath: '/qualificacao/'
+      preLoaderRoute: typeof AuthenticatedQualificacaoIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/qualificacao/$id': {
+      id: '/_authenticated/qualificacao/$id'
+      path: '/qualificacao/$id'
+      fullPath: '/qualificacao/$id'
+      preLoaderRoute: typeof AuthenticatedQualificacaoIdRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
   }
 }
 
@@ -335,6 +375,8 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedPainelRoute: typeof AuthenticatedPainelRoute
   AuthenticatedAnalisesIdRoute: typeof AuthenticatedAnalisesIdRoute
   AuthenticatedComparacoesIdRoute: typeof AuthenticatedComparacoesIdRoute
+  AuthenticatedQualificacaoIdRoute: typeof AuthenticatedQualificacaoIdRoute
+  AuthenticatedQualificacaoIndexRoute: typeof AuthenticatedQualificacaoIndexRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
@@ -344,6 +386,8 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedPainelRoute: AuthenticatedPainelRoute,
   AuthenticatedAnalisesIdRoute: AuthenticatedAnalisesIdRoute,
   AuthenticatedComparacoesIdRoute: AuthenticatedComparacoesIdRoute,
+  AuthenticatedQualificacaoIdRoute: AuthenticatedQualificacaoIdRoute,
+  AuthenticatedQualificacaoIndexRoute: AuthenticatedQualificacaoIndexRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =

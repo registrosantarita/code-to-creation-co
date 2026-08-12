@@ -1,0 +1,174 @@
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
+import { useState } from "react";
+import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Plus, Trash2, ShieldCheck } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { criarConjunto, excluirConjunto, listarConjuntos } from "@/lib/qualificacao.functions";
+
+export const Route = createFileRoute("/_authenticated/qualificacao/")({
+  head: () => ({
+    meta: [
+      { title: "Conferência Automática de Dados de Qualificação — GeoConfronto" },
+      {
+        name: "description",
+        content:
+          "Confronte nomes, CPF, RG, endereço, estado civil, regime de bens, cadastros do imóvel (CCIR, CIB, CAR) e registro anterior entre documentos.",
+      },
+      {
+        property: "og:title",
+        content: "Conferência Automática de Dados de Qualificação — GeoConfronto",
+      },
+      {
+        property: "og:description",
+        content: "Módulo de conferência cadastral e pessoal de documentos registrais.",
+      },
+    ],
+  }),
+  component: QualificacaoLista,
+});
+
+function QualificacaoLista() {
+  const queryClient = useQueryClient();
+  const listar = useServerFn(listarConjuntos);
+  const criar = useServerFn(criarConjunto);
+  const excluir = useServerFn(excluirConjunto);
+  const [open, setOpen] = useState(false);
+  const [title, setTitle] = useState("");
+  const [note, setNote] = useState("");
+
+  const { data, isLoading } = useQuery({
+    queryKey: ["qualificacao-sets"],
+    queryFn: () => listar({ data: {} }),
+  });
+
+  const create = useMutation({
+    mutationFn: async () => {
+      if (title.trim().length < 3) throw new Error("Informe um título com ao menos 3 caracteres.");
+      return criar({ data: { title: title.trim(), note: note.trim() } });
+    },
+    onSuccess: async () => {
+      setOpen(false);
+      setTitle("");
+      setNote("");
+      await queryClient.invalidateQueries({ queryKey: ["qualificacao-sets"] });
+      toast.success("Conferência criada.");
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const remove = useMutation({
+    mutationFn: (id: string) => excluir({ data: { id } }),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ["qualificacao-sets"] });
+      toast.success("Conferência excluída.");
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  return (
+    <main className="mx-auto max-w-6xl px-6 py-10">
+      <div className="flex flex-wrap items-end justify-between gap-4">
+        <div>
+          <p className="eyebrow">Módulo cadastral</p>
+          <h1 className="font-display text-2xl text-foreground">
+            Conferência Automática de Dados de Qualificação
+          </h1>
+          <p className="mt-2 max-w-3xl text-sm text-muted-foreground">
+            Confronta partes (nome, CPF/CNPJ, RG, endereço, estado civil, regime de bens e data do
+            casamento), cadastros do imóvel (cadastro municipal, CCIR, CIB, CAR, ITR/NIRF) e a cadeia
+            registral (matrícula, transcrição, registro anterior, livro e folha) entre dois ou mais
+            documentos. A extração é determinística; a IA é opcional e só complementa lacunas.
+          </p>
+        </div>
+
+        <Dialog open={open} onOpenChange={setOpen}>
+          <DialogTrigger asChild>
+            <Button>
+              <Plus className="mr-2 h-4 w-4" /> Nova conferência
+            </Button>
+          </DialogTrigger>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Nova conferência de qualificação</DialogTitle>
+              <DialogDescription>
+                Depois de criar, envie ou cole os documentos a serem confrontados.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="titulo">Título</Label>
+                <Input
+                  id="titulo"
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                  placeholder="Ex.: Escritura x Matrícula 12.345 — João e Maria"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="obs">Observação</Label>
+                <Textarea id="obs" value={note} onChange={(e) => setNote(e.target.value)} rows={3} />
+              </div>
+            </div>
+            <DialogFooter>
+              <Button onClick={() => create.mutate()} disabled={create.isPending}>
+                {create.isPending ? "Criando…" : "Criar"}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      </div>
+
+      <section className="mt-8 space-y-3">
+        {isLoading && <p className="text-sm text-muted-foreground">Carregando…</p>}
+        {!isLoading && !data?.length && (
+          <p className="rounded-md border border-border bg-card p-6 text-sm text-muted-foreground">
+            Nenhuma conferência de qualificação criada ainda.
+          </p>
+        )}
+        {data?.map((c) => (
+          <div
+            key={c.id}
+            className="flex items-center justify-between gap-4 rounded-md border border-border bg-card p-4"
+          >
+            <Link
+              to="/qualificacao/$id"
+              params={{ id: c.id }}
+              className="flex flex-1 items-start gap-3"
+            >
+              <ShieldCheck className="mt-0.5 h-4 w-4 text-muted-foreground" />
+              <div>
+                <p className="font-display text-sm text-foreground">{c.title}</p>
+                {c.note && <p className="text-xs text-muted-foreground">{c.note}</p>}
+                <p className="mt-1 text-[11px] text-muted-foreground">
+                  Atualizada em {new Date(c.updated_at).toLocaleString("pt-BR")}
+                </p>
+              </div>
+            </Link>
+            <Button
+              variant="ghost"
+              size="icon"
+              aria-label="Excluir conferência"
+              onClick={() => remove.mutate(c.id)}
+            >
+              <Trash2 className="h-4 w-4" />
+            </Button>
+          </div>
+        ))}
+      </section>
+    </main>
+  );
+}
