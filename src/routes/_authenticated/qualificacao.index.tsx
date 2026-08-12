@@ -88,7 +88,7 @@ function QualificacaoLista() {
         <div>
           <p className="eyebrow">Módulo cadastral</p>
           <h1 className="font-display text-2xl text-foreground">
-            Conferência Automática de Dados de Qualificação
+            CheckTítulo — Conferência de dados de qualificação
           </h1>
           <p className="mt-2 max-w-3xl text-sm text-muted-foreground">
             Confronta partes (nome, CPF/CNPJ, RG, endereço, estado civil, regime de bens e data do

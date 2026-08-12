@@ -141,7 +141,7 @@ function QualificacaoDetalhe() {
 
   return (
     <main className="mx-auto max-w-6xl px-6 py-10">
-      <p className="eyebrow">Conferência Automática de Dados de Qualificação</p>
+      <p className="eyebrow">CheckTítulo — Conferência de dados de qualificação</p>
       <h1 className="font-display text-2xl text-foreground">{data?.conjunto.title}</h1>
       <p className="mt-1 text-xs uppercase tracking-wide text-muted-foreground">
         {modo === "titulo_x_titulo" ? "Título x Título" : "Título x Matrícula(s)"}
