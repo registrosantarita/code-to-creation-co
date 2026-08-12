@@ -294,7 +294,7 @@ function extrairPessoas(t: string): Pessoa[] {
     );
     p.conjuge = primeiro(
       janela,
-      new RegExp(`(?:c[ôo]njuge|esposa|esposo|marido|casad[oa][^.;\\n]{0,90}?\\bcom)\\s*[:\\-]?\\s*(${NOME})`, "i"),
+      new RegExp(`(?:c[ôo]njuge|esposa|esposo|marido|casad[oa][^.;\\n]{0,90}?\\bcom\\b)\\s*[:\\-]?\\s*(${NOME})`, "i"),
     );
 
     pessoas.push(p);
