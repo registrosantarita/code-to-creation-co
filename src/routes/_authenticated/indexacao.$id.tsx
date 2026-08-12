@@ -351,9 +351,35 @@ function LoteDetalhe() {
                     {atos.length} ato(s)
                   </span>
                   <span className="rounded border border-border px-2 py-1 text-muted-foreground">
-                    {onus.length} ônus
+                    {onus.length} ônus vigente(s)
                   </span>
+                  {onusCancelados.length > 0 && (
+                    <span className="rounded border border-border px-2 py-1 text-muted-foreground line-through">
+                      {onusCancelados.length} cancelado(s)
+                    </span>
+                  )}
                 </div>
+
+                {todosOnus.length > 0 && (
+                  <ul className="mt-3 space-y-1 text-sm">
+                    {todosOnus.map((o, i) => (
+                      <li
+                        key={`${o.tipo}-${o.numero}-${i}`}
+                        className={
+                          o.vigente === false
+                            ? "text-muted-foreground line-through"
+                            : "text-foreground"
+                        }
+                      >
+                        {o.tipo}-{o.numero}
+                        {o.gravame ? ` — ${o.gravame.toUpperCase()}` : ""}
+                        {o.vigente === false
+                          ? ` (cancelado${o.cancelado_por ? ` por ${o.cancelado_por}` : ""})`
+                          : ""}
+                      </li>
+                    ))}
+                  </ul>
+                )}
 
                 {props.length > 0 && (
                   <p className="mt-3 text-sm text-foreground">
