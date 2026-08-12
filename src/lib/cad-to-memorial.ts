@@ -29,7 +29,8 @@ function grausParaDms(valor: number): string {
   const restoMin = (valor - g) * 60;
   const m = Math.floor(restoMin);
   const s = (restoMin - m) * 60;
-  return `${g}°${String(m).padStart(2, "0")}'${fmt(s, 2)}"`;
+  const seg = fmt(s, 2);
+  return `${g}°${String(m).padStart(2, "0")}'${seg.length < 5 ? `0${seg}` : seg}"`;
 }
 
 /** Coordenadas em faixa UTM plausível (E 100k–999k, N 1M–10M). */
