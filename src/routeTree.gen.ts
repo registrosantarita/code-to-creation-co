@@ -19,6 +19,7 @@ import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as Char91DotmcpChar93ListToolsRouteImport } from './routes/[.mcp]/list-tools'
 import { Route as Char91DotwellKnownChar93OauthProtectedResourceRouteImport } from './routes/[.well-known]/oauth-protected-resource'
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
+import { Route as AuthenticatedContaRouteImport } from './routes/_authenticated/conta'
 import { Route as AuthenticatedCreditosRouteImport } from './routes/_authenticated/creditos'
 import { Route as AuthenticatedNormasRouteImport } from './routes/_authenticated/normas'
 import { Route as AuthenticatedPainelRouteImport } from './routes/_authenticated/painel'
@@ -78,6 +79,11 @@ const Char91DotwellKnownChar93OauthProtectedResourceRoute =
 const AuthenticatedAdminRoute = AuthenticatedAdminRouteImport.update({
   id: '/admin',
   path: '/admin',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedContaRoute = AuthenticatedContaRouteImport.update({
+  id: '/conta',
+  path: '/conta',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedCreditosRoute = AuthenticatedCreditosRouteImport.update({
@@ -140,6 +146,7 @@ export interface FileRoutesByFullPath {
   '/.mcp/list-tools': typeof Char91DotmcpChar93ListToolsRoute
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   '/admin': typeof AuthenticatedAdminRoute
+  '/conta': typeof AuthenticatedContaRoute
   '/creditos': typeof AuthenticatedCreditosRoute
   '/normas': typeof AuthenticatedNormasRoute
   '/painel': typeof AuthenticatedPainelRoute
@@ -160,6 +167,7 @@ export interface FileRoutesByTo {
   '/.mcp/list-tools': typeof Char91DotmcpChar93ListToolsRoute
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   '/admin': typeof AuthenticatedAdminRoute
+  '/conta': typeof AuthenticatedContaRoute
   '/creditos': typeof AuthenticatedCreditosRoute
   '/normas': typeof AuthenticatedNormasRoute
   '/painel': typeof AuthenticatedPainelRoute
@@ -182,6 +190,7 @@ export interface FileRoutesById {
   '/.mcp/list-tools': typeof Char91DotmcpChar93ListToolsRoute
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   '/_authenticated/admin': typeof AuthenticatedAdminRoute
+  '/_authenticated/conta': typeof AuthenticatedContaRoute
   '/_authenticated/creditos': typeof AuthenticatedCreditosRoute
   '/_authenticated/normas': typeof AuthenticatedNormasRoute
   '/_authenticated/painel': typeof AuthenticatedPainelRoute
@@ -204,6 +213,7 @@ export interface FileRouteTypes {
     | '/.mcp/list-tools'
     | '/.well-known/oauth-protected-resource'
     | '/admin'
+    | '/conta'
     | '/creditos'
     | '/normas'
     | '/painel'
@@ -224,6 +234,7 @@ export interface FileRouteTypes {
     | '/.mcp/list-tools'
     | '/.well-known/oauth-protected-resource'
     | '/admin'
+    | '/conta'
     | '/creditos'
     | '/normas'
     | '/painel'
@@ -245,6 +256,7 @@ export interface FileRouteTypes {
     | '/.mcp/list-tools'
     | '/.well-known/oauth-protected-resource'
     | '/_authenticated/admin'
+    | '/_authenticated/conta'
     | '/_authenticated/creditos'
     | '/_authenticated/normas'
     | '/_authenticated/painel'
@@ -342,6 +354,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/conta': {
+      id: '/_authenticated/conta'
+      path: '/conta'
+      fullPath: '/conta'
+      preLoaderRoute: typeof AuthenticatedContaRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/creditos': {
       id: '/_authenticated/creditos'
       path: '/creditos'
@@ -410,6 +429,7 @@ declare module '@tanstack/react-router' {
 
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedAdminRoute: typeof AuthenticatedAdminRoute
+  AuthenticatedContaRoute: typeof AuthenticatedContaRoute
   AuthenticatedCreditosRoute: typeof AuthenticatedCreditosRoute
   AuthenticatedNormasRoute: typeof AuthenticatedNormasRoute
   AuthenticatedPainelRoute: typeof AuthenticatedPainelRoute
@@ -421,6 +441,7 @@ interface AuthenticatedRouteRouteChildren {
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAdminRoute: AuthenticatedAdminRoute,
+  AuthenticatedContaRoute: AuthenticatedContaRoute,
   AuthenticatedCreditosRoute: AuthenticatedCreditosRoute,
   AuthenticatedNormasRoute: AuthenticatedNormasRoute,
   AuthenticatedPainelRoute: AuthenticatedPainelRoute,
