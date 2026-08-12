@@ -60,7 +60,7 @@ export const obterLote = createServerFn({ method: "POST" })
       context.supabase
         .from("index_records")
         .select(
-          "id, label, file_name, file_extension, source_type, matricula_numero, livro, folha, cartorio, data_abertura, natureza, descricao, endereco, municipio, uf, area_m2, ultima_ficha, certificacao, registro_anterior, encerrada, matriculas_abertas, adquirente, conjuge_adq, transmitente, conjuge_transm, usufrutuario, conjuge_usu, prenotacao, ato, data_ato, selo, cadastros, proprietarios, atos, onus, extraction_source, review_status, created_at",
+          "id, label, file_name, file_extension, source_type, matricula_numero, livro, folha, cartorio, data_abertura, natureza, descricao, endereco, municipio, uf, area_m2, cep, tipo_logradouro, logradouro, numero_logradouro, tipo_rural, denominacao_rural, lote, quadra, cim, ultima_ficha, certificacao, registro_anterior, encerrada, matriculas_abertas, adquirente, conjuge_adq, transmitente, conjuge_transm, usufrutuario, conjuge_usu, prenotacao, ato, data_ato, selo, cadastros, proprietarios, atos, onus, extraction_source, review_status, created_at",
         )
         .eq("batch_id", data.id)
         .order("created_at", { ascending: true }),
@@ -138,6 +138,15 @@ export const indexarMatricula = createServerFn({ method: "POST" })
         municipio: dados.municipio,
         uf: dados.uf,
         area_m2: dados.area_m2,
+        cep: dados.cep,
+        tipo_logradouro: dados.tipo_logradouro,
+        logradouro: dados.logradouro,
+        numero_logradouro: dados.numero_logradouro,
+        tipo_rural: dados.tipo_rural,
+        denominacao_rural: dados.denominacao_rural,
+        lote: dados.lote,
+        quadra: dados.quadra,
+        cim: dados.cim,
         ultima_ficha: dados.ultima_ficha,
         certificacao: dados.certificacao,
         registro_anterior: dados.registro_anterior,
@@ -186,6 +195,15 @@ export const atualizarRegistro = createServerFn({ method: "POST" })
             municipio: z.string().max(80).nullable().optional(),
             uf: z.string().max(2).nullable().optional(),
             area_m2: z.number().nullable().optional(),
+            cep: z.string().max(12).nullable().optional(),
+            tipo_logradouro: z.string().max(40).nullable().optional(),
+            logradouro: z.string().max(200).nullable().optional(),
+            numero_logradouro: z.string().max(20).nullable().optional(),
+            tipo_rural: z.string().max(40).nullable().optional(),
+            denominacao_rural: z.string().max(200).nullable().optional(),
+            lote: z.string().max(20).nullable().optional(),
+            quadra: z.string().max(20).nullable().optional(),
+            cim: z.string().max(60).nullable().optional(),
             ultima_ficha: z.string().max(20).nullable().optional(),
             certificacao: z.string().max(80).nullable().optional(),
             registro_anterior: z.string().max(120).nullable().optional(),
