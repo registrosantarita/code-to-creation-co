@@ -55,7 +55,7 @@ function AuthenticatedLayout() {
                   e-Qualifica
                 </p>
                 <p className="eyebrow hidden sm:block">
-                  GeoConfronto · CheckTítulo
+                  Qualificação Registral Assistida
                 </p>
               </div>
             </Link>
