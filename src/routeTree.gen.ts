@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as AuthRouteImport } from './routes/auth'
+import { Route as ChecktituloRouteImport } from './routes/checktitulo'
 import { Route as GeoconfrontoRouteImport } from './routes/geoconfronto'
 import { Route as McpRouteImport } from './routes/mcp'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
@@ -40,6 +41,11 @@ const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
 const AuthRoute = AuthRouteImport.update({
   id: '/auth',
   path: '/auth',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ChecktituloRoute = ChecktituloRouteImport.update({
+  id: '/checktitulo',
+  path: '/checktitulo',
   getParentRoute: () => rootRouteImport,
 } as any)
 const GeoconfrontoRoute = GeoconfrontoRouteImport.update({
@@ -127,6 +133,7 @@ const AuthenticatedQualificacaoIdRoute =
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/checktitulo': typeof ChecktituloRoute
   '/geoconfronto': typeof GeoconfrontoRoute
   '/mcp': typeof McpRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
@@ -146,6 +153,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/checktitulo': typeof ChecktituloRoute
   '/geoconfronto': typeof GeoconfrontoRoute
   '/mcp': typeof McpRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
@@ -167,6 +175,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
+  '/checktitulo': typeof ChecktituloRoute
   '/geoconfronto': typeof GeoconfrontoRoute
   '/mcp': typeof McpRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
@@ -188,6 +197,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/auth'
+    | '/checktitulo'
     | '/geoconfronto'
     | '/mcp'
     | '/sitemap.xml'
@@ -207,6 +217,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/auth'
+    | '/checktitulo'
     | '/geoconfronto'
     | '/mcp'
     | '/sitemap.xml'
@@ -227,6 +238,7 @@ export interface FileRouteTypes {
     | '/'
     | '/_authenticated'
     | '/auth'
+    | '/checktitulo'
     | '/geoconfronto'
     | '/mcp'
     | '/sitemap.xml'
@@ -248,6 +260,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AuthRoute: typeof AuthRoute
+  ChecktituloRoute: typeof ChecktituloRoute
   GeoconfrontoRoute: typeof GeoconfrontoRoute
   McpRoute: typeof McpRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
@@ -278,6 +291,13 @@ declare module '@tanstack/react-router' {
       path: '/auth'
       fullPath: '/auth'
       preLoaderRoute: typeof AuthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/checktitulo': {
+      id: '/checktitulo'
+      path: '/checktitulo'
+      fullPath: '/checktitulo'
+      preLoaderRoute: typeof ChecktituloRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/geoconfronto': {
@@ -417,6 +437,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AuthRoute: AuthRoute,
+  ChecktituloRoute: ChecktituloRoute,
   GeoconfrontoRoute: GeoconfrontoRoute,
   McpRoute: McpRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
