@@ -18,6 +18,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { criarConjunto, excluirConjunto, listarConjuntos } from "@/lib/qualificacao.functions";
+import checktituloLogo from "@/assets/checktitulo-logo.png.asset.json";
 
 export const Route = createFileRoute("/_authenticated/qualificacao/")({
   head: () => ({
@@ -86,10 +87,19 @@ function QualificacaoLista() {
     <main className="mx-auto max-w-6xl px-6 py-10">
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <p className="eyebrow">Módulo cadastral</p>
-          <h1 className="font-display text-2xl text-foreground">
-            CheckTítulo — Conferência de dados de qualificação
-          </h1>
+          <div className="flex items-center gap-3">
+            <img
+              src={checktituloLogo.url}
+              alt="CheckTítulo"
+              className="h-10 w-auto object-contain"
+            />
+            <div>
+              <p className="eyebrow">Módulo cadastral</p>
+              <h1 className="font-display text-2xl text-foreground">
+                CheckTítulo — Conferência de dados de qualificação
+              </h1>
+            </div>
+          </div>
           <p className="mt-2 max-w-3xl text-sm text-muted-foreground">
             Confronta partes (nome, CPF/CNPJ, RG, endereço, estado civil, regime de bens e data do
             casamento), cadastros do imóvel (cadastro municipal, CCIR, CIB, CAR, ITR/NIRF) e a cadeia
