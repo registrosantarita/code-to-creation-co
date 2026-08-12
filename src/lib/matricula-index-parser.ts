@@ -245,12 +245,70 @@ export function extrairIndiceMatricula(textoBruto: string): MatriculaIndexada {
     municipio: municipio ? municipio.toUpperCase() : null,
     uf,
     area_m2: areaM2,
+    ultima_ficha: extrairUltimaFicha(compacto),
+    certificacao: extrairCertificacao(compacto),
+    registro_anterior: extrairRegistroAnterior(compacto),
+    encerrada: ENCERRAMENTO.test(compacto),
+    matriculas_abertas: extrairMatriculasAbertas(compacto),
     cadastros,
     proprietarios: extrairProprietarios(compacto),
     atos,
     onus,
   };
 }
+
+/** Formata número de matrícula com separador de milhar (10345 -> 10.345). */
+export function formatarNumeroMatricula(valor: string): string {
+  const d = digitos(valor);
+  if (!d) return valor.trim();
+  return String(Number(d)).replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+}
+
+const ENCERRAMENTO = /\bencerrad[ao]\b/i;
+
+function extrairUltimaFicha(texto: string): string | null {
+  return capturar(texto, [
+    /(?:[úu]ltima\s+)?ficha\s*(?:n[.º°]*)?\s*[:\-]?\s*(\d{1,4}\s*[Vv]?)\b/i,
+  ])?.replace(/\s+/g, "").toUpperCase() ?? null;
+}
+
+function extrairCertificacao(texto: string): string | null {
+  return capturar(texto, [
+    /certifica[çc][ãa]o\s*(?:do\s*)?(?:INCRA|SIGEF)?\s*(?:sob\s*(?:o\s*)?)?(?:n[.º°]*)?\s*[:\-]?\s*([\w.\-/]{6,60})/i,
+    /c[óo]digo\s+(?:da\s+)?certifica[çc][ãa]o\s*[:\-]?\s*([\w.\-/]{6,60})/i,
+  ]);
+}
+
+/** Monta o ato de origem no padrão R.05/M.5.456, AV.08/M.1.234 ou TR.7.908/L3.-Q. */
+function extrairRegistroAnterior(texto: string): string | null {
+  const janela =
+    texto.match(/registro\s+anterior[^]{0,200}/i)?.[0] ??
+    texto.match(/(?:oriund[ao]|proveniente|desmembrad[ao])\s+d[ae][^]{0,200}/i)?.[0] ??
+    "";
+  if (!janela) return null;
+
+  const ato = janela.match(/\b(R|AV|TR)\b[.\-\s]*\s*(\d{1,6})/i);
+  const origem =
+    janela.match(/\b(?:matr[íi]cula|M)\b[.\s]*(?:n[.º°]*)?\s*([\d.]{1,12})/i) ??
+    janela.match(/\btranscri[çc][ãa]o\b[.\s]*(?:n[.º°]*)?\s*([\d.]{1,12})/i);
+  if (!ato && !origem) return null;
+
+  const tipo = (ato?.[1] ?? "R").toUpperCase();
+  const numeroAto = ato?.[2] ? formatarNumeroMatricula(ato[2]) : "";
+  const alvo = origem?.[1] ? `M.${formatarNumeroMatricula(origem[1])}` : "";
+  const esquerda = numeroAto ? `${tipo}.${ato?.[2]?.length === 1 ? `0${numeroAto}` : numeroAto}` : tipo;
+  return alvo ? `${esquerda}/${alvo}` : esquerda;
+}
+
+function extrairMatriculasAbertas(texto: string): string[] {
+  if (!ENCERRAMENTO.test(texto)) return [];
+  const janela = texto.match(/encerrad[ao][^]{0,320}/i)?.[0] ?? "";
+  const numeros = [...janela.matchAll(/\bn?[.º°]*\s*([\d]{1,3}(?:\.\d{3})+|\d{3,8})\b/g)].map((m) =>
+    formatarNumeroMatricula(m[1] ?? ""),
+  );
+  return [...new Set(numeros)];
+}
+
 
 /** Campos exibidos na revisão e exportados na ordem do layout padrão. */
 export const CAMPOS_INDICE: { chave: keyof MatriculaIndexada; rotulo: string }[] = [
