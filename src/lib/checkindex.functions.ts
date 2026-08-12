@@ -180,7 +180,7 @@ export const atualizarRegistro = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const campos = Object.fromEntries(
       Object.entries(data.campos).filter(([, v]) => v !== undefined),
-    ) as Record<string, string | number | null>;
+    ) as unknown as Database["public"]["Tables"]["index_records"]["Update"];
     const { error } = await context.supabase
       .from("index_records")
       .update(campos)
