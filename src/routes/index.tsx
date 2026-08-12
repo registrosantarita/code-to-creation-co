@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { NavArrows } from "@/components/NavArrows";
-import logoAsset from "@/assets/geoconfronto-logo.png.asset.json";
+import logoAsset from "@/assets/equalifica-logo.png.asset.json";
 
 
 export const Route = createFileRoute("/")({
