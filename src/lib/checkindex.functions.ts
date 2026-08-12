@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import type { Database } from "@/integrations/supabase/types";
 import { extrairIndiceMatricula } from "./matricula-index-parser";
 
 export const listarLotes = createServerFn({ method: "POST" })
