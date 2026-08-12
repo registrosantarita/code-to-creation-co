@@ -8,6 +8,8 @@ export type IndexProprietario = {
   nome: string | null;
   cpf_cnpj: string | null;
   fracao: string | null;
+  /** ATIVO = proprietário atual; INATIVO = titular anterior (transmitente). */
+  situacao?: "ATIVO" | "INATIVO";
 };
 
 export type IndexAto = {
