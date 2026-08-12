@@ -97,7 +97,7 @@ export const adicionarDocumento = createServerFn({ method: "POST" })
         file_extension: (data.extension ?? "").replace(".", "").toLowerCase() || null,
         source_type: data.base64 ? "upload" : "pasted_text",
         raw_text: texto.slice(0, 400000),
-        extracted: dados as unknown as Record<string, unknown>,
+        extracted: JSON.parse(JSON.stringify(dados)),
         extraction_source: "deterministico",
         created_by: context.userId,
       })
@@ -157,7 +157,7 @@ export const complementarComIA = createServerFn({ method: "POST" })
     const { error: upError } = await context.supabase
       .from("qualification_docs")
       .update({
-        extracted: mesclado as unknown as Record<string, unknown>,
+        extracted: JSON.parse(JSON.stringify(mesclado)),
         extraction_source: "deterministico+ia",
       })
       .eq("id", doc.id);
