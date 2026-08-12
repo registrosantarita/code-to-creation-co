@@ -31,7 +31,7 @@ export type DocQualificacao = { rotulo: string; dados: Qualificacao };
 
 /** Comparação numérica/textual tolerante a máscaras e acentos. */
 function equivalente(campo: string, a: string, b: string): boolean {
-  const numericos = ["CPF", "CNPJ", "CCIR", "CIB", "ITR / NIRF", "Matrícula", "Transcrição", "RG"];
+  const numericos = ["CPF", "CNPJ", "CCIR", "CIB", "ITR / CIB", "Matrícula", "Transcrição", "RG"];
   if (numericos.includes(campo)) return digitos(a) === digitos(b) && digitos(a) !== "";
   return normalizarTexto(a) === normalizarTexto(b);
 }
