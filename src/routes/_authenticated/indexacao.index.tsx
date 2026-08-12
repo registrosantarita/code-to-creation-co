@@ -18,7 +18,8 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { criarLote, excluirLote, listarLotes } from "@/lib/checkindex.functions";
-import checkindexLogo from "@/assets/checkindex-logo.png";
+import checkindexLogoAsset from "@/assets/checkindex-logo.png.asset.json";
+const checkindexLogo = checkindexLogoAsset.url;
 
 export const Route = createFileRoute("/_authenticated/indexacao/")({
   head: () => ({
