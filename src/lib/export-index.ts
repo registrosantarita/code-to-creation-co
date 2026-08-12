@@ -167,11 +167,15 @@ export function linhaDoRegistro(r: RegistroIndexado): (string | number)[] {
     texto(cad['inscricao_estadual']),
     props.map((p) => texto(p.nome)).filter(Boolean).join(" | "),
     props.map((p) => texto(p.cpf_cnpj)).filter(Boolean).join(" | "),
+    props.map(situacaoProp).join(" | "),
+    props.filter((p) => situacaoProp(p) === "ATIVO").map((p) => texto(p.nome)).filter(Boolean).join(" | "),
+    props.filter((p) => situacaoProp(p) === "INATIVO").map((p) => texto(p.nome)).filter(Boolean).join(" | "),
     atos.length,
     onus.map(rotuloOnus).join(" | "),
     onusCancelados
       .map((o) => `${rotuloOnus(o)}${o.cancelado_por ? ` cancelado por ${o.cancelado_por}` : " cancelado"}`)
       .join(" | "),
+    [...onus.map(() => "ATIVO"), ...onusCancelados.map(() => "INATIVO")].join(" | "),
     texto(r.ultima_ficha).toUpperCase(),
     texto(r.certificacao),
     texto(r.registro_anterior),
