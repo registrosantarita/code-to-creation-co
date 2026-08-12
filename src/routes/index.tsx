@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import logoAsset from "@/assets/equalifica-logo.png.asset.json";
 import geoLogo from "@/assets/geoconfronto-logo.png.asset.json";
 import checkLogo from "@/assets/checktitulo-logo.png.asset.json";
+import checkindexLogo from "@/assets/checkindex-logo.png";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -64,7 +65,7 @@ function Index() {
 
       <main className="mx-auto max-w-5xl px-6 py-16">
         <p className="eyebrow text-center">Módulos</p>
-        <div className="mt-8 grid gap-6 md:grid-cols-2">
+        <div className="mt-8 grid gap-6 md:grid-cols-3">
           <Link
             to="/geoconfronto"
             className="group flex flex-col items-center rounded-lg border border-border bg-card p-10 text-center transition hover:border-accent"
@@ -98,7 +99,28 @@ function Index() {
             </p>
             <span className="mt-6 text-xs uppercase tracking-wide text-accent">Acessar módulo</span>
           </Link>
+
+          <Link
+            to="/checkindex"
+            className="group flex flex-col items-center rounded-lg border border-border bg-card p-10 text-center transition hover:border-accent"
+          >
+            <img
+              src={checkindexLogo}
+              alt="CheckIndex"
+              width={1024}
+              height={1024}
+              loading="lazy"
+              className="h-32 w-auto object-contain md:h-40"
+            />
+
+            <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
+              Matrículas digitalizadas: extração de dados estruturados e exportação para o sistema
+              interno do Cartório.
+            </p>
+            <span className="mt-6 text-xs uppercase tracking-wide text-accent">Acessar módulo</span>
+          </Link>
         </div>
+
       </main>
 
       <footer className="mx-auto max-w-5xl px-6 pb-12">

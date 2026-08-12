@@ -83,6 +83,13 @@ function AuthenticatedLayout() {
               CheckTítulo
             </Link>
             <Link
+              to="/indexacao"
+              className="text-xs text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
+            >
+              CheckIndex
+            </Link>
+
+            <Link
               to="/normas"
               className="text-xs text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
             >
