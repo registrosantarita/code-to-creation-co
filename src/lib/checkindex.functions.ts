@@ -60,7 +60,7 @@ export const obterLote = createServerFn({ method: "POST" })
       context.supabase
         .from("index_records")
         .select(
-          "id, label, file_name, file_extension, source_type, matricula_numero, livro, folha, cartorio, data_abertura, natureza, descricao, endereco, municipio, uf, area_m2, cadastros, proprietarios, atos, onus, extraction_source, review_status, created_at",
+          "id, label, file_name, file_extension, source_type, matricula_numero, livro, folha, cartorio, data_abertura, natureza, descricao, endereco, municipio, uf, area_m2, ultima_ficha, certificacao, registro_anterior, encerrada, matriculas_abertas, cadastros, proprietarios, atos, onus, extraction_source, review_status, created_at",
         )
         .eq("batch_id", data.id)
         .order("created_at", { ascending: true }),
@@ -138,6 +138,11 @@ export const indexarMatricula = createServerFn({ method: "POST" })
         municipio: dados.municipio,
         uf: dados.uf,
         area_m2: dados.area_m2,
+        ultima_ficha: dados.ultima_ficha,
+        certificacao: dados.certificacao,
+        registro_anterior: dados.registro_anterior,
+        encerrada: dados.encerrada,
+        matriculas_abertas: dados.matriculas_abertas,
         cadastros: JSON.parse(JSON.stringify(dados.cadastros)),
         proprietarios: JSON.parse(JSON.stringify(dados.proprietarios)),
         atos: JSON.parse(JSON.stringify(dados.atos)),
@@ -171,6 +176,11 @@ export const atualizarRegistro = createServerFn({ method: "POST" })
             municipio: z.string().max(80).nullable().optional(),
             uf: z.string().max(2).nullable().optional(),
             area_m2: z.number().nullable().optional(),
+            ultima_ficha: z.string().max(20).nullable().optional(),
+            certificacao: z.string().max(80).nullable().optional(),
+            registro_anterior: z.string().max(120).nullable().optional(),
+            encerrada: z.boolean().optional(),
+            matriculas_abertas: z.array(z.string().max(20)).max(200).optional(),
             descricao: z.string().max(4000).optional(),
             review_status: z.enum(["pendente", "revisado"]).optional(),
           })

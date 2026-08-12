@@ -23,6 +23,11 @@ export type RegistroIndexado = {
   proprietarios: IndexProprietario[] | unknown;
   atos: IndexAto[] | unknown;
   onus: IndexAto[] | unknown;
+  ultima_ficha: string | null;
+  certificacao: string | null;
+  registro_anterior: string | null;
+  encerrada: boolean | null;
+  matriculas_abertas: string[] | null;
   review_status: string;
 };
 
@@ -46,10 +51,21 @@ export const COLUNAS_EXPORT = [
   "DOCUMENTOS_PROPRIETARIOS",
   "QTD_ATOS",
   "ONUS",
+  "ULTIMAFICHA",
+  "CERTIFICAÇÃO",
+  "REGISTROANTERIOR",
+  "ENCERRADA",
   "SITUACAO",
 ] as const;
 
 const texto = (v: unknown): string => (v === null || v === undefined ? "" : String(v));
+
+/** ENCERRADA:10.345;10.346 — matrículas abertas a partir da encerrada. */
+function encerramento(r: RegistroIndexado): string {
+  if (!r.encerrada) return "";
+  const abertas = (r.matriculas_abertas ?? []).map((m) => texto(m)).filter(Boolean);
+  return abertas.length ? `ENCERRADA:${abertas.join(";")}` : "ENCERRADA";
+}
 
 const lista = <T,>(v: unknown): T[] => (Array.isArray(v) ? (v as T[]) : []);
 
@@ -78,6 +94,10 @@ export function linhaDoRegistro(r: RegistroIndexado): (string | number)[] {
     props.map((p) => texto(p.cpf_cnpj)).filter(Boolean).join(" | "),
     atos.length,
     onus.map((o) => `${texto(o.tipo)}-${texto(o.numero)}`).join(" | "),
+    texto(r.ultima_ficha).toUpperCase(),
+    texto(r.certificacao),
+    texto(r.registro_anterior),
+    encerramento(r),
     texto(r.review_status).toUpperCase(),
   ];
 }
