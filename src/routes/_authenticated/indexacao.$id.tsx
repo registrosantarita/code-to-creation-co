@@ -292,6 +292,16 @@ function LoteDetalhe() {
                     ["CIB", cad['cib']],
                     ["CCIR", cad['ccir']],
                     ["CAR", cad['car']],
+                    ["Adquirente", r.adquirente],
+                    ["Cônjuge do adquirente", r.conjuge_adq],
+                    ["Transmitente", r.transmitente],
+                    ["Cônjuge do transmitente", r.conjuge_transm],
+                    ["Usufrutuário", r.usufrutuario],
+                    ["Cônjuge do usufrutuário", r.conjuge_usu],
+                    ["Prenotação", r.prenotacao],
+                    ["Ato", r.ato],
+                    ["Data do ato", r.data_ato],
+                    ["Selo", r.selo],
                   ].map(([rotulo, valor]) => (
                     <div key={String(rotulo)}>
                       <dt className="eyebrow">{rotulo}</dt>

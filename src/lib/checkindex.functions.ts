@@ -60,7 +60,7 @@ export const obterLote = createServerFn({ method: "POST" })
       context.supabase
         .from("index_records")
         .select(
-          "id, label, file_name, file_extension, source_type, matricula_numero, livro, folha, cartorio, data_abertura, natureza, descricao, endereco, municipio, uf, area_m2, ultima_ficha, certificacao, registro_anterior, encerrada, matriculas_abertas, cadastros, proprietarios, atos, onus, extraction_source, review_status, created_at",
+          "id, label, file_name, file_extension, source_type, matricula_numero, livro, folha, cartorio, data_abertura, natureza, descricao, endereco, municipio, uf, area_m2, ultima_ficha, certificacao, registro_anterior, encerrada, matriculas_abertas, adquirente, conjuge_adq, transmitente, conjuge_transm, usufrutuario, conjuge_usu, prenotacao, ato, data_ato, selo, cadastros, proprietarios, atos, onus, extraction_source, review_status, created_at",
         )
         .eq("batch_id", data.id)
         .order("created_at", { ascending: true }),
@@ -143,6 +143,16 @@ export const indexarMatricula = createServerFn({ method: "POST" })
         registro_anterior: dados.registro_anterior,
         encerrada: dados.encerrada,
         matriculas_abertas: dados.matriculas_abertas,
+        adquirente: dados.adquirente,
+        conjuge_adq: dados.conjuge_adq,
+        transmitente: dados.transmitente,
+        conjuge_transm: dados.conjuge_transm,
+        usufrutuario: dados.usufrutuario,
+        conjuge_usu: dados.conjuge_usu,
+        prenotacao: dados.prenotacao,
+        ato: dados.ato,
+        data_ato: dados.data_ato,
+        selo: dados.selo,
         cadastros: JSON.parse(JSON.stringify(dados.cadastros)),
         proprietarios: JSON.parse(JSON.stringify(dados.proprietarios)),
         atos: JSON.parse(JSON.stringify(dados.atos)),
@@ -181,6 +191,16 @@ export const atualizarRegistro = createServerFn({ method: "POST" })
             registro_anterior: z.string().max(120).nullable().optional(),
             encerrada: z.boolean().optional(),
             matriculas_abertas: z.array(z.string().max(20)).max(200).optional(),
+            adquirente: z.string().max(160).nullable().optional(),
+            conjuge_adq: z.string().max(160).nullable().optional(),
+            transmitente: z.string().max(160).nullable().optional(),
+            conjuge_transm: z.string().max(160).nullable().optional(),
+            usufrutuario: z.string().max(160).nullable().optional(),
+            conjuge_usu: z.string().max(160).nullable().optional(),
+            prenotacao: z.string().max(40).nullable().optional(),
+            ato: z.string().max(40).nullable().optional(),
+            data_ato: z.string().max(10).nullable().optional(),
+            selo: z.string().max(60).nullable().optional(),
             descricao: z.string().max(4000).optional(),
             review_status: z.enum(["pendente", "revisado"]).optional(),
           })
