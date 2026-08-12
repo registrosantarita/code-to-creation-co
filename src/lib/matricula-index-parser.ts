@@ -46,6 +46,18 @@ export type MatriculaIndexada = {
   encerrada: boolean;
   /** Matrículas abertas a partir desta, quando encerrada. */
   matriculas_abertas: string[];
+  /** Partes do último ato registrado. */
+  adquirente: string | null;
+  conjuge_adq: string | null;
+  transmitente: string | null;
+  conjuge_transm: string | null;
+  usufrutuario: string | null;
+  conjuge_usu: string | null;
+  /** Dados do protocolo/ato. */
+  prenotacao: string | null;
+  ato: string | null;
+  data_ato: string | null;
+  selo: string | null;
   cadastros: IndexCadastros;
   proprietarios: IndexProprietario[];
   atos: IndexAto[];
