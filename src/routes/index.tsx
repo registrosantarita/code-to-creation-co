@@ -88,13 +88,17 @@ function Index() {
             <NavArrows showHome={false} />
             <img
               src={logoAsset.url}
-              alt="GeoConfronto"
+              alt="e-Qualifica"
               className="h-16 w-16 object-contain"
             />
 
             <div className="leading-tight">
               <p className="font-display text-2xl text-foreground md:text-3xl">
-                GeoConfronto
+                e-Qualifica
+              </p>
+              <p className="mt-0.5 text-xs text-muted-foreground">
+                GeoConfronto (memorial e planta) · CheckTítulo (títulos e
+                matrículas)
               </p>
               <p className="mt-0.5 text-xs italic text-muted-foreground">
                 desenvolvido por Abrahão Jesus de Souza
