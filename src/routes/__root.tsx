@@ -78,11 +78,11 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "GeoConfronto — Qualificação técnica assistida" },
+      { title: "e-Qualifica — Qualificação registral assistida" },
       {
         name: "description",
         content:
-          "GeoConfronto — plataforma de conferência registral, geométrica e normativa: extração, normalização e comparação auditável de memoriais descritivos.",
+          "e-Qualifica — plataforma de conferência registral, geométrica e normativa: extração, normalização e comparação auditável de memoriais descritivos.",
       },
       { property: "og:type", content: "website" },
       {
@@ -94,7 +94,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { name: "mobile-web-app-capable", content: "yes" },
       { name: "apple-mobile-web-app-capable", content: "yes" },
       { name: "apple-mobile-web-app-status-bar-style", content: "default" },
-      { name: "apple-mobile-web-app-title", content: "GeoConfronto" },
+      { name: "apple-mobile-web-app-title", content: "e-Qualifica" },
     ],
     links: [
       { rel: "stylesheet", href: appCss },
@@ -117,7 +117,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
             {
               "@type": "Organization",
               "@id": "https://code-to-creation-co.lovable.app/#organization",
-              name: "GeoConfronto",
+              name: "e-Qualifica",
               url: "https://code-to-creation-co.lovable.app/",
               logo: "https://code-to-creation-co.lovable.app/apple-touch-icon.png",
               description:
@@ -126,12 +126,12 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
             {
               "@type": "WebSite",
               "@id": "https://code-to-creation-co.lovable.app/#website",
-              name: "GeoConfronto",
+              name: "e-Qualifica",
               url: "https://code-to-creation-co.lovable.app/",
               inLanguage: "pt-BR",
               publisher: { "@id": "https://code-to-creation-co.lovable.app/#organization" },
               description:
-                "GeoConfronto — extração, normalização e comparação auditável de memoriais descritivos, plantas e escrituras.",
+                "e-Qualifica — extração, normalização e comparação auditável de memoriais descritivos, plantas e escrituras.",
             },
           ],
         }),

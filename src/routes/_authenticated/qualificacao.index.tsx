@@ -22,7 +22,7 @@ import { criarConjunto, excluirConjunto, listarConjuntos } from "@/lib/qualifica
 export const Route = createFileRoute("/_authenticated/qualificacao/")({
   head: () => ({
     meta: [
-      { title: "Conferência Automática de Dados de Qualificação — GeoConfronto" },
+      { title: "CheckTítulo — Conferência de Dados de Qualificação — e-Qualifica" },
       {
         name: "description",
         content:
@@ -30,7 +30,7 @@ export const Route = createFileRoute("/_authenticated/qualificacao/")({
       },
       {
         property: "og:title",
-        content: "Conferência Automática de Dados de Qualificação — GeoConfronto",
+        content: "CheckTítulo — Conferência de Dados de Qualificação — e-Qualifica",
       },
       {
         property: "og:description",

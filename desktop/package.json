@@ -1,13 +1,13 @@
 {
   "name": "geoconfronto",
-  "productName": "GeoConfronto",
+  "productName": "e-Qualifica",
   "version": "1.0.0",
-  "description": "GeoConfronto — plataforma de conferência registral, geométrica e normativa",
+  "description": "e-Qualifica — plataforma de conferência registral, geométrica e normativa",
   "main": "main.cjs",
-  "author": "GeoConfronto",
+  "author": "e-Qualifica",
   "license": "UNLICENSED",
   "scripts": {
-    "package:win": "electron-packager . GeoConfronto --platform=win32 --arch=x64 --icon=build/icon.ico --out=release --overwrite"
+    "package:win": "electron-packager . e-Qualifica --platform=win32 --arch=x64 --icon=build/icon.ico --out=release --overwrite"
   },
   "dependencies": {
     "@electron/packager": "^20.1.1",

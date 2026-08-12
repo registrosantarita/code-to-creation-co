@@ -9,7 +9,7 @@ import logoAsset from "@/assets/geoconfronto-logo.png.asset.json";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "GeoConfronto — Qualificação técnica assistida" },
+      { title: "e-Qualifica — Qualificação registral assistida" },
       {
         name: "description",
         content:
@@ -17,7 +17,7 @@ export const Route = createFileRoute("/")({
       },
       {
         property: "og:title",
-        content: "GeoConfronto — Qualificação técnica assistida",
+        content: "e-Qualifica — Qualificação registral assistida",
       },
       {
         property: "og:description",

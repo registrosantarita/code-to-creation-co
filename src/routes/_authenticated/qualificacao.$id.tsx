@@ -22,13 +22,13 @@ import { docColor, docLetra, TONE_CLASS } from "@/lib/labels";
 export const Route = createFileRoute("/_authenticated/qualificacao/$id")({
   head: () => ({
     meta: [
-      { title: "Conferência de qualificação — GeoConfronto" },
+      { title: "CheckTítulo — Conferência de qualificação — e-Qualifica" },
       {
         name: "description",
         content:
           "Resultado do confronto de dados de qualificação das partes, cadastros do imóvel e cadeia registral.",
       },
-      { property: "og:title", content: "Conferência de qualificação — GeoConfronto" },
+      { property: "og:title", content: "CheckTítulo — Conferência de qualificação — e-Qualifica" },
       {
         property: "og:description",
         content: "Divergências cadastrais e pessoais entre os documentos conferidos.",
