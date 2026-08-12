@@ -45,7 +45,7 @@ function Index() {
             alt="e-Qualifica"
             className="h-40 w-40 object-contain md:h-56 md:w-56"
           />
-          <h1 className="mt-8 font-display text-4xl md:text-6xl">e-Qualifica</h1>
+          
           <div className="rule-gold mt-6 w-40" />
           <p className="mt-6 text-base tracking-wide text-ink-foreground/80 md:text-lg">
             Qualificação Registral Assistida
