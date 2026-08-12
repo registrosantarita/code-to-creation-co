@@ -64,7 +64,7 @@ export const CAMPOS_IMOVEL: { chave: keyof Imovel; rotulo: string; critico?: boo
   { chave: "ccir", rotulo: "CCIR", critico: true },
   { chave: "cib", rotulo: "CIB" },
   { chave: "car", rotulo: "CAR" },
-  { chave: "itr_nirf", rotulo: "ITR / CIB" },
+  { chave: "itr_nirf", rotulo: "ITR" },
   { chave: "inscricao_estadual", rotulo: "Inscrição estadual" },
 ];
 
@@ -214,12 +214,11 @@ function extrairImovel(t: string): Imovel {
       primeiro(t, /cadastro\s+(?:imobili[áa]rio\s+)?(?:municipal\s+)?(?:n[º°.]?\s*)?([\w.\-/]{4,})/i) ??
       primeiro(t, /(?:IPTU|inscri[çc][ãa]o\s+municipal)\s*(?:n[º°.]?\s*)?[:\-]?\s*([\w.\-/]{4,})/i),
     ccir: primeiro(t, /CCIR\s*(?:n[º°.]?\s*)?[:\-]?\s*([\d.\-\s]{10,})/i),
-    cib: primeiro(t, /\bCIB\s*(?:n[º°.]?\s*)?[:\-]?\s*([\w.\-]{4,})/i),
+    cib:
+      primeiro(t, /\bCIB\s*(?:n[º°.]?\s*)?[:\-]?\s*([\w.\-]{4,})/i) ??
+      primeiro(t, /\bNIRF\s*(?:n[º°.]?\s*)?[:\-]?\s*([\d.\-]{6,})/i),
     car: primeiro(t, /\bCAR\s*(?:n[º°.]?\s*)?[:\-]?\s*([A-Z]{2}-\d{7}-[0-9A-F.]{8,})/i),
-    itr_nirf:
-      primeiro(t, /CIB\s*(?:n[º°.]?\s*)?[:\-]?\s*([\d.\-]{6,})/i) ??
-      primeiro(t, /ITR\s*(?:n[º°.]?\s*)?[:\-]?\s*([\d.\-]{6,})/i) ??
-      primeiro(t, /NIRF\s*(?:n[º°.]?\s*)?[:\-]?\s*([\d.\-]{6,})/i),
+    itr_nirf: primeiro(t, /\bITR\s*(?:n[º°.]?\s*)?[:\-]?\s*([\d.\-]{6,})/i),
     inscricao_estadual: primeiro(t, /inscri[çc][ãa]o\s+estadual\s*(?:n[º°.]?\s*)?[:\-]?\s*([\w.\-/]{4,})/i),
   };
 }
