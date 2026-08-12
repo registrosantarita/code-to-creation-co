@@ -60,7 +60,7 @@ export const obterLote = createServerFn({ method: "POST" })
       context.supabase
         .from("index_records")
         .select(
-          "id, label, file_name, file_extension, source_type, matricula_numero, livro, folha, cartorio, data_abertura, natureza, descricao, endereco, municipio, uf, area_m2, cep, tipo_logradouro, logradouro, numero_logradouro, tipo_rural, denominacao_rural, lote, quadra, cim, ultima_ficha, certificacao, registro_anterior, encerrada, matriculas_abertas, adquirente, conjuge_adq, transmitente, conjuge_transm, usufrutuario, conjuge_usu, prenotacao, ato, data_ato, selo, cadastros, proprietarios, atos, onus, extraction_source, review_status, created_at",
+          "id, label, file_name, file_extension, source_type, matricula_numero, livro, folha, cartorio, data_abertura, natureza, descricao, endereco, municipio, uf, area_m2, area_hectare, perimetro_m, area_construida_m2, cep, tipo_logradouro, logradouro, numero_logradouro, tipo_rural, denominacao_rural, lote, quadra, cim, ultima_ficha, certificacao, registro_anterior, encerrada, matriculas_abertas, adquirente, conjuge_adq, transmitente, conjuge_transm, usufrutuario, conjuge_usu, prenotacao, ato, data_ato, selo, cadastros, proprietarios, atos, onus, extraction_source, review_status, created_at",
         )
         .eq("batch_id", data.id)
         .order("created_at", { ascending: true }),
@@ -138,6 +138,9 @@ export const indexarMatricula = createServerFn({ method: "POST" })
         municipio: dados.municipio,
         uf: dados.uf,
         area_m2: dados.area_m2,
+        area_hectare: dados.area_hectare,
+        perimetro_m: dados.perimetro_m,
+        area_construida_m2: dados.area_construida_m2,
         cep: dados.cep,
         tipo_logradouro: dados.tipo_logradouro,
         logradouro: dados.logradouro,
@@ -195,6 +198,9 @@ export const atualizarRegistro = createServerFn({ method: "POST" })
             municipio: z.string().max(80).nullable().optional(),
             uf: z.string().max(2).nullable().optional(),
             area_m2: z.number().nullable().optional(),
+            area_hectare: z.number().nullable().optional(),
+            perimetro_m: z.number().nullable().optional(),
+            area_construida_m2: z.number().nullable().optional(),
             cep: z.string().max(12).nullable().optional(),
             tipo_logradouro: z.string().max(40).nullable().optional(),
             logradouro: z.string().max(200).nullable().optional(),

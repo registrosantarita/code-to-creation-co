@@ -37,6 +37,12 @@ export type MatriculaIndexada = {
   municipio: string | null;
   uf: string | null;
   area_m2: number | null;
+  /** Área em hectares (literal do documento, ou convertida de m²). */
+  area_hectare: number | null;
+  /** Perímetro em metros. */
+  perimetro_m: number | null;
+  /** Área construída/edificada em m². */
+  area_construida_m2: number | null;
   /** Endereço decomposto (urbanos) e identificação rural. */
   cep: string | null;
   tipo_logradouro: string | null;
@@ -270,6 +276,9 @@ export function extrairIndiceMatricula(textoBruto: string): MatriculaIndexada {
     municipio: municipio ? municipio.toUpperCase() : null,
     uf,
     area_m2: areaM2,
+    area_hectare: extrairHectares(compacto, areaM2),
+    perimetro_m: extrairPerimetro(compacto),
+    area_construida_m2: extrairAreaConstruida(compacto),
     ...extrairLocalizacao(compacto, endereco, cadastros),
     ultima_ficha: extrairUltimaFicha(compacto),
     certificacao: extrairCertificacao(compacto),
@@ -482,4 +491,39 @@ function extrairLocalizacao(
     quadra,
     cim: cim ? String(cim) : null,
   };
+}
+
+const numeroBr = (v: string | undefined | null): number | null => {
+  if (!v) return null;
+  const n = Number(v.replace(/\./g, "").replace(",", "."));
+  return Number.isFinite(n) ? n : null;
+};
+
+/** Área em hectares: literal do documento; senão convertida da área em m². */
+function extrairHectares(texto: string, areaM2: number | null): number | null {
+  const m = texto.match(
+    /[áa]rea[^.;\n]{0,40}?([\d.]+,\d+|[\d.]+)\s*(?:ha\b|hectares?)/i,
+  );
+  const lit = numeroBr(m?.[1]);
+  if (lit !== null) return lit;
+  return areaM2 !== null ? Number((areaM2 / 10000).toFixed(4)) : null;
+}
+
+/** Perímetro em metros (converte km quando necessário). */
+function extrairPerimetro(texto: string): number | null {
+  const m = texto.match(
+    /per[íi]metro[^.;\n]{0,30}?([\d.]+,\d+|[\d.]+)\s*(m\b|metros|km\b|quil[ôo]metros)?/i,
+  );
+  const n = numeroBr(m?.[1]);
+  if (n === null) return null;
+  const u = (m?.[2] ?? "m").toLowerCase();
+  return u.startsWith("km") || u.startsWith("quil") ? n * 1000 : n;
+}
+
+/** Área construída/edificada em m². */
+function extrairAreaConstruida(texto: string): number | null {
+  const m = texto.match(
+    /[áa]rea\s+(?:constru[íi]da|edificada|de\s+constru[çc][ãa]o)[^.;\n]{0,25}?([\d.]+,\d+|[\d.]+)\s*(m²|m2|metros quadrados)?/i,
+  );
+  return numeroBr(m?.[1]);
 }
