@@ -178,9 +178,12 @@ export const atualizarRegistro = createServerFn({ method: "POST" })
       .parse(input),
   )
   .handler(async ({ data, context }) => {
+    const campos = Object.fromEntries(
+      Object.entries(data.campos).filter(([, v]) => v !== undefined),
+    ) as Record<string, string | number | null>;
     const { error } = await context.supabase
       .from("index_records")
-      .update(data.campos)
+      .update(campos)
       .eq("id", data.id);
     if (error) throw new Error(error.message);
     return { ok: true as const };
