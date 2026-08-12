@@ -37,6 +37,17 @@ export type MatriculaIndexada = {
   municipio: string | null;
   uf: string | null;
   area_m2: number | null;
+  /** Endereço decomposto (urbanos) e identificação rural. */
+  cep: string | null;
+  tipo_logradouro: string | null;
+  logradouro: string | null;
+  numero_logradouro: string | null;
+  tipo_rural: string | null;
+  denominacao_rural: string | null;
+  lote: string | null;
+  quadra: string | null;
+  /** Cadastro imobiliário municipal. */
+  cim: string | null;
   /** Última ficha física da matrícula (alfanumérico: 6, 6V…). */
   ultima_ficha: string | null;
   /** Código de certificação do INCRA (rurais georreferenciados). */
@@ -259,6 +270,7 @@ export function extrairIndiceMatricula(textoBruto: string): MatriculaIndexada {
     municipio: municipio ? municipio.toUpperCase() : null,
     uf,
     area_m2: areaM2,
+    ...extrairLocalizacao(compacto, endereco, cadastros),
     ultima_ficha: extrairUltimaFicha(compacto),
     certificacao: extrairCertificacao(compacto),
     registro_anterior: extrairRegistroAnterior(compacto),
@@ -407,3 +419,67 @@ export const CAMPOS_INDICE: { chave: keyof MatriculaIndexada; rotulo: string }[]
   { chave: "registro_anterior", rotulo: "Registro anterior" },
   { chave: "descricao", rotulo: "Descrição" },
 ];
+
+const TIPOS_LOGRADOURO = [
+  "rua","avenida","alameda","travessa","praça","praca","rodovia","estrada","via","viela",
+  "largo","beco","passagem","quadra","conjunto","servidão","servidao","ladeira","marginal",
+];
+
+const TIPOS_RURAL = [
+  "fazenda","sítio","sitio","chácara","chacara","gleba","lote rural","sesmaria","estância",
+  "estancia","haras","granja","colônia","colonia","quinhão","quinhao","retiro","povoado",
+];
+
+/**
+ * Decompõe o endereço urbano (CEP, tipo/nome/número de logradouro, lote e quadra)
+ * e a identificação rural (tipo e denominação), além do CIM.
+ */
+function extrairLocalizacao(
+  compacto: string,
+  endereco: string,
+  cadastros: IndexCadastros,
+) {
+  const base = `${endereco} ${compacto}`;
+
+  const cep = capturar(base, [/\bCEP\s*[:\-]?\s*(\d{5}-?\d{3})\b/i, /\b(\d{5}-\d{3})\b/]);
+
+  const alt = TIPOS_LOGRADOURO.map((t) => t.replace(/ /g, "\\s+")).join("|");
+  const mLog = base.match(
+    new RegExp(`\\b(${alt})\\b\\s+((?:[A-Za-zÀ-ÿ0-9'’.\\-]+\\s*){1,8}?)(?=,|\\s+n[.º°]|\\s+nº|\\s+número|$)`, "i"),
+  );
+  const tipoLogradouro = mLog?.[1] ? limpar(mLog[1])!.toUpperCase() : null;
+  const logradouro = mLog?.[2] ? limpar(mLog[2])?.toUpperCase() ?? null : null;
+
+  const numeroLogradouro =
+    capturar(base, [
+      /\b(?:n[.º°]{1,2}|n[uú]mero|nº)\s*[:\-]?\s*(\d{1,6}\s*[A-Za-z]?)\b/i,
+      /,\s*(\d{1,6})\s*(?:,|-|$)/,
+    ])?.replace(/\s+/g, "").toUpperCase() ?? null;
+
+  const lote = capturar(base, [/\blote\s*(?:n[.º°]*)?\s*[:\-]?\s*([A-Z0-9\-/]{1,10})\b/i])?.toUpperCase() ?? null;
+  const quadra = capturar(base, [/\bquadra\s*(?:n[.º°]*)?\s*[:\-]?\s*([A-Z0-9\-/]{1,10})\b/i])?.toUpperCase() ?? null;
+
+  const altR = TIPOS_RURAL.map((t) => t.replace(/ /g, "\\s+")).join("|");
+  const mRural = base.match(
+    new RegExp(`\\b(${altR})\\b\\s*(?:denominad[oa]\\s*)?["'“]?((?:[A-Za-zÀ-ÿ0-9'’.\\-]+\\s*){1,6}?)(?=["'”,.;]|\\s+(?:situad|localizad|com\\s+[áa]rea|de\\s+propriedade)|$)`, "i"),
+  );
+  const tipoRural = mRural?.[1] ? limpar(mRural[1])!.toUpperCase() : null;
+  const denominacaoRural = mRural?.[2] ? limpar(mRural[2])?.toUpperCase() ?? null : null;
+
+  const cim =
+    capturar(base, [
+      /(?:CIM|cadastro\s+imobili[áa]rio\s+municipal)\s*(?:n[.º°]*)?\s*[:\-]?\s*([\w.\-/]{3,40})/i,
+    ]) ?? (cadastros as Record<string, unknown>)['cadastro_municipal'] as string | undefined ?? null;
+
+  return {
+    cep: cep ? cep.replace(/^(\d{5})-?(\d{3})$/, "$1-$2") : null,
+    tipo_logradouro: tipoLogradouro,
+    logradouro,
+    numero_logradouro: numeroLogradouro,
+    tipo_rural: tipoRural,
+    denominacao_rural: denominacaoRural,
+    lote,
+    quadra,
+    cim: cim ? String(cim) : null,
+  };
+}

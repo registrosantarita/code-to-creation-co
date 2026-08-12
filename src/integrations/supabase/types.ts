@@ -398,7 +398,9 @@ export type Database = {
           batch_id: string
           cadastros: Json
           cartorio: string | null
+          cep: string | null
           certificacao: string | null
+          cim: string | null
           conjuge_adq: string | null
           conjuge_transm: string | null
           conjuge_usu: string | null
@@ -406,6 +408,7 @@ export type Database = {
           created_by: string
           data_abertura: string | null
           data_ato: string | null
+          denominacao_rural: string | null
           descricao: string
           encerrada: boolean
           endereco: string
@@ -417,18 +420,24 @@ export type Database = {
           id: string
           label: string
           livro: string | null
+          logradouro: string | null
+          lote: string | null
           matricula_numero: string | null
           matriculas_abertas: string[]
           municipio: string | null
           natureza: string
+          numero_logradouro: string | null
           onus: Json
           prenotacao: string | null
           proprietarios: Json
+          quadra: string | null
           raw_text: string
           registro_anterior: string | null
           review_status: string
           selo: string | null
           source_type: string
+          tipo_logradouro: string | null
+          tipo_rural: string | null
           transmitente: string | null
           uf: string | null
           ultima_ficha: string | null
@@ -443,7 +452,9 @@ export type Database = {
           batch_id: string
           cadastros?: Json
           cartorio?: string | null
+          cep?: string | null
           certificacao?: string | null
+          cim?: string | null
           conjuge_adq?: string | null
           conjuge_transm?: string | null
           conjuge_usu?: string | null
@@ -451,6 +462,7 @@ export type Database = {
           created_by: string
           data_abertura?: string | null
           data_ato?: string | null
+          denominacao_rural?: string | null
           descricao?: string
           encerrada?: boolean
           endereco?: string
@@ -462,18 +474,24 @@ export type Database = {
           id?: string
           label?: string
           livro?: string | null
+          logradouro?: string | null
+          lote?: string | null
           matricula_numero?: string | null
           matriculas_abertas?: string[]
           municipio?: string | null
           natureza?: string
+          numero_logradouro?: string | null
           onus?: Json
           prenotacao?: string | null
           proprietarios?: Json
+          quadra?: string | null
           raw_text?: string
           registro_anterior?: string | null
           review_status?: string
           selo?: string | null
           source_type?: string
+          tipo_logradouro?: string | null
+          tipo_rural?: string | null
           transmitente?: string | null
           uf?: string | null
           ultima_ficha?: string | null
@@ -488,7 +506,9 @@ export type Database = {
           batch_id?: string
           cadastros?: Json
           cartorio?: string | null
+          cep?: string | null
           certificacao?: string | null
+          cim?: string | null
           conjuge_adq?: string | null
           conjuge_transm?: string | null
           conjuge_usu?: string | null
@@ -496,6 +516,7 @@ export type Database = {
           created_by?: string
           data_abertura?: string | null
           data_ato?: string | null
+          denominacao_rural?: string | null
           descricao?: string
           encerrada?: boolean
           endereco?: string
@@ -507,18 +528,24 @@ export type Database = {
           id?: string
           label?: string
           livro?: string | null
+          logradouro?: string | null
+          lote?: string | null
           matricula_numero?: string | null
           matriculas_abertas?: string[]
           municipio?: string | null
           natureza?: string
+          numero_logradouro?: string | null
           onus?: Json
           prenotacao?: string | null
           proprietarios?: Json
+          quadra?: string | null
           raw_text?: string
           registro_anterior?: string | null
           review_status?: string
           selo?: string | null
           source_type?: string
+          tipo_logradouro?: string | null
+          tipo_rural?: string | null
           transmitente?: string | null
           uf?: string | null
           ultima_ficha?: string | null

@@ -19,6 +19,15 @@ export type RegistroIndexado = {
   municipio: string | null;
   uf: string | null;
   area_m2: number | string | null;
+  cep: string | null;
+  tipo_logradouro: string | null;
+  logradouro: string | null;
+  numero_logradouro: string | null;
+  tipo_rural: string | null;
+  denominacao_rural: string | null;
+  lote: string | null;
+  quadra: string | null;
+  cim: string | null;
   cadastros: IndexCadastros | Record<string, unknown> | null;
   proprietarios: IndexProprietario[] | unknown;
   atos: IndexAto[] | unknown;
@@ -49,6 +58,15 @@ export const COLUNAS_EXPORT = [
   "DATA_ABERTURA",
   "NATUREZA",
   "ENDERECO",
+  "CEP",
+  "TIPO_LOGRADOURO",
+  "LOGRADOURO",
+  "NUMERO_LOGRADOURO",
+  "TIPO_RURAL",
+  "DENOMINACAO_RURAL",
+  "LOTE",
+  "QUADRA",
+  "CIM",
   "MUNICIPIO",
   "UF",
   "AREA_M2",
@@ -102,6 +120,15 @@ export function linhaDoRegistro(r: RegistroIndexado): (string | number)[] {
     texto(r.data_abertura),
     texto(r.natureza).toUpperCase(),
     texto(r.endereco),
+    texto(r.cep),
+    texto(r.tipo_logradouro),
+    texto(r.logradouro),
+    texto(r.numero_logradouro),
+    texto(r.tipo_rural),
+    texto(r.denominacao_rural),
+    texto(r.lote),
+    texto(r.quadra),
+    texto(r.cim),
     texto(r.municipio),
     texto(r.uf),
     r.area_m2 === null || r.area_m2 === undefined || r.area_m2 === "" ? "" : Number(r.area_m2),
