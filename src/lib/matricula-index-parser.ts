@@ -228,10 +228,10 @@ const ehCancelamento = (t: string): boolean => {
 
 /** Referências a atos anteriores citadas no corpo da averbação (R.04, AV.07…). */
 function referenciasInternas(descricao: string): string[] {
-  return [...descricao.matchAll(/\b(R|AV|Av|R\.|AV\.)\s*[-.\s]?\s*(\d{1,3})\b/g)]
+  return [...descricao.matchAll(/\b(R|AV|Av|R\.|AV\.)\s*[-.\s]?\s*(\d+)\b/g)]
     .map((m) => {
       const tipo = (m[1] ?? "").toUpperCase().startsWith("A") ? "AV" : "R";
-      return `${tipo}.${String(m[2] ?? "").padStart(2, "0")}`;
+      return `${tipo}.${String(m[2] ?? "")}`;
     })
     .slice(1); // o primeiro marcador é o próprio número do ato
 }
@@ -257,7 +257,7 @@ function aplicarVigencia(atos: IndexAto[]): { onus: IndexAto[]; onusCancelados: 
       cancelado_por: null,
     }));
 
-  const chave = (a: IndexAto) => `${a.tipo}.${String(a.numero).padStart(2, "0")}`;
+  const chave = (a: IndexAto) => `${a.tipo}.${String(a.numero)}`;
 
   for (const ato of atos) {
     if (!ehCancelamento(ato.descricao)) continue;
@@ -289,12 +289,12 @@ function aplicarVigencia(atos: IndexAto[]): { onus: IndexAto[]; onusCancelados: 
 /** Localiza os atos (R.01, AV.02, AV.03…) e classifica os que representam ônus. */
 function extrairAtos(texto: string): { atos: IndexAto[]; onus: IndexAto[]; onusCancelados: IndexAto[] } {
   const atos: IndexAto[] = [];
-  const marcador = /\b(R|AV|Av|R\.|AV\.)\s*[-.\s]?\s*(\d{1,3})\b/g;
+  const marcador = /\b(R|AV|Av|R\.|AV\.)\s*[-.\s]?\s*(\d+)\b/g;
   const posicoes: { idx: number; tipo: string; numero: string }[] = [];
   let m: RegExpExecArray | null;
   while ((m = marcador.exec(texto))) {
     const tipo = (m[1] ?? "").toUpperCase().startsWith("A") ? "AV" : "R";
-    posicoes.push({ idx: m.index, tipo, numero: String(m[2] ?? "").padStart(2, "0") });
+    posicoes.push({ idx: m.index, tipo, numero: String(m[2] ?? "") });
   }
   for (let i = 0; i < posicoes.length; i++) {
     const inicio = posicoes[i]!.idx;
