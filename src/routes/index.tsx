@@ -71,7 +71,7 @@ function Index() {
               alt="GeoConfronto"
               className="h-32 w-auto object-contain md:h-40"
             />
-            <h2 className="mt-6 font-display text-2xl text-foreground">GeoConfronto</h2>
+            
             <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
               Memoriais descritivos, plantas e divisas: extração, normalização e comparação
               geométrica auditável.
@@ -88,7 +88,7 @@ function Index() {
               alt="CheckTítulo"
               className="h-32 w-auto object-contain md:h-40"
             />
-            <h2 className="mt-6 font-display text-2xl text-foreground">CheckTítulo</h2>
+            
             <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
               Títulos e matrículas: conferência de partes, documentos, estado civil, cadastros do
               imóvel e cadeia registral.
