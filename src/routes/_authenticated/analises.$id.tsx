@@ -223,6 +223,20 @@ function AnaliseDetalhe() {
       if (file.size > 25 * 1024 * 1024)
         throw new Error("Arquivo acima de 25 MB.");
       const ext = file.name.split(".").pop()?.toLowerCase() ?? "";
+
+      /** DWG/DXF são convertidos no navegador em memorial tabular. */
+      let textoCad: string | null = null;
+      if (isCadExtension(ext)) {
+        const { lerArquivoCad } = await import("@/lib/cad-reader.client");
+        const conv = await lerArquivoCad(file);
+        if (!conv.text.trim())
+          throw new Error(
+            conv.aviso ?? "Não foi possível extrair geometria do arquivo CAD.",
+          );
+        if (conv.aviso) toast.warning(conv.aviso);
+        textoCad = conv.text.slice(0, 200000);
+      }
+
       const path = `${uid}/${id}/${crypto.randomUUID()}.${ext}`;
       const { error: upErr } = await supabase.storage
         .from("documentos")
@@ -239,6 +253,7 @@ function AnaliseDetalhe() {
           file_size_bytes: file.size,
           storage_path: path,
           document_category: categoria as never,
+          ...(textoCad ? { original_text: textoCad } : {}),
           created_by: uid,
         })
         .select("id")
