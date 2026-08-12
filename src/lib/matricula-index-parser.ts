@@ -270,6 +270,7 @@ export function extrairIndiceMatricula(textoBruto: string): MatriculaIndexada {
     municipio: municipio ? municipio.toUpperCase() : null,
     uf,
     area_m2: areaM2,
+    ...extrairLocalizacao(compacto, endereco, cadastros),
     ultima_ficha: extrairUltimaFicha(compacto),
     certificacao: extrairCertificacao(compacto),
     registro_anterior: extrairRegistroAnterior(compacto),
