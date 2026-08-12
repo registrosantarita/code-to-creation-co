@@ -37,11 +37,21 @@ export type MatriculaIndexada = {
   municipio: string | null;
   uf: string | null;
   area_m2: number | null;
+  /** Última ficha física da matrícula (alfanumérico: 6, 6V…). */
+  ultima_ficha: string | null;
+  /** Código de certificação do INCRA (rurais georreferenciados). */
+  certificacao: string | null;
+  /** Ato de origem, no formato R.05/M.5.456, AV.08/M.1.234, TR.7.908/L3.-Q. */
+  registro_anterior: string | null;
+  encerrada: boolean;
+  /** Matrículas abertas a partir desta, quando encerrada. */
+  matriculas_abertas: string[];
   cadastros: IndexCadastros;
   proprietarios: IndexProprietario[];
   atos: IndexAto[];
   onus: IndexAto[];
 };
+
 
 const UFS = [
   "AC","AL","AP","AM","BA","CE","DF","ES","GO","MA","MT","MS","MG","PA","PB","PR","PE","PI","RJ",
