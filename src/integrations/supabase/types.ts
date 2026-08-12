@@ -359,6 +359,137 @@ export type Database = {
           },
         ]
       }
+      index_batches: {
+        Row: {
+          created_at: string
+          created_by: string
+          export_layout: string
+          id: string
+          note: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          export_layout?: string
+          id?: string
+          note?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          export_layout?: string
+          id?: string
+          note?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      index_records: {
+        Row: {
+          area_m2: number | null
+          atos: Json
+          batch_id: string
+          cadastros: Json
+          cartorio: string | null
+          created_at: string
+          created_by: string
+          data_abertura: string | null
+          descricao: string
+          endereco: string
+          extracted: Json
+          extraction_source: string
+          file_extension: string | null
+          file_name: string | null
+          folha: string | null
+          id: string
+          label: string
+          livro: string | null
+          matricula_numero: string | null
+          municipio: string | null
+          natureza: string
+          onus: Json
+          proprietarios: Json
+          raw_text: string
+          review_status: string
+          source_type: string
+          uf: string | null
+          updated_at: string
+        }
+        Insert: {
+          area_m2?: number | null
+          atos?: Json
+          batch_id: string
+          cadastros?: Json
+          cartorio?: string | null
+          created_at?: string
+          created_by: string
+          data_abertura?: string | null
+          descricao?: string
+          endereco?: string
+          extracted?: Json
+          extraction_source?: string
+          file_extension?: string | null
+          file_name?: string | null
+          folha?: string | null
+          id?: string
+          label?: string
+          livro?: string | null
+          matricula_numero?: string | null
+          municipio?: string | null
+          natureza?: string
+          onus?: Json
+          proprietarios?: Json
+          raw_text?: string
+          review_status?: string
+          source_type?: string
+          uf?: string | null
+          updated_at?: string
+        }
+        Update: {
+          area_m2?: number | null
+          atos?: Json
+          batch_id?: string
+          cadastros?: Json
+          cartorio?: string | null
+          created_at?: string
+          created_by?: string
+          data_abertura?: string | null
+          descricao?: string
+          endereco?: string
+          extracted?: Json
+          extraction_source?: string
+          file_extension?: string | null
+          file_name?: string | null
+          folha?: string | null
+          id?: string
+          label?: string
+          livro?: string | null
+          matricula_numero?: string | null
+          municipio?: string | null
+          natureza?: string
+          onus?: Json
+          proprietarios?: Json
+          raw_text?: string
+          review_status?: string
+          source_type?: string
+          uf?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "index_records_batch_id_fkey"
+            columns: ["batch_id"]
+            isOneToOne: false
+            referencedRelation: "index_batches"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       norm_chunks: {
         Row: {
           content: string
