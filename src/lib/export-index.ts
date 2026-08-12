@@ -117,11 +117,21 @@ function encerramento(r: RegistroIndexado): string {
 
 const lista = <T,>(v: unknown): T[] => (Array.isArray(v) ? (v as T[]) : []);
 
+/** Rótulo do ônus: R-4 (HIPOTECA) — legível pelo importador do cartório. */
+const rotuloOnus = (o: IndexAto): string => {
+  const base = `${texto(o.tipo)}-${texto(o.numero)}`;
+  const grav = texto(o.gravame).toUpperCase();
+  return grav ? `${base} (${grav})` : base;
+};
+
 export function linhaDoRegistro(r: RegistroIndexado): (string | number)[] {
   const cad = (r.cadastros ?? {}) as Record<string, unknown>;
   const props = lista<IndexProprietario>(r.proprietarios);
-  const onus = lista<IndexAto>(r.onus);
+  const todosOnus = lista<IndexAto>(r.onus);
+  const onus = todosOnus.filter((o) => o.vigente !== false);
+  const onusCancelados = todosOnus.filter((o) => o.vigente === false);
   const atos = lista<IndexAto>(r.atos);
+
   return [
     texto(r.matricula_numero),
     texto(r.livro),
