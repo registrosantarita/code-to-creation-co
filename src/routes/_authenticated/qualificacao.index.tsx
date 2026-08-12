@@ -102,7 +102,7 @@ function QualificacaoLista() {
           </div>
           <p className="mt-2 max-w-3xl text-sm text-muted-foreground">
             Confronta partes (nome, CPF/CNPJ, RG, endereço, estado civil, regime de bens e data do
-            casamento), cadastros do imóvel (cadastro municipal, CCIR, CIB, CAR, ITR/NIRF) e a cadeia
+            casamento), cadastros do imóvel (cadastro municipal, CCIR, CIB, CAR, ITR) e a cadeia
             registral (matrícula, transcrição, registro anterior, livro e folha) entre dois ou mais
             documentos. A extração é determinística; a IA é opcional e só complementa lacunas.
           </p>

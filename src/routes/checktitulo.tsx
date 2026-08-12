@@ -34,7 +34,7 @@ const CAPACIDADES = [
   ],
   [
     "Cadastros do imóvel",
-    "Cadastro municipal, CCIR, CIB, CAR e ITR/NIRF conferidos entre título e matrícula.",
+    "Cadastro municipal, CCIR, CIB, CAR e ITR conferidos entre título e matrícula.",
   ],
   [
     "Cadeia registral",
