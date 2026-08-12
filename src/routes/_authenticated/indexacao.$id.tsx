@@ -382,11 +382,25 @@ function LoteDetalhe() {
                 )}
 
                 {props.length > 0 && (
-                  <p className="mt-3 text-sm text-foreground">
-                    {props
-                      .map((p) => `${p.nome ?? "—"}${p.cpf_cnpj ? ` (${p.cpf_cnpj})` : ""}`)
-                      .join(" · ")}
-                  </p>
+                  <ul className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-sm">
+                    {(props as { nome?: string | null; cpf_cnpj?: string | null; situacao?: string }[]).map(
+                      (p, i) => {
+                        const inativo = p.situacao === "INATIVO";
+                        return (
+                          <li
+                            key={`${p.cpf_cnpj ?? p.nome ?? i}`}
+                            className={inativo ? "text-destructive line-through" : "text-foreground"}
+                          >
+                            {p.nome ?? "—"}
+                            {p.cpf_cnpj ? ` (${p.cpf_cnpj})` : ""}
+                            <span className="ml-1 text-[10px] uppercase tracking-wide opacity-70">
+                              {inativo ? "inativo" : "ativo"}
+                            </span>
+                          </li>
+                        );
+                      },
+                    )}
+                  </ul>
                 )}
               </article>
             );
