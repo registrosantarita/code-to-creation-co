@@ -10,6 +10,7 @@ import {
   runLotBatchComparison,
 } from "@/lib/registral.functions";
 import { DEFAULT_TOLERANCES } from "@/lib/comparison-engine";
+import { isCadExtension } from "@/lib/cad-reader.client";
 import {
   CATEGORIA_DOCUMENTO,
   CLASSIFICACAO,
