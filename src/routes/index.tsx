@@ -177,7 +177,7 @@ function Index() {
 
       <footer className="mx-auto max-w-6xl px-6 py-10">
         <p className="text-xs text-muted-foreground">
-          GeoConfronto — plataforma de conferência registral, geométrica e
+          e-Qualifica — plataforma de conferência registral, geométrica e
           normativa — apoio à decisão, com trilha de auditoria integral.
         </p>
       </footer>
