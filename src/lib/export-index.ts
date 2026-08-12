@@ -4,6 +4,7 @@
  * XLSX e JSON.
  */
 import type { IndexAto, IndexCadastros, IndexProprietario } from "./matricula-index-parser";
+import { rotuloAto } from "./matricula-index-parser";
 
 export type RegistroIndexado = {
   id: string;
