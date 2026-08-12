@@ -129,6 +129,10 @@ const rotuloOnus = (o: IndexAto): string => {
   return grav ? `${base} (${grav})` : base;
 };
 
+/** ATIVO = proprietário atual; INATIVO = titular anterior. */
+const situacaoProp = (p: IndexProprietario): "ATIVO" | "INATIVO" =>
+  p.situacao === "INATIVO" ? "INATIVO" : "ATIVO";
+
 export function linhaDoRegistro(r: RegistroIndexado): (string | number)[] {
   const cad = (r.cadastros ?? {}) as Record<string, unknown>;
   const props = lista<IndexProprietario>(r.proprietarios);
