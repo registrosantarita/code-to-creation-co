@@ -62,11 +62,11 @@ export function databaseParaDrawing(entities: AnyEntity[]): CadDrawing {
 }
 
 async function lerDwg(bytes: ArrayBuffer): Promise<CadDrawing> {
-  const [{ LibreDwg, createModule }, wasmUrl] = await Promise.all([
-    import("@mlightcad/libredwg-web"),
-    import("@mlightcad/libredwg-web/wasm/libredwg-web.wasm?url").then((m) => m.default),
-  ]);
-  const wasmInstance = await createModule({ locateFile: () => wasmUrl });
+  const { LibreDwg, createModule } = await import("@mlightcad/libredwg-web");
+  // WebAssembly do libredwg servido estaticamente (baixado só ao abrir um DWG).
+  const wasmInstance = await createModule({
+    locateFile: () => "/cad/libredwg-web.wasm",
+  });
   const libredwg = LibreDwg.createByWasmInstance(wasmInstance);
   const ptr = libredwg.dwg_read_data(bytes, 0);
   if (ptr == null) throw new Error("Não foi possível abrir o arquivo DWG.");
