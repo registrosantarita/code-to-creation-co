@@ -409,7 +409,7 @@ export function extrairIndiceMatricula(textoBruto: string): MatriculaIndexada {
     data_ato: ultimoAto?.data ?? null,
     selo: extrairSelo(compacto),
     cadastros,
-    proprietarios: extrairProprietarios(compacto),
+    proprietarios: aplicarSituacaoProprietarios(extrairProprietarios(compacto), partes),
     atos,
     onus,
     onus_cancelados: onusCancelados,
