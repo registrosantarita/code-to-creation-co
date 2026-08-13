@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { NavArrows } from "@/components/NavArrows";
+import equalificaLogo from "@/assets/equalifica-logo.png.asset.json";
 import checkindexLogoAsset from "@/assets/checkindex-logo.png.asset.json";
 const checkindexLogo = checkindexLogoAsset.url;
 
@@ -29,10 +30,19 @@ export const Route = createFileRoute("/checkindex")({
 
 const CAPACIDADES: [string, string][] = [
   ["Leitura da matrícula", "PDF, DOCX, imagem ou texto colado; OCR opcional para digitalizações sem camada de texto."],
-  ["Identificação registral", "Número da matrícula, livro, folha, cartório e data de abertura."],
-  ["Imóvel", "Natureza (urbano/rural), endereço, município, UF, área e descrição tabular."],
-  ["Cadastros", "Cadastro municipal, CIB (inclusive quando a matrícula traz NIRF), CCIR, CAR e inscrição estadual."],
-  ["Partes e atos", "Proprietários com CPF/CNPJ, atos (R e AV) e ônus identificados na cadeia."],
+  [
+    "Identificação registral",
+    "Número da matrícula ou Livro de Registro Auxiliar, data de sua abertura e registro anterior.",
+  ],
+  [
+    "Imóvel",
+    "Natureza (urbano ou rural), endereço, nome da propriedade, município, UF, área, perímetro e área construída.",
+  ],
+  ["Cadastros", "CIM, CIB (inclusive quando a matrícula mostra o NIRF), CCIR, CAR e Certificação do Incra."],
+  [
+    "Titulares de direitos reais",
+    "Nome e identificação dos titulares, número do registro ou averbação dos respectivos gravames.",
+  ],
   ["Exportação", "Arquivo CSV (ponto e vírgula, UTF-8), XLSX ou JSON com colunas fixas para importação."],
 ];
 
@@ -50,7 +60,8 @@ function CheckIndexFrontPage() {
       <header className="border-b border-border">
         <div className="mx-auto flex max-w-5xl items-center gap-4 px-6 py-5">
           <NavArrows showHome />
-          <Link to="/" className="text-xs text-muted-foreground hover:text-foreground">
+          <Link to="/" className="flex items-center gap-2 text-xs text-muted-foreground hover:text-foreground">
+            <img src={equalificaLogo.url} alt="e-Qualifica" className="h-7 w-7 object-contain" />
             e-Qualifica
           </Link>
         </div>

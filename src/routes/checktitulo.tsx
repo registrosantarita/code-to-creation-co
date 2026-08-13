@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { NavArrows } from "@/components/NavArrows";
+import equalificaLogo from "@/assets/equalifica-logo.png.asset.json";
 import checkLogo from "@/assets/checktitulo-logo.png.asset.json";
 
 export const Route = createFileRoute("/checktitulo")({
@@ -64,7 +65,8 @@ function CheckTituloFrontPage() {
       <header className="border-b border-border">
         <div className="mx-auto flex max-w-5xl items-center gap-4 px-6 py-5">
           <NavArrows showHome />
-          <Link to="/" className="text-xs text-muted-foreground hover:text-foreground">
+          <Link to="/" className="flex items-center gap-2 text-xs text-muted-foreground hover:text-foreground">
+            <img src={equalificaLogo.url} alt="e-Qualifica" className="h-7 w-7 object-contain" />
             e-Qualifica
           </Link>
         </div>
