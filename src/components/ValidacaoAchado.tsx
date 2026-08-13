@@ -83,6 +83,11 @@ export function ValidacaoAchado({
         >
           {DECISAO_LABEL[atual.decisao]}
         </span>
+        {atual.grupo && (
+          <span className="text-[11px] text-muted-foreground">
+            Vinculado à validação humana nº {atual.grupo}
+          </span>
+        )}
       </div>
 
       {atual.decisao !== "pendente" && (
@@ -91,6 +96,12 @@ export function ValidacaoAchado({
         </p>
       )}
 
+      {atual.grupo ? (
+        <p className="mt-3 text-xs text-muted-foreground print:hidden">
+          Para alterar esta decisão, edite a validação nº {atual.grupo} no painel
+          de validação humana em lote, ao final da página.
+        </p>
+      ) : (
       <div className="print:hidden">
         <Textarea
           className="mt-3"
@@ -118,6 +129,7 @@ export function ValidacaoAchado({
           )}
         </div>
       </div>
+      )}
     </div>
   );
 }
