@@ -57,6 +57,41 @@ export function parseNumber(raw: string): number | null {
   return Number.isFinite(n) ? n : null;
 }
 
+/**
+ * Números vindos de OCR podem trazer letras no lugar de dígitos
+ * (5,A7 em vez de 5,47). Corrige os sósias mais comuns e sinaliza.
+ */
+const OCR_DIGIT_TOKEN = String.raw`[\dOoDIlZzASsGTBbgq.,]+`;
+
+const OCR_DIGITS: Record<string, string> = {
+  O: "0", o: "0", D: "0",
+  I: "1", l: "1",
+  Z: "2", z: "2",
+  A: "4",
+  S: "5", s: "5",
+  G: "6",
+  T: "7",
+  B: "8", b: "8",
+  g: "9", q: "9",
+};
+
+export function parseNumberOcr(raw: string): { value: number | null; corrigido: string | null } {
+  const direto = parseNumber(raw);
+  if (direto !== null) return { value: direto, corrigido: null };
+  const ajustado = raw.replace(/[A-Za-z]/g, (c) => OCR_DIGITS[c] ?? c);
+  if (/[A-Za-z]/.test(ajustado)) return { value: null, corrigido: null };
+  const value = parseNumber(ajustado);
+  if (value === null) return { value: null, corrigido: null };
+  return { value, corrigido: `"${raw.trim()}" lido como "${ajustado.trim()}"` };
+}
+
+function avisoOcr(fixes: string[]): string {
+  return (
+    `Correção de OCR aplicada em ${fixes.length} medida(s) com letra no lugar de dígito: ` +
+    `${fixes.join("; ")}. Confira estes valores no documento original.`
+  );
+}
+
 /** Graus/minutos/segundos -> graus decimais. */
 export function dmsToDegrees(
   deg: number,
@@ -324,19 +359,21 @@ function extractPerimeter(flat: string, raw = flat): number | null {
 type StructuredParse = {
   segments: ParsedSegment[];
   coords: Map<string, VertexCoord>;
+  warnings?: string[];
 };
 
 const COORD_DMS = String.raw`-?\d{1,3}\s*[°ºo]\s*\d{1,2}\s*['′]\s*[\d.,]+\s*["″]?`;
 
 /** Memorial SIGEF/INCRA em tabela: código, long, lat, altitude, vante, azimute, distância. */
 const SIGEF_ROW_RE = new RegExp(
-  String.raw`^\s*([A-Z0-9][\w\-.]{2,20})\s+(${COORD_DMS})\s+(${COORD_DMS})\s+(-?[\d.,]+)\s+([A-Z0-9][\w\-.]{2,20})\s+(\d{1,3}\s*[°ºo]\s*\d{1,2}\s*['′]?(?:\s*[\d.,]+\s*["″])?)\s+([\d.,]+)\s*(.*)$`,
+  String.raw`^\s*([A-Z0-9][\w\-.]{2,20})\s+(${COORD_DMS})\s+(${COORD_DMS})\s+(-?[\d.,]+)\s+([A-Z0-9][\w\-.]{2,20})\s+(\d{1,3}\s*[°ºo]\s*\d{1,2}\s*['′]?(?:\s*[\d.,]+\s*["″])?)\s+(${OCR_DIGIT_TOKEN})\s*(.*)$`,
   "i",
 );
 
 function parseSigefTable(rawText: string): StructuredParse | null {
   const segments: ParsedSegment[] = [];
   const coords = new Map<string, VertexCoord>();
+  const ocrFixes: string[] = [];
   const altByVertex = new Map<string, number | null>();
 
   for (const line of rawText.split(/\r?\n/)) {
@@ -355,6 +392,8 @@ function parseSigefTable(rawText: string): StructuredParse | null {
       east: null,
     });
     const az = parseAzimuthText(azRaw!);
+    const dist = parseNumberOcr(distRaw!);
+    if (dist.corrigido) ocrFixes.push(dist.corrigido);
     const confrontante = tail
       ? cleanConfrontante(tail.split("|").pop()!.trim())
       : null;
@@ -364,7 +403,7 @@ function parseSigefTable(rawText: string): StructuredParse | null {
       to_vertex: to!,
       bearing_text: azRaw!.trim(),
       azimuth_deg: az === null ? null : normalizeAzimuth(az),
-      distance_m: parseNumber(distRaw!),
+      distance_m: dist.value,
       altitude_from_m: alt,
       altitude_to_m: null,
       confrontante,
@@ -376,7 +415,11 @@ function parseSigefTable(rawText: string): StructuredParse | null {
   segments.forEach((s) => {
     if (s.to_vertex) s.altitude_to_m = altByVertex.get(s.to_vertex.toUpperCase()) ?? null;
   });
-  return { segments, coords };
+  return {
+    segments,
+    coords,
+    ...(ocrFixes.length ? { warnings: [avisoOcr(ocrFixes)] } : {}),
+  };
 }
 
 // --- Tabelas genéricas de grandezas ----------------------------------------
@@ -675,7 +718,7 @@ function parseMeasureTable(rawText: string): StructuredParse | null {
 
 /** Memorial em prosa: "108°57' e 18,57 m até o vértice X, (Longitude: ..., Latitude: ... e Altitude: ...)". */
 const PROSE_SEG_RE = new RegExp(
-  String.raw`(\d{1,3}\s*[°ºo]\s*\d{1,2}\s*['′]?(?:\s*[\d.,]+\s*["″])?)\s*(?:e|,)\s*([\d.,]+)\s*(?:m|metros)\s*at[ée]\s+(?:o\s+)?(?:v[ée]rtice|ponto|marco|estaca)\s+([A-Z0-9][\w\-.]{1,20})\s*,?\s*(?:\(\s*Longitude\s*:?\s*(${COORD_DMS})\s*,?\s*Latitude\s*:?\s*(${COORD_DMS})(?:\s*(?:e|,)\s*Altitude\s*:?\s*(-?[\d.,]+))?)?`,
+  String.raw`(\d{1,3}\s*[°ºo]\s*\d{1,2}\s*['′]?(?:\s*[\d.,]+\s*["″])?)\s*(?:e|,)\s*(${OCR_DIGIT_TOKEN})\s*(?:m|metros)\s*at[ée]\s+(?:o\s+)?(?:v[ée]rtice|ponto|marco|estaca)\s+([A-Z0-9][\w\-.]{1,20})\s*,?\s*(?:\(\s*Longitude\s*:?\s*(${COORD_DMS})\s*,?\s*Latitude\s*:?\s*(${COORD_DMS})(?:\s*(?:e|,)\s*Altitude\s*:?\s*(-?[\d.,]+))?)?`,
   "gi",
 );
 const PROSE_START_RE = new RegExp(
@@ -726,6 +769,7 @@ function parseProseSegments(flat: string): StructuredParse | null {
   let prevAlt = registrar(prevName, start[2]!, start[3]!, start[4]);
 
   const segments: ParsedSegment[] = [];
+  const ocrFixes: string[] = [];
   PROSE_SEG_RE.lastIndex = 0;
   for (const m of flat.matchAll(PROSE_SEG_RE)) {
     const [, azRaw, distRaw, to, lonRaw, latRaw, altRaw] = m;
@@ -734,13 +778,15 @@ function parseProseSegments(flat: string): StructuredParse | null {
         ? registrar(to!, lonRaw, latRaw, altRaw)
         : (coords.get(to!.toUpperCase())?.alt ?? null);
     const az = parseAzimuthText(azRaw!);
+    const dist = parseNumberOcr(distRaw!);
+    if (dist.corrigido) ocrFixes.push(dist.corrigido);
     segments.push({
       seq: segments.length + 1,
       from_vertex: prevName,
       to_vertex: to!,
       bearing_text: azRaw!.trim(),
       azimuth_deg: az === null ? null : normalizeAzimuth(az),
-      distance_m: parseNumber(distRaw!),
+      distance_m: dist.value,
       altitude_from_m: prevAlt,
       altitude_to_m: alt,
       confrontante: confrontanteEm(m.index ?? 0),
@@ -750,7 +796,9 @@ function parseProseSegments(flat: string): StructuredParse | null {
     prevAlt = alt;
   }
 
-  return segments.length >= 3 ? { segments, coords } : null;
+  return segments.length >= 3
+    ? { segments, coords, ...(ocrFixes.length ? { warnings: [avisoOcr(ocrFixes)] } : {}) }
+    : null;
 }
 
 export function parseMemorial(text: string): ParsedParcel {
@@ -774,6 +822,8 @@ export function parseMemorial(text: string): ParsedParcel {
   const tableParse = parseMeasureTable(normalizado);
   const structured =
     parseSigefTable(normalizado) ?? parseProseSegments(flat) ?? tableParse;
+
+  if (structured?.warnings?.length) warnings.push(...structured.warnings);
 
   const segments: ParsedSegment[] = structured?.segments ?? [];
   const coordMap = structured?.coords ?? new Map<string, VertexCoord>();
