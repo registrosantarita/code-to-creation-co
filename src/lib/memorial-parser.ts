@@ -254,7 +254,16 @@ function extractCoords(chunk: string): {
 
 /** Reconstitui hifenizações e sinais quebrados por fim de linha do PDF. */
 function repairLineBreaks(text: string): string {
-  return text
+  // Remove linhas curtas sem dígitos (ruído típico de OCR, ex.: "O", "« í")
+  const semRuido = text
+    .split(/\r?\n/)
+    .filter((l) => {
+      const s = l.trim();
+      if (!s) return true;
+      return !(s.length <= 3 && !/\d/.test(s));
+    })
+    .join("\n");
+  return semRuido
     .replace(/\s+/g, " ")
     .replace(/([A-Za-z0-9])-\s+(?=[A-Za-z0-9])/g, "$1-")
     .replace(/([(:,]\s*)-\s+(?=\d)/g, "$1-");
