@@ -58,6 +58,8 @@ import {
 } from "@/components/ui/dialog";
 import { HelpCircle } from "lucide-react";
 import { EstimativaCreditosArquivo } from "@/components/EstimativaCreditos";
+import { RelatoriosAnalise } from "@/components/RelatoriosAnalise";
+
 
 export const Route = createFileRoute("/_authenticated/analises/$id")({
   head: () => ({
