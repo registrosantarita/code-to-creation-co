@@ -11,6 +11,8 @@ import {
 } from "@/lib/registral.functions";
 import { souAdmin, excluirDocumento } from "@/lib/admin.functions";
 import { DEFAULT_TOLERANCES } from "@/lib/comparison-engine";
+import { lerDecisao } from "@/lib/finding-review";
+
 
 import { isCadExtension } from "@/lib/cad-ext";
 import {
