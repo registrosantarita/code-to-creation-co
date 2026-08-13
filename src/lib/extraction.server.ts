@@ -2,7 +2,8 @@
 
 export async function extractPdfText(bytes: ArrayBuffer): Promise<string> {
   const { extractText, getDocumentProxy } = await import("unpdf");
-  const pdf = await getDocumentProxy(new Uint8Array(bytes));
+  // pdf.js "detacha" (invalida) o buffer recebido; sempre trabalhar numa cópia.
+  const pdf = await getDocumentProxy(new Uint8Array(bytes.slice(0)));
   const { text } = await extractText(pdf, { mergePages: true });
   return Array.isArray(text) ? text.join("\n") : text;
 }
