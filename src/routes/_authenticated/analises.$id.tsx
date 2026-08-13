@@ -480,6 +480,58 @@ function AnaliseDetalhe() {
       </div>
       <div className="rule-gold mt-6 w-24" />
 
+      {analysis.data &&
+        (() => {
+          const achados = achadosAnalise.data ?? [];
+          const pendentes = achados.filter(
+            (f) => lerDecisao(f).decisao === "pendente",
+          );
+          const definitiva =
+            analysis.data.status === "completed" ||
+            analysis.data.status === "archived";
+          return (
+            <section className="panel mt-6 p-6">
+              <div className="flex flex-wrap items-start justify-between gap-4">
+                <div>
+                  <h2 className="text-lg">Encerramento da conferência</h2>
+                  <p className="mt-2 max-w-2xl text-sm leading-relaxed text-muted-foreground">
+                    {definitiva
+                      ? "Análise encerrada: o relatório é definitivo e permanece disponível para consulta."
+                      : achados.length === 0
+                        ? "Enquanto estiver em rascunho, a análise é editável. Execute as comparações e valide os achados para encerrá-la."
+                        : `${achados.length - pendentes.length} de ${achados.length} achados validados. Cada divergência deve ser confirmada ou relevada com justificativa, no relatório da comparação, antes do encerramento.`}
+                  </p>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {definitiva ? (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => mudarStatus.mutate("draft")}
+                    >
+                      Reabrir análise
+                    </Button>
+                  ) : (
+                    <Button
+                      size="sm"
+                      disabled={mudarStatus.isPending || pendentes.length > 0}
+                      onClick={() => mudarStatus.mutate("completed")}
+                    >
+                      Concluir análise
+                    </Button>
+                  )}
+                </div>
+              </div>
+              {!definitiva && pendentes.length > 0 && (
+                <p className="mt-3 text-xs text-muted-foreground">
+                  Restam {pendentes.length} achado(s) sem validação humana.
+                </p>
+              )}
+            </section>
+          );
+        })()}
+
+
       <Tabs defaultValue="documentos" className="mt-8">
         <TabsList>
           <TabsTrigger value="documentos">Documentos</TabsTrigger>
