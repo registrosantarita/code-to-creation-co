@@ -632,21 +632,18 @@ function extrairMatriculasAbertas(texto: string): string[] {
 
 /** Campos exibidos na revisão e exportados na ordem do layout padrão. */
 export const CAMPOS_INDICE: { chave: keyof MatriculaIndexada; rotulo: string }[] = [
-  { chave: "matricula_numero", rotulo: "Matrícula" },
+  { chave: "tipo_livro", rotulo: "Tipo de livro" },
   { chave: "livro", rotulo: "Livro" },
-  { chave: "folha", rotulo: "Folha" },
-  { chave: "cartorio", rotulo: "Cartório" },
+  { chave: "cns", rotulo: "CNS" },
   { chave: "data_abertura", rotulo: "Data de abertura" },
-  { chave: "natureza", rotulo: "Natureza" },
-  { chave: "endereco", rotulo: "Endereço" },
-  { chave: "municipio", rotulo: "Município" },
-  { chave: "uf", rotulo: "UF" },
-  { chave: "area_m2", rotulo: "Área (m²)" },
   { chave: "ultima_ficha", rotulo: "Última ficha" },
-  { chave: "certificacao", rotulo: "Certificação (INCRA)" },
   { chave: "registro_anterior", rotulo: "Registro anterior" },
+  { chave: "natureza", rotulo: "Natureza" },
+  { chave: "certificacao", rotulo: "Certificação (INCRA)" },
+  { chave: "area_m2", rotulo: "Área (m²)" },
   { chave: "descricao", rotulo: "Descrição" },
 ];
+
 
 const TIPOS_LOGRADOURO = [
   "rua","avenida","alameda","travessa","praça","praca","rodovia","estrada","via","viela",
