@@ -27,72 +27,107 @@ export type IndexAto = {
 
 
 export type IndexCadastros = {
-  cadastro_municipal: string | null;
+  /** Comum a urbano e rural. */
   cib: string | null;
+  /** Cadastro imobiliário municipal (urbano). */
+  cim: string | null;
+  /** Rurais. */
   ccir: string | null;
   car: string | null;
-  inscricao_estadual: string | null;
 };
 
 export type MatriculaIndexada = {
-  matricula_numero: string | null;
+  /** 2 = Matrícula; 3 = Registro Auxiliar. */
+  tipo_livro: 2 | 3;
+  /** Número do livro (matrícula ou registro auxiliar), com separador de milhar. */
   livro: string | null;
-  folha: string | null;
-  cartorio: string | null;
+  /** Espelho de `livro`, usado apenas nos rótulos internos do CheckIndex. */
+  matricula_numero: string | null;
+  /** CNS do Livro no padrão CNJ: CCCCCC.L.NNNNNNN-DD. */
+  cns: string | null;
   data_abertura: string | null;
-  natureza: "urbano" | "rural" | "nao_identificado";
-  descricao: string;
-  endereco: string;
-  municipio: string | null;
-  uf: string | null;
-  area_m2: number | null;
-  /** Área em hectares (literal do documento, ou convertida de m²). */
-  area_hectare: number | null;
-  /** Perímetro em metros. */
-  perimetro_m: number | null;
-  /** Área construída/edificada em m². */
-  area_construida_m2: number | null;
-  /** Endereço decomposto (urbanos) e identificação rural. */
-  cep: string | null;
-  tipo_logradouro: string | null;
-  logradouro: string | null;
-  numero_logradouro: string | null;
-  tipo_rural: string | null;
-  denominacao_rural: string | null;
-  lote: string | null;
-  quadra: string | null;
-  /** Cadastro imobiliário municipal. */
-  cim: string | null;
-  /** Última ficha física da matrícula (alfanumérico: 6, 6V…). */
+  /** Número da última ficha, com V quando verso. */
   ultima_ficha: string | null;
-  /** Código de certificação do INCRA (rurais georreferenciados). */
-  certificacao: string | null;
-  /** Ato de origem, no formato R.05/M.5.456, AV.08/M.1.234, TR.7.908/L3.-Q. */
+  /** Origem da matrícula (R.01/M.10.345, AV.01/M.9.856, TR.12.456/L.3-K). */
   registro_anterior: string | null;
   encerrada: boolean;
   /** Matrículas abertas a partir desta, quando encerrada. */
   matriculas_abertas: string[];
-  /** Partes do último ato registrado. */
+  natureza: "urbano" | "rural" | "nao_identificado";
+  /** Identificação comum. */
+  cep: string | null;
+  /** Identificação urbana. */
+  tipo_logradouro: string | null;
+  logradouro: string | null;
+  numero_logradouro: string | null;
+  bairro: string | null;
+  lote: string | null;
+  quadra: string | null;
+  condominio: string | null;
+  unidade: string | null;
+  andar: string | null;
+  bloco: string | null;
+  /** Identificação rural. */
+  tipo_rural: string | null;
+  denominacao_rural: string | null;
+  /** Certificação do INCRA (rurais georreferenciados). */
+  certificacao: string | null;
+  cadastros: IndexCadastros;
+  /** Medidas. */
+  area_m2: number | null;
+  area_hectare: number | null;
+  perimetro_m: number | null;
+  area_construida_m2: number | null;
+  /** Descrição tabular do imóvel (apoio interno). */
+  descricao: string;
+  /** Atos registrados. */
+  prenotacao: string | null;
+  /** R. (registro) ou AV. (averbação). */
+  tipo_ato: string | null;
+  /** Número do ato (01, 05, 10). */
+  ato: string | null;
+  data_ato: string | null;
+  selo: string | null;
+  /** Titulares de direitos reais. */
   adquirente: string | null;
   conjuge_adq: string | null;
   transmitente: string | null;
   conjuge_transm: string | null;
   usufrutuario: string | null;
   conjuge_usu: string | null;
-  /** Dados do protocolo/ato. */
-  prenotacao: string | null;
-  ato: string | null;
-  data_ato: string | null;
-  selo: string | null;
-  cadastros: IndexCadastros;
+  outorgante: string | null;
+  conjuge_outorgante: string | null;
+  outorgado: string | null;
+  conjuge_outorgado: string | null;
+  credor: string | null;
+  devedor: string | null;
+  /** Servidão: quem suporta o ônus. */
+  serviente: string | null;
+  /** Servidão: quem usufrui do benefício. */
+  dominante: string | null;
+  /** Qualificação do titular. */
+  estado_civil: string | null;
+  data_casamento: string | null;
+  lei_casamento: string | null;
+  reg_bens: string | null;
+  pacto: string | null;
+  /** Endereço do titular (não necessariamente o do imóvel). */
+  endereco: string;
+  email: string | null;
+  telefone: string | null;
+  /** CPF/CNPJ. */
+  identificacao: string | null;
+  /** NIRE/RCPJ para pessoas jurídicas. */
+  inscricao_estadual: string | null;
+  situacao_titulares: "ATIVO" | "INATIVO" | null;
   proprietarios: IndexProprietario[];
   atos: IndexAto[];
   /** Ônus ainda vigentes (cancelados são excluídos daqui). */
   onus: IndexAto[];
   /** Ônus baixados/cancelados, mantidos para auditoria. */
   onus_cancelados: IndexAto[];
-
 };
+
 
 
 const UFS = [
