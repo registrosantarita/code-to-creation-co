@@ -74,11 +74,26 @@ function GeoFrontPage() {
             memoriais descritivos, plantas, divisas e confrontações, com tolerâncias técnicas
             configuráveis.
           </p>
-          <Button asChild size="lg" variant="secondary" className="mt-8">
-            <Link to={signedIn ? "/painel" : "/auth"}>
-              {signedIn ? "Abrir minhas análises" : "Entrar para começar"}
-            </Link>
-          </Button>
+          <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
+            <Button asChild size="lg" variant="secondary">
+              <Link to={signedIn ? "/painel" : "/auth"}>
+                {signedIn ? "Abrir minhas análises" : "Entrar para começar"}
+              </Link>
+            </Button>
+            {signedIn && (
+              <Button
+                size="lg"
+                variant="outline"
+                className="border-ink-foreground/30 bg-transparent text-ink-foreground hover:bg-ink-foreground/10"
+                onClick={async () => {
+                  await supabase.auth.signOut();
+                }}
+              >
+                Sair
+              </Button>
+            )}
+          </div>
+
         </div>
       </section>
 
