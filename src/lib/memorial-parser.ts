@@ -224,7 +224,7 @@ export function parseGeoCoord(raw: string): number | null {
   if (dms) {
     const d = Number(dms[1]);
     const m = Number(dms[2]);
-    const sec = parseNumber(dms[3]!) ?? 0;
+    const sec = dms[3] ? (parseNumber(dms[3]) ?? 0) : 0;
     value = Math.abs(d) + m / 60 + sec / 3600;
     if (d < 0) value = -value;
   } else {
