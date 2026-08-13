@@ -806,7 +806,10 @@ function AnaliseDetalhe() {
 
             <div className="mt-6 grid gap-4 md:grid-cols-3">
               <div className="space-y-2">
-                <Label>Documento A (paradigma)</Label>
+                <div className="flex h-6 items-center">
+                  <Label>Documento A (paradigma)</Label>
+                </div>
+
                 <Select
                   value={docA}
                   onValueChange={(v) => {
