@@ -85,6 +85,13 @@ export function parseNumberOcr(raw: string): { value: number | null; corrigido: 
   return { value, corrigido: `"${raw.trim()}" lido como "${ajustado.trim()}"` };
 }
 
+function avisoOcr(fixes: string[]): string {
+  return (
+    `Correção de OCR aplicada em ${fixes.length} medida(s) com letra no lugar de dígito: ` +
+    `${fixes.join("; ")}. Confira estes valores no documento original.`
+  );
+}
+
 /** Graus/minutos/segundos -> graus decimais. */
 export function dmsToDegrees(
   deg: number,
@@ -408,7 +415,11 @@ function parseSigefTable(rawText: string): StructuredParse | null {
   segments.forEach((s) => {
     if (s.to_vertex) s.altitude_to_m = altByVertex.get(s.to_vertex.toUpperCase()) ?? null;
   });
-  return { segments, coords };
+  return {
+    segments,
+    coords,
+    ...(ocrFixes.length ? { warnings: [avisoOcr(ocrFixes)] } : {}),
+  };
 }
 
 // --- Tabelas genéricas de grandezas ----------------------------------------
@@ -811,6 +822,8 @@ export function parseMemorial(text: string): ParsedParcel {
   const tableParse = parseMeasureTable(normalizado);
   const structured =
     parseSigefTable(normalizado) ?? parseProseSegments(flat) ?? tableParse;
+
+  if (structured?.warnings?.length) warnings.push(...structured.warnings);
 
   const segments: ParsedSegment[] = structured?.segments ?? [];
   const coordMap = structured?.coords ?? new Map<string, VertexCoord>();
