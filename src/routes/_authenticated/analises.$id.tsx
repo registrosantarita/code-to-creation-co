@@ -9,7 +9,9 @@ import {
   runComparison,
   runLotBatchComparison,
 } from "@/lib/registral.functions";
+import { souAdmin, excluirDocumento } from "@/lib/admin.functions";
 import { DEFAULT_TOLERANCES } from "@/lib/comparison-engine";
+
 import { isCadExtension } from "@/lib/cad-ext";
 import {
   CATEGORIA_DOCUMENTO,
