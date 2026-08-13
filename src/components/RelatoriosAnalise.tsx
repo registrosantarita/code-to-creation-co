@@ -1,0 +1,186 @@
+/**
+ * Painel "Relatórios": permite gerar o PDF de qualquer comparação da análise
+ * a qualquer momento, inclusive depois de a análise ter sido concluída.
+ */
+import { useState } from "react";
+import { Link } from "@tanstack/react-router";
+import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { CLASSIFICACAO, TIPO_COMPARACAO, TONE_CLASS } from "@/lib/labels";
+import { exportarRelatorioPdf } from "@/lib/export-registral";
+import { lerTrechos } from "@/components/TrechosConferidos";
+import { DECISAO_LABEL, lerDecisao } from "@/lib/finding-review";
+
+type ComparacaoResumo = {
+  id: string;
+  comparison_type: string;
+  classification: string | null;
+  summary: string | null;
+  created_at: string;
+};
+
+export function RelatoriosAnalise({
+  comparacoes,
+}: {
+  comparacoes: ComparacaoResumo[];
+}) {
+  const [aberto, setAberto] = useState(false);
+  const [gerando, setGerando] = useState<string | null>(null);
+
+  async function gerar(comparacaoId: string) {
+    setGerando(comparacaoId);
+    try {
+      const { data: c, error } = await supabase
+        .from("comparisons")
+        .select("*")
+        .eq("id", comparacaoId)
+        .single();
+      if (error) throw error;
+
+      const { data: findings, error: e2 } = await supabase
+        .from("findings")
+        .select("*")
+        .eq("comparison_id", comparacaoId);
+      if (e2) throw e2;
+
+      const ids = [c.document_a_id, c.document_b_id].filter(
+        (v): v is string => !!v,
+      );
+      const { data: docs } = await supabase
+        .from("documents")
+        .select("id, file_name")
+        .in("id", ids);
+      const nomeDoc = (docId: string | null) =>
+        (docs ?? []).find((d) => d.id === docId)?.file_name ?? "Documento";
+
+      const metrics = (c.metrics ?? {}) as Record<string, unknown>;
+      const counts = (metrics["counts"] ?? {}) as Record<string, number>;
+      const extensao =
+        typeof metrics["extensao_conferida_m"] === "number"
+          ? (metrics["extensao_conferida_m"] as number)
+          : null;
+
+      exportarRelatorioPdf(
+        {
+          titulo: `${nomeDoc(c.document_a_id)} × ${nomeDoc(c.document_b_id)}`,
+          tipo: TIPO_COMPARACAO[c.comparison_type] ?? c.comparison_type,
+          classificacao: c.classification,
+          resumo: c.summary,
+          emitidoEm: new Date(c.created_at).toLocaleString("pt-BR"),
+          documentoA: nomeDoc(c.document_a_id),
+          documentoB: nomeDoc(c.document_b_id),
+          tolerancias: (c.tolerances ?? {}) as Record<string, number>,
+          contagens: counts,
+          trechos: lerTrechos(metrics),
+          extensaoConferidaM: extensao,
+          achados: (findings ?? []).map((f) => {
+            const d = lerDecisao(f);
+            return {
+              severity: f.severity,
+              code: f.code,
+              title: f.title,
+              description: f.description,
+              evidence: f.evidence,
+              situacao:
+                DECISAO_LABEL[d.decisao] +
+                (d.grupo ? ` (validação nº ${d.grupo})` : ""),
+              justificativa: d.justificativa,
+            };
+          }),
+        },
+        `relatorio-conferencia-${comparacaoId.slice(0, 8)}.pdf`,
+      );
+      toast.success("Relatório gerado.");
+    } catch (err) {
+      toast.error(
+        err instanceof Error ? err.message : "Não foi possível gerar o relatório.",
+      );
+    } finally {
+      setGerando(null);
+    }
+  }
+
+  return (
+    <Dialog open={aberto} onOpenChange={setAberto}>
+      <DialogTrigger asChild>
+        <Button variant="outline" size="sm">
+          Relatórios
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="max-w-2xl">
+        <DialogHeader>
+          <DialogTitle>Relatórios das comparações</DialogTitle>
+          <DialogDescription>
+            Gere o PDF de qualquer comparação desta análise a qualquer tempo,
+            inclusive após o encerramento. O conteúdo reflete as validações
+            humanas registradas.
+          </DialogDescription>
+        </DialogHeader>
+
+        {comparacoes.length === 0 ? (
+          <p className="text-sm text-muted-foreground">
+            Nenhuma comparação registrada nesta análise.
+          </p>
+        ) : (
+          <ul className="max-h-[60vh] space-y-3 overflow-y-auto pr-1">
+            {comparacoes.map((c) => {
+              const cls = CLASSIFICACAO[c.classification ?? "inconclusive"]!;
+              return (
+                <li
+                  key={c.id}
+                  className="rounded-sm border border-border p-4"
+                >
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="font-display text-sm">
+                      {TIPO_COMPARACAO[c.comparison_type] ?? c.comparison_type}
+                    </span>
+                    <span
+                      className={`rounded-sm border px-2 py-0.5 text-[11px] ${TONE_CLASS[cls.tone]}`}
+                    >
+                      {cls.label}
+                    </span>
+                    <span className="numeric ml-auto text-[11px] text-muted-foreground">
+                      {new Date(c.created_at).toLocaleString("pt-BR")}
+                    </span>
+                  </div>
+                  {c.summary && (
+                    <p className="mt-2 line-clamp-2 text-xs text-muted-foreground">
+                      {c.summary}
+                    </p>
+                  )}
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    <Button
+                      size="sm"
+                      disabled={gerando === c.id}
+                      onClick={() => gerar(c.id)}
+                    >
+                      {gerando === c.id ? "Gerando..." : "Baixar PDF"}
+                    </Button>
+                    <Button variant="outline" size="sm" asChild>
+                      <Link
+                        to="/comparacoes/$id"
+                        params={{ id: c.id }}
+                        onClick={() => setAberto(false)}
+                      >
+                        Abrir relatório
+                      </Link>
+                    </Button>
+                  </div>
+                </li>
+              );
+            })}
+          </ul>
+        )}
+      </DialogContent>
+    </Dialog>
+  );
+}
