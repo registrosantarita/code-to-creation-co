@@ -809,20 +809,24 @@ function parseProseSegments(flat: string): StructuredParse | null {
   const ocrFixes: string[] = [];
   PROSE_SEG_RE.lastIndex = 0;
   for (const m of flat.matchAll(PROSE_SEG_RE)) {
-    const [, azRaw, distRaw, to, lonRaw, latRaw, altRaw] = m;
+    const [, azRawBruto, distRaw, to, lonRaw, latRaw, altRaw] = m;
+    const grau = corrigirGrauOcr(azRawBruto!);
+    if (grau.corrigido) ocrFixes.push(grau.corrigido);
+    const azRaw = grau.texto;
     const alt =
       lonRaw && latRaw
         ? registrar(to!, lonRaw, latRaw, altRaw)
         : (coords.get(to!.toUpperCase())?.alt ?? null);
-    const az = parseAzimuthText(azRaw!);
+    const az = parseAzimuthText(azRaw);
     const dist = parseNumberOcr(distRaw!);
     if (dist.corrigido) ocrFixes.push(dist.corrigido);
     segments.push({
       seq: segments.length + 1,
       from_vertex: prevName,
       to_vertex: to!,
-      bearing_text: azRaw!.trim(),
+      bearing_text: azRaw.trim(),
       azimuth_deg: az === null ? null : normalizeAzimuth(az),
+
       distance_m: dist.value,
       altitude_from_m: prevAlt,
       altitude_to_m: alt,
