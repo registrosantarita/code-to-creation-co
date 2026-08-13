@@ -192,13 +192,19 @@ export function fmtMedida(value: number | string | null, min = 2, max = 6): stri
 }
 
 /** Estrutura (grau / minuto / segundo e casas) de um ângulo escrito no documento. */
+/**
+ * Estrutura literal de um ângulo. Os minutos podem vir SEM apóstrofe
+ * ("142°34"), como ocorre em memoriais digitalizados: nesse caso os dígitos
+ * seguintes ao grau ainda são minutos e não podem ser descartados.
+ */
+const ANGULO_LITERAL_RE =
+  /(-?\d{1,3})\s*[°º]\s*(?:(\d{1,2})\s*(?:['\u2032´`]|(?![\d.,])))?\s*(?:(\d{1,2}(?:[.,]\d+)?)\s*["\u2033'']?)?/;
+
 function estruturaAngulo(
   texto: string | null | undefined,
 ): { min: boolean; seg: boolean; casas: number } | null {
   const t = (texto ?? "").trim();
-  const m = t.match(
-    /(-?\d{1,3})\s*[°º]\s*(?:(\d{1,2})\s*['\u2032´`])?\s*(?:(\d{1,2}(?:[.,]\d+)?)\s*["\u2033''])?/,
-  );
+  const m = t.match(ANGULO_LITERAL_RE);
   if (!m || !m[1]) return null;
   if (m[2] === undefined) return { min: false, seg: false, casas: 0 };
   if (m[3] === undefined) return { min: true, seg: false, casas: 0 };
@@ -257,9 +263,7 @@ export function anguloLiteral(
   modelo?: string | null,
 ): string {
   const t = (texto ?? "").trim();
-  const m = t.match(
-    /(-?\d{1,3})\s*[°º]\s*(?:(\d{1,2})\s*['\u2032´`])?\s*(?:(\d{1,2}(?:[.,]\d+)?)\s*["\u2033''])?/,
-  );
+  const m = t.match(ANGULO_LITERAL_RE);
   if (m && m[1]) {
     const g = m[1];
     if (m[2] === undefined) return `${g}°`;
