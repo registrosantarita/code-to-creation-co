@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { useMemo, useRef, useState } from "react";
+import { Fragment, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -63,6 +63,9 @@ function QualificacaoDetalhe() {
   const adicionar = useServerFn(adicionarDocumento);
   const excluir = useServerFn(excluirDocumento);
   const complementar = useServerFn(complementarComIA);
+  const [visao, setVisao] = useState<"colunas" | "empilhado">("colunas");
+
+
 
   const { data, isLoading } = useQuery({
     queryKey: ["qualificacao", id],
@@ -231,6 +234,23 @@ function QualificacaoDetalhe() {
             <Badge variant="outline">{resultado.resumo.invalidos} inválidos</Badge>
             <Badge variant="outline">{resultado.resumo.incompletos} não comparados</Badge>
           </div>
+          <div className="mt-3 flex flex-wrap items-center gap-2">
+            <span className="text-xs text-muted-foreground">Exibição:</span>
+            <Button
+              size="sm"
+              variant={visao === "colunas" ? "default" : "outline"}
+              onClick={() => setVisao("colunas")}
+            >
+              Colunas lado a lado
+            </Button>
+            <Button
+              size="sm"
+              variant={visao === "empilhado" ? "default" : "outline"}
+              onClick={() => setVisao("empilhado")}
+            >
+              Empilhado
+            </Button>
+          </div>
           <p className="mt-2 text-xs text-muted-foreground">
             Resultado meramente instrumental: a qualificação jurídica permanece com o Oficial.
           </p>
@@ -240,47 +260,107 @@ function QualificacaoDetalhe() {
               <p className="border-b border-border px-4 py-2 font-display text-sm text-foreground">
                 {bloco}
               </p>
-              <table className="w-full table-auto text-xs">
-                <thead>
-                  <tr className="border-b border-border text-left text-muted-foreground">
-                    <th className="px-3 py-2 font-normal">CAMPO</th>
-                    {ordenados.map((d, i) => (
-                      <th key={d.id} className={`px-3 py-2 font-normal ${docColor(i)}`}>
-                        DOC. {docLetra(i)}
-                        <span className="block text-[10px] uppercase tracking-wide">
-                          {d.doc_role === "matricula" ? "Matrícula" : "Título"}
-                        </span>
-                      </th>
-                    ))}
-                    <th className="px-3 py-2 font-normal">SITUAÇÃO</th>
-                    <th className="px-3 py-2 font-normal">OBSERVAÇÃO</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {linhas.map((l, idx) => (
-                    <tr key={`${l.campo}-${idx}`} className="border-b border-border/60 align-top">
-                      <td className="px-3 py-2 text-foreground">{l.campo}</td>
-                      {l.valores.map((v, i) => (
-                        <td key={i} className={`px-3 py-2 ${docColor(i)}`}>
-                          {v ?? "—"}
-                        </td>
+              {visao === "colunas" ? (
+                <table className="w-full table-auto text-xs">
+                  <thead>
+                    <tr className="border-b border-border text-left text-muted-foreground">
+                      <th className="px-3 py-2 font-normal">CAMPO</th>
+                      {ordenados.map((d, i) => (
+                        <th key={d.id} className={`px-3 py-2 font-normal ${docColor(i)}`}>
+                          DOC. {docLetra(i)}
+                          <span className="block text-[10px] uppercase tracking-wide">
+                            {d.doc_role === "matricula" ? "Matrícula" : "Título"}
+                          </span>
+                        </th>
                       ))}
-                      <td className="px-3 py-2">
-                        <span
-                          className={`inline-block rounded border px-2 py-0.5 ${TONE_CLASS[SITUACAO[l.situacao].tone]}`}
-                        >
-                          {SITUACAO[l.situacao].label}
-                        </span>
-                      </td>
-                      <td className="px-3 py-2 text-muted-foreground">{l.observacao ?? "—"}</td>
+                      <th className="px-3 py-2 font-normal">SITUAÇÃO</th>
+                      <th className="px-3 py-2 font-normal">OBSERVAÇÃO</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody>
+                    {linhas.map((l, idx) => (
+                      <tr key={`${l.campo}-${idx}`} className="border-b border-border/60 align-top">
+                        <td className="px-3 py-2 text-foreground">{l.campo}</td>
+                        {l.valores.map((v, i) => (
+                          <td key={i} className={`px-3 py-2 ${docColor(i)}`}>
+                            {v ?? "—"}
+                          </td>
+                        ))}
+                        <td className="px-3 py-2">
+                          <span
+                            className={`inline-block rounded border px-2 py-0.5 ${TONE_CLASS[SITUACAO[l.situacao].tone]}`}
+                          >
+                            {SITUACAO[l.situacao].label}
+                          </span>
+                        </td>
+                        <td className="px-3 py-2 text-muted-foreground">{l.observacao ?? "—"}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              ) : (
+                <table className="w-full table-auto text-xs">
+                  <thead>
+                    <tr className="border-b border-border text-left text-muted-foreground">
+                      <th className="px-3 py-2 font-normal">CAMPO</th>
+                      <th className="px-3 py-2 font-normal">DOCUMENTO</th>
+                      <th className="px-3 py-2 font-normal">VALOR</th>
+                      <th className="px-3 py-2 font-normal">SITUAÇÃO</th>
+                      <th className="px-3 py-2 font-normal">OBSERVAÇÃO</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {linhas.map((l, idx) => (
+                      <Fragment key={`${l.campo}-${idx}`}>
+                        {l.valores.map((v, i) => (
+                          <tr
+                            key={`${l.campo}-${idx}-${i}`}
+                            className={`align-top ${i === l.valores.length - 1 ? "border-b border-border/60" : ""}`}
+                          >
+                            {i === 0 ? (
+                              <td
+                                rowSpan={l.valores.length}
+                                className="px-3 py-2 text-foreground"
+                              >
+                                {l.campo}
+                              </td>
+                            ) : null}
+                            <td className={`whitespace-nowrap px-3 py-2 ${docColor(i)}`}>
+                              DOC. {docLetra(i)}
+                              <span className="ml-1 text-[10px] uppercase tracking-wide">
+                                {ordenados[i]?.doc_role === "matricula" ? "Matrícula" : "Título"}
+                              </span>
+                            </td>
+                            <td className={`px-3 py-2 ${docColor(i)}`}>{v ?? "—"}</td>
+                            {i === 0 ? (
+                              <>
+                                <td rowSpan={l.valores.length} className="px-3 py-2">
+                                  <span
+                                    className={`inline-block rounded border px-2 py-0.5 ${TONE_CLASS[SITUACAO[l.situacao].tone]}`}
+                                  >
+                                    {SITUACAO[l.situacao].label}
+                                  </span>
+                                </td>
+                                <td
+                                  rowSpan={l.valores.length}
+                                  className="px-3 py-2 text-muted-foreground"
+                                >
+                                  {l.observacao ?? "—"}
+                                </td>
+                              </>
+                            ) : null}
+                          </tr>
+                        ))}
+                      </Fragment>
+                    ))}
+                  </tbody>
+                </table>
+              )}
             </div>
           ))}
         </section>
       )}
+
     </main>
   );
 }
