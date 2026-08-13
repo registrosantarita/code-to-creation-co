@@ -128,3 +128,50 @@ export const removerPapel = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     return { ok: true };
   });
+
+/** Exclusão de uma análise inteira (documentos, arquivos e comparações). Somente admin. */
+export const excluirAnalise = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) => z.object({ analysisId: z.string().uuid() }).parse(input))
+  .handler(async ({ data, context }) => {
+    await exigirAdmin(context);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    const { data: docs } = await supabaseAdmin
+      .from("documents")
+      .select("storage_path")
+      .eq("analysis_id", data.analysisId);
+    const paths = (docs ?? []).map((d) => d.storage_path).filter(Boolean) as string[];
+    if (paths.length) await supabaseAdmin.storage.from("documentos").remove(paths);
+
+    const { error } = await supabaseAdmin
+      .from("analyses")
+      .delete()
+      .eq("id", data.analysisId);
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
+
+/** Exclusão de um documento enviado e do respectivo arquivo. Somente admin. */
+export const excluirDocumento = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) => z.object({ documentId: z.string().uuid() }).parse(input))
+  .handler(async ({ data, context }) => {
+    await exigirAdmin(context);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    const { data: doc } = await supabaseAdmin
+      .from("documents")
+      .select("storage_path")
+      .eq("id", data.documentId)
+      .maybeSingle();
+    if (doc?.storage_path)
+      await supabaseAdmin.storage.from("documentos").remove([doc.storage_path]);
+
+    const { error } = await supabaseAdmin
+      .from("documents")
+      .delete()
+      .eq("id", data.documentId);
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });

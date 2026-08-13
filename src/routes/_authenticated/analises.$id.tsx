@@ -9,7 +9,9 @@ import {
   runComparison,
   runLotBatchComparison,
 } from "@/lib/registral.functions";
+import { souAdmin, excluirDocumento } from "@/lib/admin.functions";
 import { DEFAULT_TOLERANCES } from "@/lib/comparison-engine";
+
 import { isCadExtension } from "@/lib/cad-ext";
 import {
   CATEGORIA_DOCUMENTO,
@@ -276,6 +278,24 @@ function AnaliseDetalhe() {
     onError: (e: Error) => toast.error(e.message),
   });
 
+  const souAdminFn = useServerFn(souAdmin);
+  const admin = useQuery({
+    queryKey: ["sou-admin"],
+    queryFn: () => souAdminFn({}),
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const excluirDocFn = useServerFn(excluirDocumento);
+  const excluirDoc = useMutation({
+    mutationFn: (documentId: string) => excluirDocFn({ data: { documentId } }),
+    onSuccess: () => {
+      refreshDocs();
+      queryClient.invalidateQueries({ queryKey: ["comparisons", id] });
+      toast.success("Documento excluído.");
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
   const reprocessar = useMutation({
     mutationFn: (documentId: string) => extrair({ data: { documentId } }),
     onSuccess: () => {
@@ -284,6 +304,7 @@ function AnaliseDetalhe() {
     },
     onError: (e: Error) => toast.error(e.message),
   });
+
 
   const executarComparacao = useMutation({
     mutationFn: async () => {
@@ -753,6 +774,25 @@ function AnaliseDetalhe() {
                           >
                             Reprocessar extração
                           </Button>
+                          {admin.data?.admin && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              disabled={excluirDoc.isPending}
+                              className="text-muted-foreground hover:text-destructive"
+                              onClick={() => {
+                                if (
+                                  confirm(
+                                    `Excluir definitivamente "${d.file_name ?? "documento"}" e seus dados extraídos?`,
+                                  )
+                                )
+                                  excluirDoc.mutate(d.id);
+                              }}
+                            >
+                              Excluir documento
+                            </Button>
+                          )}
+
                           {parcel && (parcel.segments ?? []).length > 0 && (
                             <Button
                               size="sm"
@@ -806,7 +846,10 @@ function AnaliseDetalhe() {
 
             <div className="mt-6 grid gap-4 md:grid-cols-3">
               <div className="space-y-2">
-                <Label>Documento A (paradigma)</Label>
+                <div className="flex h-6 items-center">
+                  <Label>Documento A (paradigma)</Label>
+                </div>
+
                 <Select
                   value={docA}
                   onValueChange={(v) => {
@@ -841,8 +884,9 @@ function AnaliseDetalhe() {
                 )}
               </div>
               <div className="space-y-2">
-                <div className="flex items-center justify-between gap-2">
+                <div className="flex h-6 items-center justify-between gap-2">
                   <Label>Tipo de comparação</Label>
+
                   <Dialog>
                     <DialogTrigger asChild>
                       <Button

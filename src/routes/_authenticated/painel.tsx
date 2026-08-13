@@ -9,7 +9,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
-import { LogOut, Plus } from "lucide-react";
+import { LogOut, Plus, Trash2 } from "lucide-react";
+import { useServerFn } from "@tanstack/react-start";
+import { souAdmin, excluirAnalise } from "@/lib/admin.functions";
+
 import {
   Dialog,
   DialogContent,
@@ -53,6 +56,25 @@ function Painel() {
   const [title, setTitle] = useState("");
   const [objective, setObjective] = useState("");
   const [tags, setTags] = useState("");
+
+  const souAdminFn = useServerFn(souAdmin);
+  const admin = useQuery({
+    queryKey: ["sou-admin"],
+    queryFn: () => souAdminFn({}),
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const excluirFn = useServerFn(excluirAnalise);
+  const excluir = useMutation({
+    mutationFn: (analysisId: string) => excluirFn({ data: { analysisId } }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["analyses"] });
+      toast.success("Análise excluída.");
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+
 
   async function signOut() {
     await queryClient.cancelQueries();
@@ -208,7 +230,7 @@ function Painel() {
       ) : (
         <ul className="mt-10 grid gap-4 md:grid-cols-2">
           {analyses.map((a) => (
-            <li key={a.id}>
+            <li key={a.id} className="relative">
               <Link
                 to="/analises/$id"
                 params={{ id: a.id }}
@@ -239,9 +261,30 @@ function Painel() {
                   </span>
                 </div>
               </Link>
+              {admin.data?.admin && (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  disabled={excluir.isPending}
+                  className="absolute bottom-3 right-3 h-7 px-2 text-[11px] text-muted-foreground hover:text-destructive"
+                  onClick={() => {
+                    if (
+                      confirm(
+                        `Excluir definitivamente a análise "${a.title}", seus documentos e comparações?`,
+                      )
+                    )
+                      excluir.mutate(a.id);
+                  }}
+                >
+                  <Trash2 className="mr-1 h-3.5 w-3.5" />
+                  Excluir
+                </Button>
+              )}
             </li>
           ))}
         </ul>
+
       )}
     </main>
   );
