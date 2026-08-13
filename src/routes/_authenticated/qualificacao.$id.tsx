@@ -408,7 +408,7 @@ function QualificacaoDetalhe() {
 function SeloValidacao({
   v,
 }: {
-  v?: { numero: number; decisao: "relevado" | "confirmado"; justificativa: string };
+  v: { numero: number; decisao: "relevado" | "confirmado"; justificativa: string } | undefined;
 }) {
   if (!v) return null;
   return (
