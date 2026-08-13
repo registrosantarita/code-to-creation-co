@@ -214,7 +214,10 @@ export type RelatorioPdfInput = {
     title: string;
     description: string;
     evidence: unknown;
+    situacao?: string;
+    justificativa?: string;
   }[];
+
 };
 
 const ORDEM_SEV = ["critical", "moderate", "inconclusive", "informative"];
@@ -417,7 +420,7 @@ export function exportarRelatorioPdf(
 
   autoTable(doc, {
     startY: (doc as unknown as { lastAutoTable: { finalY: number } }).lastAutoTable.finalY + 24,
-    head: [["Severidade", "Código", "Achado", "Descrição"]],
+    head: [["Severidade", "Código", "Achado", "Descrição", "Validação humana"]],
     body:
       achados.length > 0
         ? achados.map((f) => [
@@ -425,18 +428,23 @@ export function exportarRelatorioPdf(
             f.code,
             f.title,
             f.description,
+            [f.situacao ?? "Aguardando validação", f.justificativa]
+              .filter(Boolean)
+              .join(" — "),
           ])
-        : [["—", "—", "Nenhum achado registrado", ""]],
+        : [["—", "—", "Nenhum achado registrado", "", ""]],
     theme: "striped",
     styles: { fontSize: 8.5, cellPadding: 5, valign: "top", overflow: "linebreak" },
     headStyles: { fillColor: [24, 28, 38], textColor: 255 },
     columnStyles: {
-      0: { cellWidth: 62 },
-      1: { cellWidth: 92 },
-      2: { cellWidth: 120 },
+      0: { cellWidth: 58 },
+      1: { cellWidth: 78 },
+      2: { cellWidth: 100 },
+      4: { cellWidth: 110 },
     },
     margin: { left: M, right: M },
   });
+
 
   autoTable(doc, {
     startY: (doc as unknown as { lastAutoTable: { finalY: number } }).lastAutoTable.finalY + 20,

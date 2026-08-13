@@ -13,6 +13,9 @@ import { exportarRelatorioPdf } from "@/lib/export-registral";
 import { TrechosConferidos, lerTrechos } from "@/components/TrechosConferidos";
 import { TrechosConsolidados } from "@/components/TrechosConsolidados";
 import { getVertices, type VertexCoordRow } from "@/lib/export-registral";
+import { ValidacaoAchado } from "@/components/ValidacaoAchado";
+import { DECISAO_LABEL, lerDecisao } from "@/lib/finding-review";
+
 
 
 
@@ -261,13 +264,19 @@ function Relatorio() {
                   contagens: counts,
                   trechos,
                   extensaoConferidaM: extensaoConferida,
-                  achados: ordenados.map((f) => ({
-                    severity: f.severity,
-                    code: f.code,
-                    title: f.title,
-                    description: f.description,
-                    evidence: f.evidence,
-                  })),
+                  achados: ordenados.map((f) => {
+                    const d = lerDecisao(f);
+                    return {
+                      severity: f.severity,
+                      code: f.code,
+                      title: f.title,
+                      description: f.description,
+                      evidence: f.evidence,
+                      situacao: DECISAO_LABEL[d.decisao],
+                      justificativa: d.justificativa,
+                    };
+                  }),
+
                 },
                 `relatorio-conferencia-${c.id.slice(0, 8)}.pdf`,
               )
@@ -397,7 +406,13 @@ function Relatorio() {
 
 
       <section className="mt-10">
-        <h2 className="text-2xl">Achados</h2>
+        <div className="flex flex-wrap items-baseline justify-between gap-3">
+          <h2 className="text-2xl">Achados</h2>
+          <span className="text-xs text-muted-foreground">
+            {ordenados.filter((f) => lerDecisao(f).decisao === "pendente").length}{" "}
+            de {ordenados.length} aguardando validação humana
+          </span>
+        </div>
         <ul className="mt-5 space-y-4">
           {ordenados.map((f) => {
             const sev = SEVERIDADE[f.severity]!;
@@ -423,9 +438,11 @@ function Relatorio() {
                     {JSON.stringify(f.evidence, null, 2)}
                   </pre>
                 </details>
+                <ValidacaoAchado achado={f} onSalvo={() => findings.refetch()} />
               </li>
             );
           })}
+
           {ordenados.length === 0 && (
             <p className="text-sm text-muted-foreground">
               Nenhum achado registrado nesta comparação.

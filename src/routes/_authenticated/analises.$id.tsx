@@ -124,6 +124,39 @@ function AnaliseDetalhe() {
     },
   });
 
+  /** Achados de toda a análise, para controlar a validação humana. */
+  const achadosAnalise = useQuery({
+    queryKey: ["findings-analise", id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("findings")
+        .select("id, severity, reviewed, reviewer_note")
+        .eq("analysis_id", id);
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  const mudarStatus = useMutation({
+    mutationFn: async (status: "draft" | "completed" | "archived") => {
+      const { error } = await supabase
+        .from("analyses")
+        .update({
+          status,
+          closed_at: status === "draft" ? null : new Date().toISOString(),
+        })
+        .eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["analysis", id] });
+      queryClient.invalidateQueries({ queryKey: ["analyses"] });
+      toast.success("Situação da análise atualizada.");
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+
   const documents = useQuery({
     queryKey: ["documents", id],
     queryFn: async () => {
