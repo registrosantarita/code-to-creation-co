@@ -9,7 +9,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
-import { LogOut, Plus } from "lucide-react";
+import { LogOut, Plus, Trash2 } from "lucide-react";
+import { useServerFn } from "@tanstack/react-start";
+import { souAdmin, excluirAnalise } from "@/lib/admin.functions";
+
 import {
   Dialog,
   DialogContent,
