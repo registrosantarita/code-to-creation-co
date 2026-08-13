@@ -60,7 +60,7 @@ export const obterLote = createServerFn({ method: "POST" })
       context.supabase
         .from("index_records")
         .select(
-          "id, label, file_name, file_extension, source_type, matricula_numero, livro, folha, cartorio, data_abertura, natureza, descricao, endereco, municipio, uf, area_m2, area_hectare, perimetro_m, area_construida_m2, cep, tipo_logradouro, logradouro, numero_logradouro, tipo_rural, denominacao_rural, lote, quadra, cim, ultima_ficha, certificacao, registro_anterior, encerrada, matriculas_abertas, adquirente, conjuge_adq, transmitente, conjuge_transm, usufrutuario, conjuge_usu, prenotacao, ato, data_ato, selo, cadastros, proprietarios, atos, onus, extraction_source, review_status, created_at",
+          "id, label, file_name, file_extension, source_type, tipo_livro, livro, matricula_numero, cns, data_abertura, ultima_ficha, registro_anterior, encerrada, matriculas_abertas, natureza, cep, tipo_logradouro, logradouro, numero_logradouro, bairro, lote, quadra, condominio, unidade, andar, bloco, tipo_rural, denominacao_rural, cim, certificacao, area_m2, area_hectare, perimetro_m, area_construida_m2, descricao, endereco, prenotacao, tipo_ato, ato, data_ato, selo, adquirente, conjuge_adq, transmitente, conjuge_transm, usufrutuario, conjuge_usu, outorgante, conjuge_outorgante, outorgado, conjuge_outorgado, credor, devedor, serviente, dominante, estado_civil, data_casamento, lei_casamento, reg_bens, pacto, email, telefone, identificacao, inscricao_estadual, situacao_titulares, cadastros, proprietarios, atos, onus, extraction_source, review_status, created_at",
         )
         .eq("batch_id", data.id)
         .order("created_at", { ascending: true }),
