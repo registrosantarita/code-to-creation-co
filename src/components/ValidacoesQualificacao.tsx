@@ -42,7 +42,7 @@ export function lerValidacoes(raw: unknown): ValidacaoQualificacao[] {
     })
     .map((v) => ({
       numero: v.numero,
-      decisao: v.decisao === "confirmado" ? "confirmado" : "relevado",
+      decisao: (v.decisao === "confirmado" ? "confirmado" : "relevado") as DecisaoQualificacao,
       justificativa: String(v.justificativa ?? ""),
       chaves: v.chaves.map(String),
     }))
@@ -116,8 +116,14 @@ export function ValidacoesQualificacao({
   };
 
   const criar = async (decisao: DecisaoQualificacao) => {
-    if (!marcados.length) return toast.error("Selecione ao menos uma divergência.");
-    if (!texto.trim()) return toast.error("Informe a justificativa da validação.");
+    if (!marcados.length) {
+      toast.error("Selecione ao menos uma divergência.");
+      return;
+    }
+    if (!texto.trim()) {
+      toast.error("Informe a justificativa da validação.");
+      return;
+    }
     const nova: ValidacaoQualificacao = {
       numero: proximoNumero,
       decisao,
@@ -150,9 +156,14 @@ export function ValidacoesQualificacao({
     const g = validacoes.find((v) => v.numero === numero);
     if (!g) return;
     const agora = Object.keys(editSel).filter((k) => editSel[k]);
-    if (!agora.length)
-      return toast.error("Selecione ao menos uma divergência ou desfaça a validação.");
-    if (!editTexto.trim()) return toast.error("Informe a justificativa da validação.");
+    if (!agora.length) {
+      toast.error("Selecione ao menos uma divergência ou desfaça a validação.");
+      return;
+    }
+    if (!editTexto.trim()) {
+      toast.error("Informe a justificativa da validação.");
+      return;
+    }
     const lista = validacoes.map((v) =>
       v.numero === numero
         ? { ...v, decisao, justificativa: editTexto.trim(), chaves: agora }
