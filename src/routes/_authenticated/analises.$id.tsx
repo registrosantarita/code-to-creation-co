@@ -478,11 +478,15 @@ function AnaliseDetalhe() {
           )}
         </div>
         {analysis.data && (
-          <span className="rounded-sm border border-border bg-muted px-3 py-1 text-xs text-muted-foreground">
-            {STATUS_ANALISE[analysis.data.status]}
-          </span>
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="rounded-sm border border-border bg-muted px-3 py-1 text-xs text-muted-foreground">
+              {STATUS_ANALISE[analysis.data.status]}
+            </span>
+            <RelatoriosAnalise comparacoes={comparisons.data ?? []} />
+          </div>
         )}
       </div>
+
       <div className="rule-gold mt-6 w-24" />
 
       {analysis.data &&
