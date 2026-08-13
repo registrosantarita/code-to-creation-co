@@ -31,7 +31,7 @@ async function registrarAuditoria(
     entity_type: "finding_validation",
     entity_id: comparisonId,
     action,
-    metadata,
+    metadata: metadata as never,
   });
 }
 
