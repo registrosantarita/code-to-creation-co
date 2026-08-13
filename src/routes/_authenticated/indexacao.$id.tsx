@@ -361,7 +361,7 @@ function LoteDetalhe() {
 
                 {r.endereco && (
                   <p className="mt-3 text-sm text-muted-foreground">
-                    <span className="eyebrow mr-2">Endereço</span>
+                    <span className="eyebrow mr-2">Endereço do titular</span>
                     {r.endereco}
                   </p>
                 )}
