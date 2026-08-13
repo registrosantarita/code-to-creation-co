@@ -9,18 +9,26 @@
  * carrega o número do grupo de validação: `[RELEVADO#2] texto`.
  */
 
-export type DecisaoAchado = "pendente" | "confirmado" | "relevado";
+export type DecisaoAchado = "pendente" | "confirmado" | "relevado" | "oposicao";
 
 export const DECISAO_LABEL: Record<DecisaoAchado, string> = {
   pendente: "Aguardando validação",
   confirmado: "Divergência confirmada",
   relevado: "Relevado / justificado",
+  oposicao: "Oposição registrada",
 };
 
 const PREFIXO: Record<Exclude<DecisaoAchado, "pendente">, string> = {
   confirmado: "[CONFIRMADO",
   relevado: "[RELEVADO",
+  oposicao: "[OPOSICAO",
 };
+
+/** Achados informativos representam trechos compatíveis (não divergentes). */
+export function ehDivergencia(severity: string): boolean {
+  return severity !== "informative";
+}
+
 
 export function montarNota(
   decisao: Exclude<DecisaoAchado, "pendente">,
@@ -39,14 +47,17 @@ export function lerDecisao(f: {
   if (!f.reviewed && !nota)
     return { decisao: "pendente", justificativa: "", grupo: null };
 
-  const m = /^\[(RELEVADO|CONFIRMADO)(?:#(\d+))?\]\s*/.exec(nota);
+  const m = /^\[(RELEVADO|CONFIRMADO|OPOSICAO)(?:#(\d+))?\]\s*/.exec(nota);
   if (m) {
+    const decisao: DecisaoAchado =
+      m[1] === "RELEVADO" ? "relevado" : m[1] === "OPOSICAO" ? "oposicao" : "confirmado";
     return {
-      decisao: m[1] === "RELEVADO" ? "relevado" : "confirmado",
+      decisao,
       justificativa: nota.slice(m[0].length).trim(),
       grupo: m[2] ? Number(m[2]) : null,
     };
   }
+
   return {
     decisao: f.reviewed ? "confirmado" : "pendente",
     justificativa: nota,
