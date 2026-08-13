@@ -177,7 +177,7 @@ export const complementarComIA = createServerFn({ method: "POST" })
 
 const validacaoSchema = z.object({
   numero: z.number().int().positive(),
-  decisao: z.enum(["relevado", "confirmado"]),
+  decisao: z.enum(["relevado", "confirmado", "oposicao"]),
   justificativa: z.string().trim().min(1).max(4000),
   chaves: z.array(z.string().max(400)).min(1),
 });

@@ -71,6 +71,7 @@ function QualificacaoDetalhe() {
   const excluir = useServerFn(excluirDocumento);
   const complementar = useServerFn(complementarComIA);
   const [visao, setVisao] = useState<"colunas" | "empilhado">("colunas");
+  const [mostrarOposicoes, setMostrarOposicoes] = useState(false);
 
 
 
@@ -161,6 +162,22 @@ function QualificacaoDetalhe() {
     for (const [bloco, linhas] of blocos) {
       linhas.forEach((l, idx) => {
         if (l.situacao !== "divergente" && l.situacao !== "invalido") return;
+        out.push({
+          chave: chaveDe(bloco, l.campo, idx),
+          bloco,
+          campo: l.campo,
+          detalhe: l.valores.map((v, i) => `Doc. ${docLetra(i)}: ${v ?? "—"}`).join("  ·  "),
+        });
+      });
+    }
+    return out;
+  }, [blocos]);
+
+  const itensConformes = useMemo<ItemDivergente[]>(() => {
+    const out: ItemDivergente[] = [];
+    for (const [bloco, linhas] of blocos) {
+      linhas.forEach((l, idx) => {
+        if (l.situacao !== "conforme") return;
         out.push({
           chave: chaveDe(bloco, l.campo, idx),
           bloco,
@@ -398,6 +415,40 @@ function QualificacaoDetalhe() {
             validacoes={validacoes}
             onSalvo={() => void invalidar()}
           />
+
+          {itensConformes.length > 0 && (
+            <div className="mt-8 print:hidden">
+              {mostrarOposicoes ? (
+                <>
+                  <Button size="sm" variant="ghost" onClick={() => setMostrarOposicoes(false)}>
+                    Fechar oposições
+                  </Button>
+                  <ValidacoesQualificacao
+                    setId={id}
+                    itens={itensConformes}
+                    validacoes={validacoes}
+                    modo="oposicao"
+                    onSalvo={() => void invalidar()}
+                  />
+                </>
+              ) : (
+                <div className="flex flex-wrap items-center gap-3">
+                  <p className="text-xs text-muted-foreground">
+                    Itens conformes não exigem justificativa. Para contraditá-los
+                    excepcionalmente, abra as oposições.
+                  </p>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="ml-auto"
+                    onClick={() => setMostrarOposicoes(true)}
+                  >
+                    Oposições ({itensConformes.length})
+                  </Button>
+                </div>
+              )}
+            </div>
+          )}
         </section>
       )}
 
@@ -408,7 +459,9 @@ function QualificacaoDetalhe() {
 function SeloValidacao({
   v,
 }: {
-  v: { numero: number; decisao: "relevado" | "confirmado"; justificativa: string } | undefined;
+  v:
+    | { numero: number; decisao: "relevado" | "confirmado" | "oposicao"; justificativa: string }
+    | undefined;
 }) {
   if (!v) return null;
   return (

@@ -6,7 +6,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
 import { salvarValidacoes } from "@/lib/qualificacao.functions";
 
-export type DecisaoQualificacao = "relevado" | "confirmado";
+export type DecisaoQualificacao = "relevado" | "confirmado" | "oposicao";
 
 export type ValidacaoQualificacao = {
   numero: number;
@@ -25,11 +25,13 @@ export type ItemDivergente = {
 export const DECISAO_LABEL: Record<DecisaoQualificacao, string> = {
   relevado: "Relevado / justificado",
   confirmado: "Divergência confirmada",
+  oposicao: "Oposição registrada",
 };
 
 const TOM: Record<DecisaoQualificacao, string> = {
   confirmado: "border-destructive/40 bg-destructive/10 text-destructive",
   relevado: "border-accent/50 bg-accent/10 text-accent-foreground",
+  oposicao: "border-primary/40 bg-primary/10 text-foreground",
 };
 
 /** Normaliza o que vier do banco (jsonb) para o formato tipado. */
@@ -42,7 +44,11 @@ export function lerValidacoes(raw: unknown): ValidacaoQualificacao[] {
     })
     .map((v) => ({
       numero: v.numero,
-      decisao: (v.decisao === "confirmado" ? "confirmado" : "relevado") as DecisaoQualificacao,
+      decisao: (v.decisao === "confirmado"
+        ? "confirmado"
+        : v.decisao === "oposicao"
+          ? "oposicao"
+          : "relevado") as DecisaoQualificacao,
       justificativa: String(v.justificativa ?? ""),
       chaves: v.chaves.map(String),
     }))
@@ -67,13 +73,17 @@ export function ValidacoesQualificacao({
   setId,
   itens,
   validacoes,
+  modo = "divergencia",
   onSalvo,
 }: {
   setId: string;
   itens: ItemDivergente[];
   validacoes: ValidacaoQualificacao[];
+  modo?: "divergencia" | "oposicao";
   onSalvo: () => void;
 }) {
+  const oposicoes = modo === "oposicao";
+  const rotulo = oposicoes ? "Oposição" : "Validação";
   const salvarFn = useServerFn(salvarValidacoes);
   const [sel, setSel] = useState<Record<string, boolean>>({});
   const [texto, setTexto] = useState("");
@@ -224,22 +234,26 @@ export function ValidacoesQualificacao({
 
   return (
     <section className="mt-10 print:hidden">
-      <h3 className="font-display text-lg text-foreground">Validação humana em lote</h3>
+      <h3 className="font-display text-lg text-foreground">
+        {oposicoes ? "Oposições a itens conformes" : "Validação humana em lote"}
+      </h3>
       <p className="mt-1 text-xs text-muted-foreground">
-        Reúna divergências com o mesmo motivo sob uma única justificativa numerada. Uma
-        divergência só pode pertencer a uma validação por vez; toda edição fica registrada
-        na trilha de auditoria. A qualificação jurídica permanece com o Oficial.
+        {oposicoes
+          ? "Itens conformes não exigem justificativa. Excepcionalmente, o conferente pode contraditá-los por escrito; a oposição fica registrada na trilha de auditoria."
+          : "Reúna divergências com o mesmo motivo sob uma única justificativa numerada. Uma divergência só pode pertencer a uma validação por vez; toda edição fica registrada na trilha de auditoria. A qualificação jurídica permanece com o Oficial."}
       </p>
 
-      {validacoes.map((g) => (
+      {validacoes
+        .filter((g) => (oposicoes ? g.decisao === "oposicao" : g.decisao !== "oposicao"))
+        .map((g) => (
         <div key={g.numero} className="mt-4 rounded-md border border-border bg-card p-5">
           <div className="flex flex-wrap items-center gap-3">
-            <span className="eyebrow">Validação nº {g.numero}</span>
+            <span className="eyebrow">{rotulo} nº {g.numero}</span>
             <span className={`rounded-sm border px-2 py-0.5 text-[11px] ${TOM[g.decisao]}`}>
               {DECISAO_LABEL[g.decisao]}
             </span>
             <span className="text-xs text-muted-foreground">
-              {g.chaves.length} divergência(s)
+              {g.chaves.length} item(ns)
             </span>
             <div className="ml-auto flex gap-2">
               {editando === g.numero ? (
@@ -274,17 +288,29 @@ export function ValidacoesQualificacao({
                 placeholder="Justificativa comum às divergências selecionadas"
               />
               <div className="flex flex-wrap gap-2">
-                <Button size="sm" disabled={salvando} onClick={() => salvarEdicao(g.numero, "relevado")}>
-                  Salvar como relevado
-                </Button>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  disabled={salvando}
-                  onClick={() => salvarEdicao(g.numero, "confirmado")}
-                >
-                  Salvar como divergência confirmada
-                </Button>
+                {oposicoes ? (
+                  <Button
+                    size="sm"
+                    disabled={salvando}
+                    onClick={() => salvarEdicao(g.numero, "oposicao")}
+                  >
+                    Salvar oposição
+                  </Button>
+                ) : (
+                  <>
+                    <Button size="sm" disabled={salvando} onClick={() => salvarEdicao(g.numero, "relevado")}>
+                      Salvar como relevado
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      disabled={salvando}
+                      onClick={() => salvarEdicao(g.numero, "confirmado")}
+                    >
+                      Salvar como divergência confirmada
+                    </Button>
+                  </>
+                )}
               </div>
             </div>
           ) : (
@@ -307,7 +333,9 @@ export function ValidacoesQualificacao({
       ))}
 
       <div className="mt-4 rounded-md border border-border bg-card p-5">
-        <span className="eyebrow">Nova validação nº {proximoNumero}</span>
+        <span className="eyebrow">
+          {oposicoes ? "Nova oposição" : "Nova validação"} nº {proximoNumero}
+        </span>
         {disponiveis.length ? (
           <div className="mt-3 space-y-2">
             {disponiveis.map((i) =>
@@ -317,20 +345,34 @@ export function ValidacoesQualificacao({
               rows={2}
               value={texto}
               onChange={(e) => setTexto(e.target.value)}
-              placeholder="Justificativa comum às divergências selecionadas"
+              placeholder={
+                oposicoes
+                  ? "Oposição escrita aos itens conformes selecionados"
+                  : "Justificativa comum às divergências selecionadas"
+              }
             />
             <div className="flex flex-wrap gap-2">
-              <Button size="sm" disabled={salvando} onClick={() => criar("relevado")}>
-                Relevar selecionadas
-              </Button>
-              <Button size="sm" variant="outline" disabled={salvando} onClick={() => criar("confirmado")}>
-                Confirmar divergência
-              </Button>
+              {oposicoes ? (
+                <Button size="sm" disabled={salvando} onClick={() => criar("oposicao")}>
+                  Registrar oposição
+                </Button>
+              ) : (
+                <>
+                  <Button size="sm" disabled={salvando} onClick={() => criar("relevado")}>
+                    Relevar selecionadas
+                  </Button>
+                  <Button size="sm" variant="outline" disabled={salvando} onClick={() => criar("confirmado")}>
+                    Confirmar divergência
+                  </Button>
+                </>
+              )}
             </div>
           </div>
         ) : (
           <p className="mt-2 text-sm text-muted-foreground">
-            Todas as divergências já estão vinculadas a uma validação.
+            {oposicoes
+              ? "Todos os itens conformes já possuem oposição registrada."
+              : "Todas as divergências já estão vinculadas a uma validação."}
           </p>
         )}
       </div>

@@ -11,7 +11,7 @@ import {
 } from "@/lib/registral.functions";
 import { souAdmin, excluirDocumento } from "@/lib/admin.functions";
 import { DEFAULT_TOLERANCES } from "@/lib/comparison-engine";
-import { lerDecisao } from "@/lib/finding-review";
+import { ehDivergencia, lerDecisao } from "@/lib/finding-review";
 
 
 import { isCadExtension } from "@/lib/cad-ext";
@@ -487,7 +487,9 @@ function AnaliseDetalhe() {
 
       {analysis.data &&
         (() => {
-          const achados = achadosAnalise.data ?? [];
+          const achados = (achadosAnalise.data ?? []).filter((f) =>
+            ehDivergencia(f.severity),
+          );
           const pendentes = achados.filter(
             (f) => lerDecisao(f).decisao === "pendente",
           );
@@ -503,10 +505,11 @@ function AnaliseDetalhe() {
                     {definitiva
                       ? "Análise encerrada: o relatório é definitivo e permanece disponível para consulta."
                       : achados.length === 0
-                        ? "Enquanto estiver em rascunho, a análise é editável. Execute as comparações e valide os achados para encerrá-la."
-                        : `${achados.length - pendentes.length} de ${achados.length} achados validados. Cada divergência deve ser confirmada ou relevada com justificativa, no relatório da comparação, antes do encerramento.`}
+                        ? "Enquanto estiver em rascunho, a análise é editável. Execute as comparações e valide as divergências para encerrá-la."
+                        : `${achados.length - pendentes.length} de ${achados.length} divergências validadas. Cada divergência deve ser confirmada ou relevada com justificativa, no relatório da comparação, antes do encerramento. Trechos compatíveis não exigem justificativa.`}
                   </p>
                 </div>
+
                 <div className="flex flex-wrap gap-2">
                   {definitiva ? (
                     <Button

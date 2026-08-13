@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -15,7 +16,7 @@ import { TrechosConsolidados } from "@/components/TrechosConsolidados";
 import { getVertices, type VertexCoordRow } from "@/lib/export-registral";
 import { ValidacaoAchado } from "@/components/ValidacaoAchado";
 import { ValidacoesEmLote } from "@/components/ValidacoesEmLote";
-import { DECISAO_LABEL, lerDecisao } from "@/lib/finding-review";
+import { DECISAO_LABEL, ehDivergencia, lerDecisao } from "@/lib/finding-review";
 
 
 
@@ -46,6 +47,8 @@ const ORDEM: string[] = ["critical", "moderate", "inconclusive", "informative"];
 
 function Relatorio() {
   const { id } = Route.useParams();
+  const [mostrarOposicoes, setMostrarOposicoes] = useState(false);
+
 
   const comparison = useQuery({
     queryKey: ["comparison", id],
@@ -237,6 +240,9 @@ function Relatorio() {
   const ordenados = [...(findings.data ?? [])].sort(
     (a, b) => ORDEM.indexOf(a.severity) - ORDEM.indexOf(b.severity),
   );
+  const divergentes = ordenados.filter((f) => ehDivergencia(f.severity));
+  const compativeis = ordenados.filter((f) => !ehDivergencia(f.severity));
+
 
   return (
     <main className="mx-auto max-w-4xl px-6 py-10 print:py-0">
@@ -412,10 +418,11 @@ function Relatorio() {
         <div className="flex flex-wrap items-baseline justify-between gap-3">
           <h2 className="text-2xl">Achados</h2>
           <span className="text-xs text-muted-foreground">
-            {ordenados.filter((f) => lerDecisao(f).decisao === "pendente").length}{" "}
-            de {ordenados.length} aguardando validação humana
+            {divergentes.filter((f) => lerDecisao(f).decisao === "pendente").length}{" "}
+            de {divergentes.length} divergências aguardando validação humana
           </span>
         </div>
+
         <ul className="mt-5 space-y-4">
           {ordenados.map((f) => {
             const sev = SEVERIDADE[f.severity]!;
@@ -455,9 +462,49 @@ function Relatorio() {
 
         <ValidacoesEmLote
           comparisonId={id}
-          achados={ordenados}
+          achados={divergentes}
+          todos={ordenados}
           onSalvo={() => findings.refetch()}
         />
+
+        {compativeis.length > 0 && (
+          <div className="mt-8 print:hidden">
+            {mostrarOposicoes ? (
+              <>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={() => setMostrarOposicoes(false)}
+                >
+                  Fechar oposições
+                </Button>
+                <ValidacoesEmLote
+                  comparisonId={id}
+                  achados={compativeis}
+                  todos={ordenados}
+                  modo="oposicao"
+                  onSalvo={() => findings.refetch()}
+                />
+              </>
+            ) : (
+              <div className="flex flex-wrap items-center gap-3">
+                <p className="text-xs text-muted-foreground">
+                  Trechos compatíveis não exigem justificativa. Se quiser
+                  contraditá-los excepcionalmente, abra as oposições.
+                </p>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="ml-auto"
+                  onClick={() => setMostrarOposicoes(true)}
+                >
+                  Oposições ({compativeis.length})
+                </Button>
+              </div>
+            )}
+          </div>
+        )}
+
       </section>
 
       <footer className="mt-12 border-t border-border pt-6">
