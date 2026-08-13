@@ -2,7 +2,8 @@
 
 export async function extractPdfText(bytes: ArrayBuffer): Promise<string> {
   const { extractText, getDocumentProxy } = await import("unpdf");
-  const pdf = await getDocumentProxy(new Uint8Array(bytes));
+  // pdf.js "detacha" (invalida) o buffer recebido; sempre trabalhar numa cópia.
+  const pdf = await getDocumentProxy(new Uint8Array(bytes.slice(0)));
   const { text } = await extractText(pdf, { mergePages: true });
   return Array.isArray(text) ? text.join("\n") : text;
 }
@@ -76,7 +77,7 @@ export async function extractTextFromFile(
     const text = await extractPdfText(bytes);
     if (text.trim().length < 40) {
       const { ocrDocument } = await import("./ocr.server");
-      const ocr = await ocrDocument(bytes, "pdf");
+      const ocr = await ocrDocument(bytes.slice(0), "pdf");
       if (ocr.text.trim()) return ocr;
       return {
         text,
@@ -90,7 +91,7 @@ export async function extractTextFromFile(
   }
   if (OCR_IMAGE_EXTENSIONS.includes(ext)) {
     const { ocrDocument } = await import("./ocr.server");
-    return await ocrDocument(bytes, ext);
+    return await ocrDocument(bytes.slice(0), ext);
   }
   if (ext === "kmz") {
     const text = await extractKmzText(bytes);

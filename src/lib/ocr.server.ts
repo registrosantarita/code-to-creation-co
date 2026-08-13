@@ -4,6 +4,9 @@
  */
 
 function toBase64(bytes: ArrayBuffer): string {
+  if (bytes.byteLength === 0) {
+    throw new Error("Arquivo indisponível para OCR (conteúdo já consumido). Reenvie o documento.");
+  }
   const view = new Uint8Array(bytes);
   let binary = "";
   const chunk = 0x8000;
