@@ -27,72 +27,107 @@ export type IndexAto = {
 
 
 export type IndexCadastros = {
-  cadastro_municipal: string | null;
+  /** Comum a urbano e rural. */
   cib: string | null;
+  /** Cadastro imobiliário municipal (urbano). */
+  cim: string | null;
+  /** Rurais. */
   ccir: string | null;
   car: string | null;
-  inscricao_estadual: string | null;
 };
 
 export type MatriculaIndexada = {
-  matricula_numero: string | null;
+  /** 2 = Matrícula; 3 = Registro Auxiliar. */
+  tipo_livro: 2 | 3;
+  /** Número do livro (matrícula ou registro auxiliar), com separador de milhar. */
   livro: string | null;
-  folha: string | null;
-  cartorio: string | null;
+  /** Espelho de `livro`, usado apenas nos rótulos internos do CheckIndex. */
+  matricula_numero: string | null;
+  /** CNS do Livro no padrão CNJ: CCCCCC.L.NNNNNNN-DD. */
+  cns: string | null;
   data_abertura: string | null;
-  natureza: "urbano" | "rural" | "nao_identificado";
-  descricao: string;
-  endereco: string;
-  municipio: string | null;
-  uf: string | null;
-  area_m2: number | null;
-  /** Área em hectares (literal do documento, ou convertida de m²). */
-  area_hectare: number | null;
-  /** Perímetro em metros. */
-  perimetro_m: number | null;
-  /** Área construída/edificada em m². */
-  area_construida_m2: number | null;
-  /** Endereço decomposto (urbanos) e identificação rural. */
-  cep: string | null;
-  tipo_logradouro: string | null;
-  logradouro: string | null;
-  numero_logradouro: string | null;
-  tipo_rural: string | null;
-  denominacao_rural: string | null;
-  lote: string | null;
-  quadra: string | null;
-  /** Cadastro imobiliário municipal. */
-  cim: string | null;
-  /** Última ficha física da matrícula (alfanumérico: 6, 6V…). */
+  /** Número da última ficha, com V quando verso. */
   ultima_ficha: string | null;
-  /** Código de certificação do INCRA (rurais georreferenciados). */
-  certificacao: string | null;
-  /** Ato de origem, no formato R.05/M.5.456, AV.08/M.1.234, TR.7.908/L3.-Q. */
+  /** Origem da matrícula (R.01/M.10.345, AV.01/M.9.856, TR.12.456/L.3-K). */
   registro_anterior: string | null;
   encerrada: boolean;
   /** Matrículas abertas a partir desta, quando encerrada. */
   matriculas_abertas: string[];
-  /** Partes do último ato registrado. */
+  natureza: "urbano" | "rural" | "nao_identificado";
+  /** Identificação comum. */
+  cep: string | null;
+  /** Identificação urbana. */
+  tipo_logradouro: string | null;
+  logradouro: string | null;
+  numero_logradouro: string | null;
+  bairro: string | null;
+  lote: string | null;
+  quadra: string | null;
+  condominio: string | null;
+  unidade: string | null;
+  andar: string | null;
+  bloco: string | null;
+  /** Identificação rural. */
+  tipo_rural: string | null;
+  denominacao_rural: string | null;
+  /** Certificação do INCRA (rurais georreferenciados). */
+  certificacao: string | null;
+  cadastros: IndexCadastros;
+  /** Medidas. */
+  area_m2: number | null;
+  area_hectare: number | null;
+  perimetro_m: number | null;
+  area_construida_m2: number | null;
+  /** Descrição tabular do imóvel (apoio interno). */
+  descricao: string;
+  /** Atos registrados. */
+  prenotacao: string | null;
+  /** R. (registro) ou AV. (averbação). */
+  tipo_ato: string | null;
+  /** Número do ato (01, 05, 10). */
+  ato: string | null;
+  data_ato: string | null;
+  selo: string | null;
+  /** Titulares de direitos reais. */
   adquirente: string | null;
   conjuge_adq: string | null;
   transmitente: string | null;
   conjuge_transm: string | null;
   usufrutuario: string | null;
   conjuge_usu: string | null;
-  /** Dados do protocolo/ato. */
-  prenotacao: string | null;
-  ato: string | null;
-  data_ato: string | null;
-  selo: string | null;
-  cadastros: IndexCadastros;
+  outorgante: string | null;
+  conjuge_outorgante: string | null;
+  outorgado: string | null;
+  conjuge_outorgado: string | null;
+  credor: string | null;
+  devedor: string | null;
+  /** Servidão: quem suporta o ônus. */
+  serviente: string | null;
+  /** Servidão: quem usufrui do benefício. */
+  dominante: string | null;
+  /** Qualificação do titular. */
+  estado_civil: string | null;
+  data_casamento: string | null;
+  lei_casamento: string | null;
+  reg_bens: string | null;
+  pacto: string | null;
+  /** Endereço do titular (não necessariamente o do imóvel). */
+  endereco: string;
+  email: string | null;
+  telefone: string | null;
+  /** CPF/CNPJ. */
+  identificacao: string | null;
+  /** NIRE/RCPJ para pessoas jurídicas. */
+  inscricao_estadual: string | null;
+  situacao_titulares: "ATIVO" | "INATIVO" | null;
   proprietarios: IndexProprietario[];
   atos: IndexAto[];
   /** Ônus ainda vigentes (cancelados são excluídos daqui). */
   onus: IndexAto[];
   /** Ônus baixados/cancelados, mantidos para auditoria. */
   onus_cancelados: IndexAto[];
-
 };
+
 
 
 const UFS = [
@@ -316,15 +351,17 @@ export function extrairIndiceMatricula(textoBruto: string): MatriculaIndexada {
   const texto = textoBruto.replace(/\r/g, "");
   const compacto = texto.replace(/\s+/g, " ");
 
-  const matricula = capturar(compacto, [
-    /matr[ií]cula\s*(?:n[.º°]*)?\s*[:\-]?\s*([\d.]{1,12})/i,
+  const auxiliar = /registro\s+auxiliar/i.test(compacto);
+  const numeroLivro = capturar(compacto, [
+    /(?:matr[ií]cula|registro\s+auxiliar)\s*(?:n[.º°]*)?\s*[:\-]?\s*([\d.]{1,12})/i,
     /\bMAT\.?\s*(?:n[.º°]*)?\s*([\d.]{1,12})/i,
+    /livro\s*(?:n[.º°]*)?\s*[:\-]?\s*([\d.]{1,12})/i,
   ]);
+  const livro = numeroLivro ? formatarNumeroMatricula(numeroLivro) : null;
 
-  const livro = capturar(compacto, [/livro\s*[:\-]?\s*([\w\-.º°/]{1,20})/i]);
-  const folha = capturar(compacto, [/(?:folhas?|fls?\.?)\s*[:\-]?\s*([\w\-./]{1,20})/i]);
-  const cartorio = capturar(compacto, [
-    /((?:\d+[ºo°]?\s*)?(?:of[ií]cio|cart[óo]rio|servi[çc]o registral)[^,.;]{0,80})/i,
+  const cns = capturar(compacto, [
+    /\b(\d{6}\.\d\.\d{7}-\d{2})\b/,
+    /\bCNS\s*(?:n[.º°]*)?\s*[:\-]?\s*([\d.\-]{10,24})/i,
   ]);
 
   const dataBruta =
@@ -346,32 +383,20 @@ export function extrairIndiceMatricula(textoBruto: string): MatriculaIndexada {
   );
   const areaM2 = areaMatch ? areaParaM2(areaMatch[1] ?? "", areaMatch[2] ?? "m2") : null;
 
-  const endereco =
+  const enderecoTitular =
     capturar(compacto, [
+      /(?:residente\s+e\s+domiciliad[oa]s?\s+(?:na|no|em)|domiciliad[oa]s?\s+(?:na|no|em)|endere[çc]o\s*[:\-]?)\s*([^;.]{8,160})/i,
       /((?:rua|avenida|av\.|travessa|alameda|estrada|rodovia|pra[çc]a)[^;.]{5,140})/i,
     ]) ?? "";
 
-  const municipio = capturar(compacto, [
-    /munic[íi]pio\s+de\s+([A-Za-zÀ-ÿ'’.\- ]{3,60})/i,
-    /comarca\s+de\s+([A-Za-zÀ-ÿ'’.\- ]{3,60})/i,
-  ]);
-
-  const ufMatch = compacto.match(
-    new RegExp(`\\b(?:estado d[eo]\\s+)?\\b(${UFS.join("|")})\\b`),
-  );
-  const uf = ufMatch?.[1] ?? null;
-
   const cadastros: IndexCadastros = {
-    cadastro_municipal: capturar(compacto, [
-      /(?:cadastro municipal|inscri[çc][ãa]o (?:imobili[áa]ria|municipal)|IPTU)\s*(?:n[.º°]*)?\s*[:\-]?\s*([\w.\-/]{4,30})/i,
-    ]),
     // Matrículas antigas trazem "NIRF"; o cadastro atual é o CIB.
     cib: capturar(compacto, [/\b(?:CIB|NIRF)\b\s*(?:n[.º°]*)?\s*[:\-]?\s*([\w.\-/]{4,30})/i]),
+    cim: capturar(compacto, [
+      /(?:CIM|cadastro\s+imobili[áa]rio\s+municipal|cadastro municipal|inscri[çc][ãa]o (?:imobili[áa]ria|municipal)|IPTU)\s*(?:n[.º°]*)?\s*[:\-]?\s*([\w.\-/]{3,40})/i,
+    ]),
     ccir: capturar(compacto, [/\bCCIR\b\s*(?:n[.º°]*)?\s*[:\-]?\s*([\w.\-/]{4,40})/i]),
     car: capturar(compacto, [/\bCAR\b\s*(?:n[.º°]*)?\s*[:\-]?\s*([\w.\-/]{6,60})/i]),
-    inscricao_estadual: capturar(compacto, [
-      /inscri[çc][ãa]o estadual\s*(?:n[.º°]*)?\s*[:\-]?\s*([\w.\-/]{4,30})/i,
-    ]),
   };
 
   const descricaoMatch = compacto.match(
@@ -383,38 +408,95 @@ export function extrairIndiceMatricula(textoBruto: string): MatriculaIndexada {
   const ultimoAto = atos.length ? atos[atos.length - 1]! : null;
 
   return {
-    matricula_numero: matricula,
+    tipo_livro: auxiliar ? 3 : 2,
     livro,
-    folha,
-    cartorio,
+    matricula_numero: livro,
+    cns,
     data_abertura: dataAbertura,
+    ultima_ficha: extrairUltimaFicha(compacto),
+    registro_anterior: auxiliar ? null : extrairRegistroAnterior(compacto),
+    encerrada: ENCERRAMENTO.test(compacto),
+    matriculas_abertas: extrairMatriculasAbertas(compacto),
     natureza,
-    descricao: limpar(descricaoMatch?.[1]) ?? "",
-    endereco,
-    municipio: municipio ? municipio.toUpperCase() : null,
-    uf,
+    ...extrairLocalizacao(compacto, enderecoTitular),
+    certificacao: extrairCertificacao(compacto),
+    cadastros,
     area_m2: areaM2,
     area_hectare: extrairHectares(compacto, areaM2),
     perimetro_m: extrairPerimetro(compacto),
     area_construida_m2: extrairAreaConstruida(compacto),
-    ...extrairLocalizacao(compacto, endereco, cadastros),
-    ultima_ficha: extrairUltimaFicha(compacto),
-    certificacao: extrairCertificacao(compacto),
-    registro_anterior: extrairRegistroAnterior(compacto),
-    encerrada: ENCERRAMENTO.test(compacto),
-    matriculas_abertas: extrairMatriculasAbertas(compacto),
-    ...partes,
+    descricao: limpar(descricaoMatch?.[1]) ?? "",
     prenotacao: extrairPrenotacao(compacto),
-    ato: ultimoAto ? rotuloAto(ultimoAto.tipo, ultimoAto.numero) : null,
+    tipo_ato: ultimoAto?.tipo ? `${ultimoAto.tipo}.` : null,
+    ato: ultimoAto?.numero ?? null,
     data_ato: ultimoAto?.data ?? null,
     selo: extrairSelo(compacto),
-    cadastros,
+    ...partes,
+    ...extrairQualificacao(compacto),
+    endereco: enderecoTitular,
+    situacao_titulares: partes.adquirente || partes.transmitente ? "ATIVO" : null,
     proprietarios: aplicarSituacaoProprietarios(extrairProprietarios(compacto), partes),
     atos,
     onus,
     onus_cancelados: onusCancelados,
   };
 }
+
+/** Estado civil, regime de bens, contatos e identificação do titular. */
+function extrairQualificacao(texto: string) {
+  const estados = ["solteiro", "casado", "separado", "divorciado", "viúvo", "viuvo"] as const;
+  const achado = estados.find((e) => new RegExp(`\\b${e}[oa]?s?\\b`, "i").test(texto));
+  const estadoCivil = achado ? (achado === "viuvo" ? "viúvo" : achado) : null;
+
+  const regimes: [RegExp, string][] = [
+    [/comunh[ãa]o\s+universal/i, "comunhão universal"],
+    [/comunh[ãa]o\s+parcial/i, "comunhão parcial"],
+    [/separa[çc][ãa]o\s+obrigat[óo]ria/i, "separação obrigatória"],
+    [/separa[çc][ãa]o\s+(?:absoluta|total|convencional)/i, "separação absoluta"],
+    [/participa[çc][ãa]o\s+final\s+nos\s+aquestos/i, "participação final nos aquestos"],
+    [/regime\s+misto/i, "regime misto"],
+  ];
+  const regBens = regimes.find(([re]) => re.test(texto))?.[1] ?? null;
+
+  const dataCasamento = (() => {
+    const j = texto.match(/casad[oa][^.;]{0,120}?(\d{1,2}[/.-]\d{1,2}[/.-]\d{4})/i)?.[1];
+    return j ? normalizarData(j) : null;
+  })();
+
+  const leiCasamento = dataCasamento
+    ? dataCasamento < "1977-12-27"
+      ? "antes da Lei 6.515/77"
+      : "depois da Lei 6.515/77"
+    : null;
+
+  const pacto = capturar(texto, [
+    /pacto\s+antenupcial[^.;]{0,160}/i,
+  ]);
+
+  const email = capturar(texto, [/\b([\w.\-+]+@[\w.\-]+\.[A-Za-z]{2,})\b/]);
+  const telefone = capturar(texto, [
+    /(?:telefone|fone|celular|tel\.?)\s*[:\-]?\s*(\(?\d{2}\)?\s?\d{4,5}-?\d{4})/i,
+  ]);
+  const identificacao = capturar(texto, [
+    /\b(?:CPF|C\.P\.F\.|CNPJ|C\.N\.P\.J\.)\b\s*(?:n[.º°]*)?\s*[:\-]?\s*([\d.\-/]{11,18})/i,
+  ]);
+  const inscricaoEstadual = capturar(texto, [
+    /(?:inscri[çc][ãa]o estadual|NIRE|RCPJ)\s*(?:n[.º°]*)?\s*[:\-]?\s*([\w.\-/]{4,30})/i,
+  ]);
+
+  return {
+    estado_civil: estadoCivil,
+    data_casamento: dataCasamento,
+    lei_casamento: leiCasamento,
+    reg_bens: regBens,
+    pacto,
+    email,
+    telefone,
+    identificacao,
+    inscricao_estadual: inscricaoEstadual,
+  };
+}
+
 
 /** Nome próprio logo após um rótulo de parte (adquirente, transmitente…). */
 function nomeApos(texto: string, rotulos: string[]): string | null {
@@ -455,6 +537,8 @@ function extrairPartes(texto: string) {
     "cedente",
   ]);
   const usufrutuario = nomeApos(texto, ["usufrutu[áa]ri[oa]", "usufruto\\s+em\\s+favor\\s+de"]);
+  const outorgante = nomeApos(texto, ["outorgante"]);
+  const outorgado = nomeApos(texto, ["outorgad[oa]"]);
   return {
     adquirente,
     conjuge_adq: conjugeDe(texto, adquirente),
@@ -462,8 +546,17 @@ function extrairPartes(texto: string) {
     conjuge_transm: conjugeDe(texto, transmitente),
     usufrutuario,
     conjuge_usu: conjugeDe(texto, usufrutuario),
+    outorgante,
+    conjuge_outorgante: conjugeDe(texto, outorgante),
+    outorgado,
+    conjuge_outorgado: conjugeDe(texto, outorgado),
+    credor: nomeApos(texto, ["credor(?:a)?", "credor(?:a)?\\s+hipotec[áa]ri[oa]", "credor(?:a)?\\s+fiduci[áa]ri[oa]"]),
+    devedor: nomeApos(texto, ["devedor(?:a)?", "devedor(?:a)?\\s+fiduciante", "fiduciante"]),
+    serviente: nomeApos(texto, ["serviente", "pr[ée]dio\\s+serviente", "im[óo]vel\\s+serviente"]),
+    dominante: nomeApos(texto, ["dominante", "pr[ée]dio\\s+dominante", "im[óo]vel\\s+dominante"]),
   };
 }
+
 
 function extrairPrenotacao(texto: string): string | null {
   return capturar(texto, [
@@ -539,21 +632,18 @@ function extrairMatriculasAbertas(texto: string): string[] {
 
 /** Campos exibidos na revisão e exportados na ordem do layout padrão. */
 export const CAMPOS_INDICE: { chave: keyof MatriculaIndexada; rotulo: string }[] = [
-  { chave: "matricula_numero", rotulo: "Matrícula" },
+  { chave: "tipo_livro", rotulo: "Tipo de livro" },
   { chave: "livro", rotulo: "Livro" },
-  { chave: "folha", rotulo: "Folha" },
-  { chave: "cartorio", rotulo: "Cartório" },
+  { chave: "cns", rotulo: "CNS" },
   { chave: "data_abertura", rotulo: "Data de abertura" },
-  { chave: "natureza", rotulo: "Natureza" },
-  { chave: "endereco", rotulo: "Endereço" },
-  { chave: "municipio", rotulo: "Município" },
-  { chave: "uf", rotulo: "UF" },
-  { chave: "area_m2", rotulo: "Área (m²)" },
   { chave: "ultima_ficha", rotulo: "Última ficha" },
-  { chave: "certificacao", rotulo: "Certificação (INCRA)" },
   { chave: "registro_anterior", rotulo: "Registro anterior" },
+  { chave: "natureza", rotulo: "Natureza" },
+  { chave: "certificacao", rotulo: "Certificação (INCRA)" },
+  { chave: "area_m2", rotulo: "Área (m²)" },
   { chave: "descricao", rotulo: "Descrição" },
 ];
+
 
 const TIPOS_LOGRADOURO = [
   "rua","avenida","alameda","travessa","praça","praca","rodovia","estrada","via","viela",
@@ -566,14 +656,10 @@ const TIPOS_RURAL = [
 ];
 
 /**
- * Decompõe o endereço urbano (CEP, tipo/nome/número de logradouro, lote e quadra)
- * e a identificação rural (tipo e denominação), além do CIM.
+ * Decompõe a identificação urbana (CEP, logradouro, bairro, lote/quadra,
+ * condomínio, unidade, andar e bloco) e a identificação rural.
  */
-function extrairLocalizacao(
-  compacto: string,
-  endereco: string,
-  cadastros: IndexCadastros,
-) {
+function extrairLocalizacao(compacto: string, endereco: string) {
   const base = `${endereco} ${compacto}`;
 
   const cep = capturar(base, [/\bCEP\s*[:\-]?\s*(\d{5}-?\d{3})\b/i, /\b(\d{5}-\d{3})\b/]);
@@ -591,8 +677,29 @@ function extrairLocalizacao(
       /,\s*(\d{1,6})\s*(?:,|-|$)/,
     ])?.replace(/\s+/g, "").toUpperCase() ?? null;
 
+  const bairro =
+    capturar(base, [
+      /\bbairro\s*(?:de|do|da)?\s*[:\-]?\s*([A-Za-zÀ-ÿ0-9'’.\- ]{3,60})/i,
+    ])?.toUpperCase() ?? null;
+
   const lote = capturar(base, [/\blote\s*(?:n[.º°]*)?\s*[:\-]?\s*([A-Z0-9\-/]{1,10})\b/i])?.toUpperCase() ?? null;
   const quadra = capturar(base, [/\bquadra\s*(?:n[.º°]*)?\s*[:\-]?\s*([A-Z0-9\-/]{1,10})\b/i])?.toUpperCase() ?? null;
+
+  const condominio =
+    capturar(base, [
+      /\b(?:cond[oô]m[íi]nio|edif[íi]cio|residencial)\s*(?:denominad[oa]\s*)?["'“]?([A-Za-zÀ-ÿ0-9'’.\- ]{3,60})/i,
+    ])?.toUpperCase() ?? null;
+  const unidade =
+    capturar(base, [
+      /\b(?:unidade(?:\s+aut[ôo]noma)?|apartamento|apto\.?|sala|loja|box|vaga)\s*(?:n[.º°]*)?\s*[:\-]?\s*([A-Z0-9\-/]{1,10})\b/i,
+    ])?.toUpperCase() ?? null;
+  const andar =
+    capturar(base, [
+      /\b(\d{1,3}[ºo°]?)\s*(?:andar|pavimento)\b/i,
+      /\b(?:andar|pavimento)\s*[:\-]?\s*([A-Z0-9\-º°]{1,6})\b/i,
+    ])?.toUpperCase() ?? null;
+  const bloco =
+    capturar(base, [/\b(?:bloco|torre)\s*[:\-]?\s*([A-Z0-9\-]{1,6})\b/i])?.toUpperCase() ?? null;
 
   const altR = TIPOS_RURAL.map((t) => t.replace(/ /g, "\\s+")).join("|");
   const mRural = base.match(
@@ -601,23 +708,23 @@ function extrairLocalizacao(
   const tipoRural = mRural?.[1] ? limpar(mRural[1])!.toUpperCase() : null;
   const denominacaoRural = mRural?.[2] ? limpar(mRural[2])?.toUpperCase() ?? null : null;
 
-  const cim =
-    capturar(base, [
-      /(?:CIM|cadastro\s+imobili[áa]rio\s+municipal)\s*(?:n[.º°]*)?\s*[:\-]?\s*([\w.\-/]{3,40})/i,
-    ]) ?? (cadastros as Record<string, unknown>)['cadastro_municipal'] as string | undefined ?? null;
-
   return {
     cep: cep ? cep.replace(/^(\d{5})-?(\d{3})$/, "$1-$2") : null,
     tipo_logradouro: tipoLogradouro,
     logradouro,
     numero_logradouro: numeroLogradouro,
-    tipo_rural: tipoRural,
-    denominacao_rural: denominacaoRural,
+    bairro,
     lote,
     quadra,
-    cim: cim ? String(cim) : null,
+    condominio,
+    unidade,
+    andar,
+    bloco,
+    tipo_rural: tipoRural,
+    denominacao_rural: denominacaoRural,
   };
 }
+
 
 const numeroBr = (v: string | undefined | null): number | null => {
   if (!v) return null;

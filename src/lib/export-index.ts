@@ -1,7 +1,7 @@
 /**
- * CheckIndex — exportação dos dados indexados em formatos legíveis por
- * sistemas de cartório: CSV (delimitado por ponto e vírgula, UTF-8 com BOM),
- * XLSX e JSON.
+ * CheckIndex — exportação dos dados indexados nos campos do sistema do
+ * Cartório (indicador real + indicador pessoal), em CSV (ponto e vírgula,
+ * UTF-8 com BOM), XLSX e JSON.
  */
 import type { IndexAto, IndexCadastros, IndexProprietario } from "./matricula-index-parser";
 import { rotuloAto } from "./matricula-index-parser";
@@ -9,109 +9,174 @@ import { rotuloAto } from "./matricula-index-parser";
 export type RegistroIndexado = {
   id: string;
   label: string;
-  matricula_numero: string | null;
+  /** 2 = Matrícula; 3 = Registro Auxiliar. */
+  tipo_livro: number | null;
   livro: string | null;
-  folha: string | null;
-  cartorio: string | null;
+  matricula_numero: string | null;
+  cns: string | null;
   data_abertura: string | null;
+  ultima_ficha: string | null;
+  registro_anterior: string | null;
+  encerrada: boolean | null;
+  matriculas_abertas: string[] | null;
   natureza: string;
-  descricao: string;
-  endereco: string;
-  municipio: string | null;
-  uf: string | null;
-  area_m2: number | string | null;
-  area_hectare: number | string | null;
-  perimetro_m: number | string | null;
-  area_construida_m2: number | string | null;
   cep: string | null;
   tipo_logradouro: string | null;
   logradouro: string | null;
   numero_logradouro: string | null;
-  tipo_rural: string | null;
-  denominacao_rural: string | null;
+  bairro: string | null;
   lote: string | null;
   quadra: string | null;
+  condominio: string | null;
+  unidade: string | null;
+  andar: string | null;
+  bloco: string | null;
+  tipo_rural: string | null;
+  denominacao_rural: string | null;
   cim: string | null;
-  cadastros: IndexCadastros | Record<string, unknown> | null;
-  proprietarios: IndexProprietario[] | unknown;
-  atos: IndexAto[] | unknown;
-  onus: IndexAto[] | unknown;
-  ultima_ficha: string | null;
   certificacao: string | null;
-  registro_anterior: string | null;
-  encerrada: boolean | null;
-  matriculas_abertas: string[] | null;
+  cadastros: IndexCadastros | Record<string, unknown> | null;
+  area_m2: number | string | null;
+  area_hectare: number | string | null;
+  perimetro_m: number | string | null;
+  area_construida_m2: number | string | null;
+  descricao: string;
+  prenotacao: string | null;
+  tipo_ato: string | null;
+  ato: string | null;
+  data_ato: string | null;
+  selo: string | null;
   adquirente: string | null;
   conjuge_adq: string | null;
   transmitente: string | null;
   conjuge_transm: string | null;
   usufrutuario: string | null;
   conjuge_usu: string | null;
-  prenotacao: string | null;
-  ato: string | null;
-  data_ato: string | null;
-  selo: string | null;
+  outorgante: string | null;
+  conjuge_outorgante: string | null;
+  outorgado: string | null;
+  conjuge_outorgado: string | null;
+  credor: string | null;
+  devedor: string | null;
+  serviente: string | null;
+  dominante: string | null;
+  estado_civil: string | null;
+  data_casamento: string | null;
+  lei_casamento: string | null;
+  reg_bens: string | null;
+  pacto: string | null;
+  endereco: string;
+  email: string | null;
+  telefone: string | null;
+  identificacao: string | null;
+  inscricao_estadual: string | null;
+  situacao_titulares: string | null;
+  proprietarios: IndexProprietario[] | unknown;
+  atos: IndexAto[] | unknown;
+  onus: IndexAto[] | unknown;
   review_status: string;
 };
 
 export const COLUNAS_EXPORT = [
-  "MATRICULA",
+  // Indicador real
+  "TIPO_LIVRO",
   "LIVRO",
-  "FOLHA",
-  "CARTORIO",
+  "CNS",
   "DATA_ABERTURA",
+  "ULTIMAFICHA",
+  "REGISTROANTERIOR",
+  "ENCERRADA",
   "NATUREZA",
-  "ENDERECO",
   "CEP",
   "TIPO_LOGRADOURO",
   "LOGRADOURO",
   "NUMERO_LOGRADOURO",
-  "TIPO_RURAL",
-  "DENOMINACAO_RURAL",
+  "BAIRRO",
   "LOTE",
   "QUADRA",
+  "CONDOMINIO",
+  "UNIDADE",
+  "ANDAR",
+  "BLOCO",
+  "TIPO_RURAL",
+  "DENOMINACAO_RURAL",
+  "CIB",
   "CIM",
-  "MUNICIPIO",
-  "UF",
+  "CCIR",
+  "CAR",
+  "CERTIFICACAO",
   "AREA_M2",
   "AREA_HECTARE",
   "PERIMETRO",
   "AREA_CONSTRUIDA",
-  "CADASTRO_MUNICIPAL",
-  "CIB",
-  "CCIR",
-  "CAR",
-  "INSCRICAO_ESTADUAL",
-  "PROPRIETARIOS",
-  "DOCUMENTOS_PROPRIETARIOS",
-  "SITUACAO_PROPRIETARIOS",
-  "PROPRIETARIOS_ATIVOS",
-  "PROPRIETARIOS_INATIVOS",
-  "QTD_ATOS",
-  "ONUS",
-  "ONUS_CANCELADOS",
-  "SITUACAO_ONUS",
-  "ULTIMAFICHA",
-  "CERTIFICACAO",
-  "REGISTROANTERIOR",
-  "ENCERRADA",
+  // Indicador pessoal
+  "PRENOTACAO",
+  "TIPO_ATO",
+  "ATO",
+  "DATA_ATO",
+  "SELO",
   "ADQUIRENTE",
   "CONJUGE_ADQ",
   "TRANSMITENTE",
   "CONJUGE_TRANSM",
   "USUFRUTUARIO",
   "CONJUGE_USU",
-  "PRENOTACAO",
-  "ATO",
-  "DATA_ATO",
-  "SELO",
+  "OUTORGANTE",
+  "CONJUGE_OUTORGANTE",
+  "OUTORGADO",
+  "CONJUGE_OUTORGADO",
+  "CREDOR",
+  "DEVEDOR",
+  "SERVIENTE",
+  "DOMINANTE",
+  "ESTADO_CIVIL",
+  "DATA_CASAMENTO",
+  "LEI_CASAMENTO",
+  "REG_BENS",
+  "PACTO",
+  "ENDERECO",
+  "EMAIL",
+  "TELEFONE",
+  "IDENTIFICACAO",
+  "INSCRICAO_ESTADUAL",
+  "SITUACAO_TITULARES",
+  // Apoio ao relatório do CheckIndex
+  "PROPRIETARIOS_ATIVOS",
+  "PROPRIETARIOS_INATIVOS",
+  "QTD_ATOS",
+  "ONUS_VIGENTES",
+  "ONUS_CANCELADOS",
+  // Controle interno
   "SITUACAO",
 ] as const;
 
-const numero = (v: unknown): string | number =>
-  v === null || v === undefined || v === "" ? "" : Number(v);
-
 const texto = (v: unknown): string => (v === null || v === undefined ? "" : String(v));
+
+/** Número no padrão brasileiro: separador de milhar e casas decimais fixas. */
+function numeroBr(v: unknown, casas: number): string {
+  if (v === null || v === undefined || v === "") return "";
+  const n = Number(v);
+  if (!Number.isFinite(n)) return "";
+  return n.toLocaleString("pt-BR", {
+    minimumFractionDigits: casas,
+    maximumFractionDigits: casas,
+  });
+}
+
+/** Datas gravadas como AAAA-MM-DD são exportadas em DD/MM/AAAA. */
+function dataBr(v: unknown): string {
+  const s = texto(v);
+  const iso = s.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  return iso ? `${iso[3]}/${iso[2]}/${iso[1]}` : s;
+}
+
+/** Número do livro com separador de milhar (10345 -> 10.345). */
+function livroBr(v: unknown): string {
+  const s = texto(v);
+  const d = s.replace(/\D/g, "");
+  if (!d) return s;
+  return String(Number(d)).replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+}
 
 /** ENCERRADA:10.345;10.346 — matrículas abertas a partir da encerrada. */
 function encerramento(r: RegistroIndexado): string {
@@ -129,7 +194,7 @@ const rotuloOnus = (o: IndexAto): string => {
   return grav ? `${base} (${grav})` : base;
 };
 
-/** ATIVO = proprietário atual; INATIVO = titular anterior. */
+/** ATIVO = titular atual; INATIVO = titular anterior. */
 const situacaoProp = (p: IndexProprietario): "ATIVO" | "INATIVO" =>
   p.situacao === "INATIVO" ? "INATIVO" : "ATIVO";
 
@@ -142,36 +207,66 @@ export function linhaDoRegistro(r: RegistroIndexado): (string | number)[] {
   const atos = lista<IndexAto>(r.atos);
 
   return [
-    texto(r.matricula_numero),
-    texto(r.livro),
-    texto(r.folha),
-    texto(r.cartorio),
-    texto(r.data_abertura),
+    r.tipo_livro ?? 2,
+    livroBr(r.livro ?? r.matricula_numero),
+    texto(r.cns),
+    dataBr(r.data_abertura),
+    texto(r.ultima_ficha).toUpperCase(),
+    texto(r.registro_anterior),
+    encerramento(r),
     texto(r.natureza).toUpperCase(),
-    texto(r.endereco),
     texto(r.cep),
     texto(r.tipo_logradouro),
     texto(r.logradouro),
     texto(r.numero_logradouro),
-    texto(r.tipo_rural),
-    texto(r.denominacao_rural),
+    texto(r.bairro),
     texto(r.lote),
     texto(r.quadra),
-    texto(r.cim),
-    texto(r.municipio),
-    texto(r.uf),
-    numero(r.area_m2),
-    numero(r.area_hectare),
-    numero(r.perimetro_m),
-    numero(r.area_construida_m2),
-    texto(cad['cadastro_municipal']),
+    texto(r.condominio),
+    texto(r.unidade),
+    texto(r.andar),
+    texto(r.bloco),
+    texto(r.tipo_rural),
+    texto(r.denominacao_rural),
     texto(cad['cib']),
+    texto(r.cim ?? cad['cim']),
     texto(cad['ccir']),
     texto(cad['car']),
-    texto(cad['inscricao_estadual']),
-    props.map((p) => texto(p.nome)).filter(Boolean).join(" | "),
-    props.map((p) => texto(p.cpf_cnpj)).filter(Boolean).join(" | "),
-    props.map(situacaoProp).join(" | "),
+    texto(r.certificacao),
+    numeroBr(r.area_m2, 2),
+    numeroBr(r.area_hectare, 4),
+    numeroBr(r.perimetro_m, 4),
+    numeroBr(r.area_construida_m2, 2),
+    texto(r.prenotacao),
+    texto(r.tipo_ato).toUpperCase(),
+    texto(r.ato),
+    dataBr(r.data_ato),
+    texto(r.selo),
+    texto(r.adquirente),
+    texto(r.conjuge_adq),
+    texto(r.transmitente),
+    texto(r.conjuge_transm),
+    texto(r.usufrutuario),
+    texto(r.conjuge_usu),
+    texto(r.outorgante),
+    texto(r.conjuge_outorgante),
+    texto(r.outorgado),
+    texto(r.conjuge_outorgado),
+    texto(r.credor),
+    texto(r.devedor),
+    texto(r.serviente),
+    texto(r.dominante),
+    texto(r.estado_civil),
+    dataBr(r.data_casamento),
+    texto(r.lei_casamento),
+    texto(r.reg_bens),
+    texto(r.pacto),
+    texto(r.endereco),
+    texto(r.email),
+    texto(r.telefone),
+    texto(r.identificacao),
+    texto(r.inscricao_estadual),
+    texto(r.situacao_titulares).toUpperCase(),
     props.filter((p) => situacaoProp(p) === "ATIVO").map((p) => texto(p.nome)).filter(Boolean).join(" | "),
     props.filter((p) => situacaoProp(p) === "INATIVO").map((p) => texto(p.nome)).filter(Boolean).join(" | "),
     atos.length,
@@ -179,21 +274,6 @@ export function linhaDoRegistro(r: RegistroIndexado): (string | number)[] {
     onusCancelados
       .map((o) => `${rotuloOnus(o)}${o.cancelado_por ? ` cancelado por ${o.cancelado_por}` : " cancelado"}`)
       .join(" | "),
-    [...onus.map(() => "ATIVO"), ...onusCancelados.map(() => "INATIVO")].join(" | "),
-    texto(r.ultima_ficha).toUpperCase(),
-    texto(r.certificacao),
-    texto(r.registro_anterior),
-    encerramento(r),
-    texto(r.adquirente),
-    texto(r.conjuge_adq),
-    texto(r.transmitente),
-    texto(r.conjuge_transm),
-    texto(r.usufrutuario),
-    texto(r.conjuge_usu),
-    texto(r.prenotacao),
-    texto(r.ato),
-    texto(r.data_ato),
-    texto(r.selo),
     texto(r.review_status).toUpperCase(),
   ];
 }

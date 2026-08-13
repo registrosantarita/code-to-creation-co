@@ -280,28 +280,11 @@ function LoteDetalhe() {
 
                 <dl className="mt-4 grid gap-3 text-sm sm:grid-cols-3 lg:grid-cols-4">
                   {[
-                    ["Livro", r.livro],
-                    ["Folha", r.folha],
-                    ["Cartório", r.cartorio],
+                    ["Tipo de livro", r.tipo_livro === 3 ? "3 — Registro Auxiliar" : "2 — Matrícula"],
+                    ["Livro", r.livro ?? r.matricula_numero],
+                    ["CNS", r.cns],
                     ["Abertura", r.data_abertura],
-                    ["Natureza", NATUREZA_LABEL[r.natureza] ?? r.natureza],
-                    ["Município", r.municipio],
-                    ["UF", r.uf],
-                    ["Área (m²)", r.area_m2],
-                    ["Área (ha)", r.area_hectare],
-                    ["Perímetro (m)", r.perimetro_m],
-                    ["Área construída (m²)", r.area_construida_m2],
-                    ["CEP", r.cep],
-                    ["Tipo de logradouro", r.tipo_logradouro],
-                    ["Logradouro", r.logradouro],
-                    ["Número", r.numero_logradouro],
-                    ["Tipo rural", r.tipo_rural],
-                    ["Denominação rural", r.denominacao_rural],
-                    ["Lote", r.lote],
-                    ["Quadra", r.quadra],
-                    ["CIM", r.cim],
                     ["Última ficha", r.ultima_ficha],
-                    ["Certificação (INCRA)", r.certificacao],
                     ["Registro anterior", r.registro_anterior],
                     [
                       "Encerrada",
@@ -309,21 +292,60 @@ function LoteDetalhe() {
                         ? `ENCERRADA:${(r.matriculas_abertas ?? []).join(";")}`
                         : null,
                     ],
-                    ["Cadastro municipal", cad['cadastro_municipal']],
+                    ["Natureza", NATUREZA_LABEL[r.natureza] ?? r.natureza],
+                    ["CEP", r.cep],
+                    ["Tipo de logradouro", r.tipo_logradouro],
+                    ["Logradouro", r.logradouro],
+                    ["Número", r.numero_logradouro],
+                    ["Bairro", r.bairro],
+                    ["Lote", r.lote],
+                    ["Quadra", r.quadra],
+                    ["Condomínio", r.condominio],
+                    ["Unidade", r.unidade],
+                    ["Andar", r.andar],
+                    ["Bloco", r.bloco],
+                    ["Tipo rural", r.tipo_rural],
+                    ["Denominação rural", r.denominacao_rural],
                     ["CIB", cad['cib']],
+                    ["CIM", r.cim ?? cad['cim']],
                     ["CCIR", cad['ccir']],
                     ["CAR", cad['car']],
+                    ["Certificação (INCRA)", r.certificacao],
+                    ["Área (m²)", r.area_m2],
+                    ["Área (ha)", r.area_hectare],
+                    ["Perímetro (m)", r.perimetro_m],
+                    ["Área construída (m²)", r.area_construida_m2],
+                    ["Prenotação", r.prenotacao],
+                    ["Tipo de ato", r.tipo_ato],
+                    ["Ato", r.ato],
+                    ["Data do ato", r.data_ato],
+                    ["Selo", r.selo],
                     ["Adquirente", r.adquirente],
                     ["Cônjuge do adquirente", r.conjuge_adq],
                     ["Transmitente", r.transmitente],
                     ["Cônjuge do transmitente", r.conjuge_transm],
                     ["Usufrutuário", r.usufrutuario],
                     ["Cônjuge do usufrutuário", r.conjuge_usu],
-                    ["Prenotação", r.prenotacao],
-                    ["Ato", r.ato],
-                    ["Data do ato", r.data_ato],
-                    ["Selo", r.selo],
+                    ["Outorgante", r.outorgante],
+                    ["Cônjuge do outorgante", r.conjuge_outorgante],
+                    ["Outorgado", r.outorgado],
+                    ["Cônjuge do outorgado", r.conjuge_outorgado],
+                    ["Credor", r.credor],
+                    ["Devedor", r.devedor],
+                    ["Serviente", r.serviente],
+                    ["Dominante", r.dominante],
+                    ["Estado civil", r.estado_civil],
+                    ["Data do casamento", r.data_casamento],
+                    ["Lei do casamento", r.lei_casamento],
+                    ["Regime de bens", r.reg_bens],
+                    ["Pacto antenupcial", r.pacto],
+                    ["E-mail", r.email],
+                    ["Telefone", r.telefone],
+                    ["Identificação (CPF/CNPJ)", r.identificacao],
+                    ["Inscrição estadual", r.inscricao_estadual],
+                    ["Situação do titular", r.situacao_titulares],
                   ].map(([rotulo, valor]) => (
+
                     <div key={String(rotulo)}>
                       <dt className="eyebrow">{rotulo}</dt>
                       <dd className="text-foreground">
@@ -339,7 +361,7 @@ function LoteDetalhe() {
 
                 {r.endereco && (
                   <p className="mt-3 text-sm text-muted-foreground">
-                    <span className="eyebrow mr-2">Endereço</span>
+                    <span className="eyebrow mr-2">Endereço do titular</span>
                     {r.endereco}
                   </p>
                 )}

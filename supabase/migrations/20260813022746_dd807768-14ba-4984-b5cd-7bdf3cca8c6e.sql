@@ -1,0 +1,33 @@
+ALTER TABLE public.index_records
+  ADD COLUMN IF NOT EXISTS tipo_livro smallint NOT NULL DEFAULT 2,
+  ADD COLUMN IF NOT EXISTS cns text,
+  ADD COLUMN IF NOT EXISTS bairro text,
+  ADD COLUMN IF NOT EXISTS condominio text,
+  ADD COLUMN IF NOT EXISTS unidade text,
+  ADD COLUMN IF NOT EXISTS andar text,
+  ADD COLUMN IF NOT EXISTS bloco text,
+  ADD COLUMN IF NOT EXISTS tipo_ato text,
+  ADD COLUMN IF NOT EXISTS outorgante text,
+  ADD COLUMN IF NOT EXISTS conjuge_outorgante text,
+  ADD COLUMN IF NOT EXISTS outorgado text,
+  ADD COLUMN IF NOT EXISTS conjuge_outorgado text,
+  ADD COLUMN IF NOT EXISTS credor text,
+  ADD COLUMN IF NOT EXISTS devedor text,
+  ADD COLUMN IF NOT EXISTS serviente text,
+  ADD COLUMN IF NOT EXISTS dominante text,
+  ADD COLUMN IF NOT EXISTS estado_civil text,
+  ADD COLUMN IF NOT EXISTS data_casamento text,
+  ADD COLUMN IF NOT EXISTS lei_casamento text,
+  ADD COLUMN IF NOT EXISTS reg_bens text,
+  ADD COLUMN IF NOT EXISTS pacto text,
+  ADD COLUMN IF NOT EXISTS email text,
+  ADD COLUMN IF NOT EXISTS telefone text,
+  ADD COLUMN IF NOT EXISTS identificacao text,
+  ADD COLUMN IF NOT EXISTS inscricao_estadual text,
+  ADD COLUMN IF NOT EXISTS situacao_titulares text;
+
+ALTER TABLE public.index_records
+  DROP COLUMN IF EXISTS folha,
+  DROP COLUMN IF EXISTS cartorio,
+  DROP COLUMN IF EXISTS municipio,
+  DROP COLUMN IF EXISTS uf;

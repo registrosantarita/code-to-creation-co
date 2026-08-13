@@ -392,172 +392,238 @@ export type Database = {
       index_records: {
         Row: {
           adquirente: string | null
+          andar: string | null
           area_construida_m2: number | null
           area_hectare: number | null
           area_m2: number | null
           ato: string | null
           atos: Json
+          bairro: string | null
           batch_id: string
+          bloco: string | null
           cadastros: Json
-          cartorio: string | null
           cep: string | null
           certificacao: string | null
           cim: string | null
+          cns: string | null
+          condominio: string | null
           conjuge_adq: string | null
+          conjuge_outorgado: string | null
+          conjuge_outorgante: string | null
           conjuge_transm: string | null
           conjuge_usu: string | null
           created_at: string
           created_by: string
+          credor: string | null
           data_abertura: string | null
           data_ato: string | null
+          data_casamento: string | null
           denominacao_rural: string | null
           descricao: string
+          devedor: string | null
+          dominante: string | null
+          email: string | null
           encerrada: boolean
           endereco: string
+          estado_civil: string | null
           extracted: Json
           extraction_source: string
           file_extension: string | null
           file_name: string | null
-          folha: string | null
           id: string
+          identificacao: string | null
+          inscricao_estadual: string | null
           label: string
+          lei_casamento: string | null
           livro: string | null
           logradouro: string | null
           lote: string | null
           matricula_numero: string | null
           matriculas_abertas: string[]
-          municipio: string | null
           natureza: string
           numero_logradouro: string | null
           onus: Json
+          outorgado: string | null
+          outorgante: string | null
+          pacto: string | null
           perimetro_m: number | null
           prenotacao: string | null
           proprietarios: Json
           quadra: string | null
           raw_text: string
+          reg_bens: string | null
           registro_anterior: string | null
           review_status: string
           selo: string | null
+          serviente: string | null
+          situacao_titulares: string | null
           source_type: string
+          telefone: string | null
+          tipo_ato: string | null
+          tipo_livro: number
           tipo_logradouro: string | null
           tipo_rural: string | null
           transmitente: string | null
-          uf: string | null
           ultima_ficha: string | null
+          unidade: string | null
           updated_at: string
           usufrutuario: string | null
         }
         Insert: {
           adquirente?: string | null
+          andar?: string | null
           area_construida_m2?: number | null
           area_hectare?: number | null
           area_m2?: number | null
           ato?: string | null
           atos?: Json
+          bairro?: string | null
           batch_id: string
+          bloco?: string | null
           cadastros?: Json
-          cartorio?: string | null
           cep?: string | null
           certificacao?: string | null
           cim?: string | null
+          cns?: string | null
+          condominio?: string | null
           conjuge_adq?: string | null
+          conjuge_outorgado?: string | null
+          conjuge_outorgante?: string | null
           conjuge_transm?: string | null
           conjuge_usu?: string | null
           created_at?: string
           created_by: string
+          credor?: string | null
           data_abertura?: string | null
           data_ato?: string | null
+          data_casamento?: string | null
           denominacao_rural?: string | null
           descricao?: string
+          devedor?: string | null
+          dominante?: string | null
+          email?: string | null
           encerrada?: boolean
           endereco?: string
+          estado_civil?: string | null
           extracted?: Json
           extraction_source?: string
           file_extension?: string | null
           file_name?: string | null
-          folha?: string | null
           id?: string
+          identificacao?: string | null
+          inscricao_estadual?: string | null
           label?: string
+          lei_casamento?: string | null
           livro?: string | null
           logradouro?: string | null
           lote?: string | null
           matricula_numero?: string | null
           matriculas_abertas?: string[]
-          municipio?: string | null
           natureza?: string
           numero_logradouro?: string | null
           onus?: Json
+          outorgado?: string | null
+          outorgante?: string | null
+          pacto?: string | null
           perimetro_m?: number | null
           prenotacao?: string | null
           proprietarios?: Json
           quadra?: string | null
           raw_text?: string
+          reg_bens?: string | null
           registro_anterior?: string | null
           review_status?: string
           selo?: string | null
+          serviente?: string | null
+          situacao_titulares?: string | null
           source_type?: string
+          telefone?: string | null
+          tipo_ato?: string | null
+          tipo_livro?: number
           tipo_logradouro?: string | null
           tipo_rural?: string | null
           transmitente?: string | null
-          uf?: string | null
           ultima_ficha?: string | null
+          unidade?: string | null
           updated_at?: string
           usufrutuario?: string | null
         }
         Update: {
           adquirente?: string | null
+          andar?: string | null
           area_construida_m2?: number | null
           area_hectare?: number | null
           area_m2?: number | null
           ato?: string | null
           atos?: Json
+          bairro?: string | null
           batch_id?: string
+          bloco?: string | null
           cadastros?: Json
-          cartorio?: string | null
           cep?: string | null
           certificacao?: string | null
           cim?: string | null
+          cns?: string | null
+          condominio?: string | null
           conjuge_adq?: string | null
+          conjuge_outorgado?: string | null
+          conjuge_outorgante?: string | null
           conjuge_transm?: string | null
           conjuge_usu?: string | null
           created_at?: string
           created_by?: string
+          credor?: string | null
           data_abertura?: string | null
           data_ato?: string | null
+          data_casamento?: string | null
           denominacao_rural?: string | null
           descricao?: string
+          devedor?: string | null
+          dominante?: string | null
+          email?: string | null
           encerrada?: boolean
           endereco?: string
+          estado_civil?: string | null
           extracted?: Json
           extraction_source?: string
           file_extension?: string | null
           file_name?: string | null
-          folha?: string | null
           id?: string
+          identificacao?: string | null
+          inscricao_estadual?: string | null
           label?: string
+          lei_casamento?: string | null
           livro?: string | null
           logradouro?: string | null
           lote?: string | null
           matricula_numero?: string | null
           matriculas_abertas?: string[]
-          municipio?: string | null
           natureza?: string
           numero_logradouro?: string | null
           onus?: Json
+          outorgado?: string | null
+          outorgante?: string | null
+          pacto?: string | null
           perimetro_m?: number | null
           prenotacao?: string | null
           proprietarios?: Json
           quadra?: string | null
           raw_text?: string
+          reg_bens?: string | null
           registro_anterior?: string | null
           review_status?: string
           selo?: string | null
+          serviente?: string | null
+          situacao_titulares?: string | null
           source_type?: string
+          telefone?: string | null
+          tipo_ato?: string | null
+          tipo_livro?: number
           tipo_logradouro?: string | null
           tipo_rural?: string | null
           transmitente?: string | null
-          uf?: string | null
           ultima_ficha?: string | null
+          unidade?: string | null
           updated_at?: string
           usufrutuario?: string | null
         }
