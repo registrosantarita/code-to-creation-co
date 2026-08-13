@@ -326,6 +326,7 @@ function AnaliseDetalhe() {
     onSuccess: () => {
       refreshDocs();
       queryClient.invalidateQueries({ queryKey: ["comparisons", id] });
+      queryClient.invalidateQueries({ queryKey: ["findings-analise", id] });
       toast.success("Documento excluído.");
     },
     onError: (e: Error) => toast.error(e.message),
@@ -371,6 +372,7 @@ function AnaliseDetalhe() {
     },
     onSuccess: (res) => {
       queryClient.invalidateQueries({ queryKey: ["comparisons", id] });
+      queryClient.invalidateQueries({ queryKey: ["findings-analise", id] });
       if (res.length === 0) return;
       if (res.length > 1) {
         const divergentes = res.filter(
@@ -402,6 +404,7 @@ function AnaliseDetalhe() {
     },
     onSuccess: (res) => {
       queryClient.invalidateQueries({ queryKey: ["comparisons", id] });
+      queryClient.invalidateQueries({ queryKey: ["findings-analise", id] });
       queryClient.invalidateQueries({ queryKey: ["findings", id] });
       toast.success(
         ("modo" in res && res.modo === "cotas_avulsas"
