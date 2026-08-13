@@ -659,14 +659,10 @@ const TIPOS_RURAL = [
 ];
 
 /**
- * Decompõe o endereço urbano (CEP, tipo/nome/número de logradouro, lote e quadra)
- * e a identificação rural (tipo e denominação), além do CIM.
+ * Decompõe a identificação urbana (CEP, logradouro, bairro, lote/quadra,
+ * condomínio, unidade, andar e bloco) e a identificação rural.
  */
-function extrairLocalizacao(
-  compacto: string,
-  endereco: string,
-  cadastros: IndexCadastros,
-) {
+function extrairLocalizacao(compacto: string, endereco: string) {
   const base = `${endereco} ${compacto}`;
 
   const cep = capturar(base, [/\bCEP\s*[:\-]?\s*(\d{5}-?\d{3})\b/i, /\b(\d{5}-\d{3})\b/]);
@@ -684,8 +680,29 @@ function extrairLocalizacao(
       /,\s*(\d{1,6})\s*(?:,|-|$)/,
     ])?.replace(/\s+/g, "").toUpperCase() ?? null;
 
+  const bairro =
+    capturar(base, [
+      /\bbairro\s*(?:de|do|da)?\s*[:\-]?\s*([A-Za-zÀ-ÿ0-9'’.\- ]{3,60})/i,
+    ])?.toUpperCase() ?? null;
+
   const lote = capturar(base, [/\blote\s*(?:n[.º°]*)?\s*[:\-]?\s*([A-Z0-9\-/]{1,10})\b/i])?.toUpperCase() ?? null;
   const quadra = capturar(base, [/\bquadra\s*(?:n[.º°]*)?\s*[:\-]?\s*([A-Z0-9\-/]{1,10})\b/i])?.toUpperCase() ?? null;
+
+  const condominio =
+    capturar(base, [
+      /\b(?:cond[oô]m[íi]nio|edif[íi]cio|residencial)\s*(?:denominad[oa]\s*)?["'“]?([A-Za-zÀ-ÿ0-9'’.\- ]{3,60})/i,
+    ])?.toUpperCase() ?? null;
+  const unidade =
+    capturar(base, [
+      /\b(?:unidade(?:\s+aut[ôo]noma)?|apartamento|apto\.?|sala|loja|box|vaga)\s*(?:n[.º°]*)?\s*[:\-]?\s*([A-Z0-9\-/]{1,10})\b/i,
+    ])?.toUpperCase() ?? null;
+  const andar =
+    capturar(base, [
+      /\b(\d{1,3}[ºo°]?)\s*(?:andar|pavimento)\b/i,
+      /\b(?:andar|pavimento)\s*[:\-]?\s*([A-Z0-9\-º°]{1,6})\b/i,
+    ])?.toUpperCase() ?? null;
+  const bloco =
+    capturar(base, [/\b(?:bloco|torre)\s*[:\-]?\s*([A-Z0-9\-]{1,6})\b/i])?.toUpperCase() ?? null;
 
   const altR = TIPOS_RURAL.map((t) => t.replace(/ /g, "\\s+")).join("|");
   const mRural = base.match(
@@ -694,23 +711,23 @@ function extrairLocalizacao(
   const tipoRural = mRural?.[1] ? limpar(mRural[1])!.toUpperCase() : null;
   const denominacaoRural = mRural?.[2] ? limpar(mRural[2])?.toUpperCase() ?? null : null;
 
-  const cim =
-    capturar(base, [
-      /(?:CIM|cadastro\s+imobili[áa]rio\s+municipal)\s*(?:n[.º°]*)?\s*[:\-]?\s*([\w.\-/]{3,40})/i,
-    ]) ?? (cadastros as Record<string, unknown>)['cadastro_municipal'] as string | undefined ?? null;
-
   return {
     cep: cep ? cep.replace(/^(\d{5})-?(\d{3})$/, "$1-$2") : null,
     tipo_logradouro: tipoLogradouro,
     logradouro,
     numero_logradouro: numeroLogradouro,
-    tipo_rural: tipoRural,
-    denominacao_rural: denominacaoRural,
+    bairro,
     lote,
     quadra,
-    cim: cim ? String(cim) : null,
+    condominio,
+    unidade,
+    andar,
+    bloco,
+    tipo_rural: tipoRural,
+    denominacao_rural: denominacaoRural,
   };
 }
+
 
 const numeroBr = (v: string | undefined | null): number | null => {
   if (!v) return null;
