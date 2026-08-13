@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { useMemo, useRef, useState } from "react";
+import { Fragment, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -311,7 +311,7 @@ function QualificacaoDetalhe() {
                   </thead>
                   <tbody>
                     {linhas.map((l, idx) => (
-                      <>
+                      <Fragment key={`${l.campo}-${idx}`}>
                         {l.valores.map((v, i) => (
                           <tr
                             key={`${l.campo}-${idx}-${i}`}
@@ -351,7 +351,7 @@ function QualificacaoDetalhe() {
                             ) : null}
                           </tr>
                         ))}
-                      </>
+                      </Fragment>
                     ))}
                   </tbody>
                 </table>
