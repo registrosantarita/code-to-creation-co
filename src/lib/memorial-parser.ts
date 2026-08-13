@@ -711,9 +711,7 @@ function parseMeasureTable(rawText: string): StructuredParse | null {
     });
   });
 
-  return segments.length >= 3
-    ? { segments, coords, ...(ocrFixes.length ? { warnings: [avisoOcr(ocrFixes)] } : {}) }
-    : null;
+  return segments.length >= 3 ? { segments, coords } : null;
 }
 
 
@@ -798,7 +796,9 @@ function parseProseSegments(flat: string): StructuredParse | null {
     prevAlt = alt;
   }
 
-  return segments.length >= 3 ? { segments, coords } : null;
+  return segments.length >= 3
+    ? { segments, coords, ...(ocrFixes.length ? { warnings: [avisoOcr(ocrFixes)] } : {}) }
+    : null;
 }
 
 export function parseMemorial(text: string): ParsedParcel {
