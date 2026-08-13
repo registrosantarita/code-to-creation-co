@@ -14,6 +14,7 @@ import { TrechosConferidos, lerTrechos } from "@/components/TrechosConferidos";
 import { TrechosConsolidados } from "@/components/TrechosConsolidados";
 import { getVertices, type VertexCoordRow } from "@/lib/export-registral";
 import { ValidacaoAchado } from "@/components/ValidacaoAchado";
+import { ValidacoesEmLote } from "@/components/ValidacoesEmLote";
 import { DECISAO_LABEL, lerDecisao } from "@/lib/finding-review";
 
 
@@ -272,7 +273,9 @@ function Relatorio() {
                       title: f.title,
                       description: f.description,
                       evidence: f.evidence,
-                      situacao: DECISAO_LABEL[d.decisao],
+                      situacao:
+                        DECISAO_LABEL[d.decisao] +
+                        (d.grupo ? ` (validação nº ${d.grupo})` : ""),
                       justificativa: d.justificativa,
                     };
                   }),
@@ -449,6 +452,12 @@ function Relatorio() {
             </p>
           )}
         </ul>
+
+        <ValidacoesEmLote
+          comparisonId={id}
+          achados={ordenados}
+          onSalvo={() => findings.refetch()}
+        />
       </section>
 
       <footer className="mt-12 border-t border-border pt-6">
