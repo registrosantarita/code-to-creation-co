@@ -257,9 +257,7 @@ export function anguloLiteral(
   modelo?: string | null,
 ): string {
   const t = (texto ?? "").trim();
-  const m = t.match(
-    /(-?\d{1,3})\s*[°º]\s*(?:(\d{1,2})\s*['\u2032´`])?\s*(?:(\d{1,2}(?:[.,]\d+)?)\s*["\u2033''])?/,
-  );
+  const m = t.match(ANGULO_LITERAL_RE);
   if (m && m[1]) {
     const g = m[1];
     if (m[2] === undefined) return `${g}°`;
