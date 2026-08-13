@@ -63,6 +63,9 @@ function QualificacaoDetalhe() {
   const adicionar = useServerFn(adicionarDocumento);
   const excluir = useServerFn(excluirDocumento);
   const complementar = useServerFn(complementarComIA);
+  const [visao, setVisao] = useState<"colunas" | "empilhado">("colunas");
+
+
 
   const { data, isLoading } = useQuery({
     queryKey: ["qualificacao", id],
