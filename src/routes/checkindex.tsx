@@ -1,7 +1,8 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
+import { useQueryClient } from "@tanstack/react-query";
 import { NavArrows } from "@/components/NavArrows";
 import equalificaLogo from "@/assets/equalifica-logo.png.asset.json";
 import checkindexLogoAsset from "@/assets/checkindex-logo.png.asset.json";
@@ -48,12 +49,21 @@ const CAPACIDADES: [string, string][] = [
 
 function CheckIndexFrontPage() {
   const [signedIn, setSignedIn] = useState(false);
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => setSignedIn(!!data.session));
     const { data } = supabase.auth.onAuthStateChange((_e, s) => setSignedIn(!!s));
     return () => data.subscription.unsubscribe();
   }, []);
+
+  async function signOut() {
+    await queryClient.cancelQueries();
+    queryClient.clear();
+    await supabase.auth.signOut();
+    navigate({ to: "/auth", replace: true });
+  }
 
   return (
     <div className="min-h-screen bg-background">
@@ -81,11 +91,23 @@ function CheckIndexFrontPage() {
             Módulo de indexação: extrai dados estruturados das matrículas digitalizadas e gera um
             arquivo padronizado para importação no sistema interno do Cartório.
           </p>
-          <Button asChild size="lg" variant="secondary" className="mt-8">
-            <Link to={signedIn ? "/indexacao" : "/auth"}>
-              {signedIn ? "Abrir meus lotes de indexação" : "Entrar para começar"}
-            </Link>
-          </Button>
+          <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
+            <Button asChild size="lg" variant="secondary">
+              <Link to={signedIn ? "/indexacao" : "/auth"}>
+                {signedIn ? "Abrir meus lotes de indexação" : "Entrar para começar"}
+              </Link>
+            </Button>
+            {signedIn && (
+              <Button
+                size="lg"
+                variant="outline"
+                className="border-ink-foreground/30 bg-transparent text-ink-foreground hover:bg-ink-foreground/10"
+                onClick={signOut}
+              >
+                Sair
+              </Button>
+            )}
+          </div>
         </div>
       </section>
 

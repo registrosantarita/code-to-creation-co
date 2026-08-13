@@ -1,7 +1,8 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
+import { useQueryClient } from "@tanstack/react-query";
 import logoAsset from "@/assets/equalifica-logo.png.asset.json";
 import geoLogo from "@/assets/geoconfronto-logo.png.asset.json";
 import checkLogo from "@/assets/checktitulo-logo.png.asset.json";
@@ -31,12 +32,21 @@ export const Route = createFileRoute("/")({
 
 function Index() {
   const [signedIn, setSignedIn] = useState(false);
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => setSignedIn(!!data.session));
     const { data } = supabase.auth.onAuthStateChange((_e, session) => setSignedIn(!!session));
     return () => data.subscription.unsubscribe();
   }, []);
+
+  async function signOut() {
+    await queryClient.cancelQueries();
+    queryClient.clear();
+    await supabase.auth.signOut();
+    navigate({ to: "/auth", replace: true });
+  }
 
   return (
     <div className="min-h-screen bg-background">
@@ -55,11 +65,23 @@ function Index() {
           <p className="mt-2 text-xs italic text-ink-foreground/60">
             desenvolvido por Abrahão Jesus de Souza
           </p>
-          <Button asChild size="lg" variant="secondary" className="mt-10">
-            <Link to={signedIn ? "/conta" : "/auth"}>
-              {signedIn ? "Minha conta" : "Entrar"}
-            </Link>
-          </Button>
+          <div className="mt-10 flex flex-wrap items-center justify-center gap-3">
+            <Button asChild size="lg" variant="secondary">
+              <Link to={signedIn ? "/conta" : "/auth"}>
+                {signedIn ? "Minha conta" : "Entrar"}
+              </Link>
+            </Button>
+            {signedIn && (
+              <Button
+                size="lg"
+                variant="outline"
+                className="border-ink-foreground/30 bg-transparent text-ink-foreground hover:bg-ink-foreground/10"
+                onClick={signOut}
+              >
+                Sair
+              </Button>
+            )}
+          </div>
 
         </div>
       </section>
