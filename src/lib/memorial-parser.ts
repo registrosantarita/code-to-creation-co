@@ -101,10 +101,20 @@ export function dmsToDegrees(
   return deg + min / 60 + sec / 3600;
 }
 
-const DMS_RE =
-  /(\d{1,3})\s*(?:°|º|graus|g)\s*(?:(\d{1,2})\s*(?:'|′|min|m)\s*(?:(\d{1,2}(?:[.,]\d+)?)\s*(?:"|″|”|seg|s)?)?)?/i;
+/**
+ * Marcas de minuto e de segundo aceitas. O OCR troca a apóstrofe reta por
+ * aspas tipográficas, acento agudo, crase etc.; sem tolerar essas variantes
+ * os minutos eram descartados e o azimute virava grau cheio (falsa divergência).
+ */
+export const APOS = String.raw`'\u2019\u2018\u00B4\u0060\u02BC\u2032`;
+export const SEC = String.raw`"\u201D\u201C\u2033\u02BA`;
 
-/** Lê um azimute textual: "123°45'30\"" */
+const DMS_RE = new RegExp(
+  String.raw`(\d{1,3})\s*(?:°|º|graus|g)\s*(?:(\d{1,2})\s*(?:[${APOS}]|min|m)\s*(?:(\d{1,2}(?:[.,]\d+)?)\s*(?:[${SEC}]|seg|s)?)?|(\d{1,2})(?![\d.,]))?`,
+  "i",
+);
+
+/** Lê um azimute textual: "123°45'30\"" (minutos podem vir sem apóstrofe). */
 export function parseAzimuthText(text: string): number | null {
   const m = DMS_RE.exec(text);
   if (!m) {
@@ -112,11 +122,13 @@ export function parseAzimuthText(text: string): number | null {
     return dec ? parseNumber(dec[1]!) : null;
   }
   const d = Number(m[1]);
-  const mi = m[2] ? Number(m[2]) : 0;
+  const minRaw = m[2] ?? m[4];
+  const mi = minRaw ? Number(minRaw) : 0;
   const se = m[3] ? (parseNumber(m[3]) ?? 0) : 0;
   const value = dmsToDegrees(d, mi, se);
   return Number.isFinite(value) ? value : null;
 }
+
 
 /** Converte rumo (NE/SE/SW/NW) em azimute. */
 export function bearingToAzimuth(
@@ -199,20 +211,20 @@ const UTM_NE_RE =
 const UTM_EN_RE =
   /\bE(?:ste|Leste)?\s*[:=]?\s*(\d{3}[.\s]?\d{3}(?:[.,]\d+)?)\s*m?\b[\s,;]*(?:e\s*)?\bN(?:orte)?\s*[:=]?\s*(\d{1,2}[.\s]?\d{3}[.\s]?\d{3}(?:[.,]\d+)?)/i;
 const LAT_RE =
-  /\blat(?:itude)?\s*[:=]?\s*(-?\d{1,3}\s*(?:[°ºo]\s*\d{1,2}\s*['′]\s*[\d.,]+\s*["″]?\s*[NSns]?|[.,]\d+)\s*[NSns]?)/i;
+  /\blat(?:itude)?\s*[:=]?\s*(-?\d{1,3}\s*(?:[°ºo]\s*\d{1,2}\s*['\u2019\u2018\u00B4\u0060\u2032]\s*[\d.,]+\s*["\u201D\u2033]?\s*[NSns]?|[.,]\d+)\s*[NSns]?)/i;
 const LON_RE =
-  /\blong?(?:itude)?\s*[:=]?\s*(-?\d{1,3}\s*(?:[°ºo]\s*\d{1,2}\s*['′]\s*[\d.,]+\s*["″]?\s*[EWOewo]?|[.,]\d+)\s*[EWOewo]?)/i;
+  /\blong?(?:itude)?\s*[:=]?\s*(-?\d{1,3}\s*(?:[°ºo]\s*\d{1,2}\s*['\u2019\u2018\u00B4\u0060\u2032]\s*[\d.,]+\s*["\u201D\u2033]?\s*[EWOewo]?|[.,]\d+)\s*[EWOewo]?)/i;
 
 /** Converte "23°45'12,3\" S" ou "-23,7534" em grau decimal com sinal. */
 export function parseGeoCoord(raw: string): number | null {
   const s = raw.trim();
   const hemi = /([NSEWOnsewo])\s*$/.exec(s)?.[1]?.toUpperCase() ?? null;
-  const dms = /(-?\d{1,3})\s*[°ºo]\s*(\d{1,2})\s*['′]\s*([\d.,]+)/.exec(s);
+  const dms = /(-?\d{1,3})\s*[°ºo]\s*(\d{1,2})\s*['\u2019\u2018\u00B4\u0060\u2032]?\s*([\d.,]+)?/.exec(s);
   let value: number | null = null;
   if (dms) {
     const d = Number(dms[1]);
     const m = Number(dms[2]);
-    const sec = parseNumber(dms[3]!) ?? 0;
+    const sec = dms[3] ? (parseNumber(dms[3]) ?? 0) : 0;
     value = Math.abs(d) + m / 60 + sec / 3600;
     if (d < 0) value = -value;
   } else {
@@ -371,11 +383,11 @@ type StructuredParse = {
   warnings?: string[];
 };
 
-const COORD_DMS = String.raw`-?\d{1,3}\s*[°ºo]\s*\d{1,2}\s*['′]\s*[\d.,]+\s*["″]?`;
+const COORD_DMS = String.raw`-?\d{1,3}\s*[°ºo]\s*\d{1,2}\s*[${APOS}]\s*[\d.,]+\s*[${SEC}]?`;
 
 /** Memorial SIGEF/INCRA em tabela: código, long, lat, altitude, vante, azimute, distância. */
 const SIGEF_ROW_RE = new RegExp(
-  String.raw`^\s*([A-Z0-9][\w\-.]{2,20})\s+(${COORD_DMS})\s+(${COORD_DMS})\s+(-?[\d.,]+)\s+([A-Z0-9][\w\-.]{2,20})\s+(\d{1,3}\s*[°ºo]\s*\d{1,2}\s*['′]?(?:\s*[\d.,]+\s*["″])?)\s+(${OCR_DIGIT_TOKEN})\s*(.*)$`,
+  String.raw`^\s*([A-Z0-9][\w\-.]{2,20})\s+(${COORD_DMS})\s+(${COORD_DMS})\s+(-?[\d.,]+)\s+([A-Z0-9][\w\-.]{2,20})\s+(\d{1,3}\s*[°ºo]\s*\d{1,2}\s*[${APOS}]?(?:\s*[\d.,]+\s*[${SEC}])?)\s+(${OCR_DIGIT_TOKEN})\s*(.*)$`,
   "i",
 );
 
@@ -462,7 +474,7 @@ const HEADER_KINDS: { re: RegExp; kind: ColKind }[] = [
 ];
 
 const DMS_TOKEN_RE = new RegExp(
-  String.raw`-?\d{1,3}\s*[°ºo]\s*\d{1,2}\s*['′]\s*(?:[\d.,]+\s*["″]?)?\s*[NSEWOnsewo]?`,
+  String.raw`-?\d{1,3}\s*[°ºo]\s*\d{1,2}\s*[${APOS}]\s*(?:[\d.,]+\s*[${SEC}]?)?\s*[NSEWOnsewo]?`,
   "g",
 );
 
@@ -728,7 +740,7 @@ function parseMeasureTable(rawText: string): StructuredParse | null {
 /** Memorial em prosa: "108°57' e 18,57 m até o vértice X, (Longitude: ..., Latitude: ... e Altitude: ...)". */
 const SEP = String.raw`\s*(?:,|;|\be\b)?\s*`;
 const PROSE_SEG_RE = new RegExp(
-  String.raw`(\d{1,3}\s*[°ºo]\s*\d{1,2}\s*['′]?(?:\s*[\d.,]+\s*["″])?)\s*(?:e|,)\s*(${OCR_DIGIT_TOKEN})\s*(?:m|metros)\s*at[ée]\s+(?:o\s+)?(?:v[ée]rtice|ponto|marco|estaca)\s+([A-Z0-9][\w\-.]{1,20})\s*,?\s*(?:\(\s*Longitude\s*:?\s*(${COORD_DMS})${SEP}Latitude\s*:?\s*(${COORD_DMS})(?:${SEP}Altitude\s*:?\s*(-?[\d.,]+))?)?`,
+  String.raw`(\d{1,3}\s*[°ºo]\s*\d{1,2}\s*[${APOS}]?(?:\s*[\d.,]+\s*[${SEC}])?)\s*(?:e|,)\s*(${OCR_DIGIT_TOKEN})\s*(?:m|metros)\s*at[ée]\s+(?:o\s+)?(?:v[ée]rtice|ponto|marco|estaca)\s+([A-Z0-9][\w\-.]{1,20})\s*,?\s*(?:\(\s*Longitude\s*:?\s*(${COORD_DMS})${SEP}Latitude\s*:?\s*(${COORD_DMS})(?:${SEP}Altitude\s*:?\s*(-?[\d.,]+))?)?`,
   "gi",
 );
 const PROSE_START_RE = new RegExp(
