@@ -739,10 +739,25 @@ function parseMeasureTable(rawText: string): StructuredParse | null {
 
 /** Memorial em prosa: "108°57' e 18,57 m até o vértice X, (Longitude: ..., Latitude: ... e Altitude: ...)". */
 const SEP = String.raw`\s*(?:,|;|\be\b)?\s*`;
+/**
+ * O OCR frequentemente troca o símbolo de grau por um dígito ou letra parecida
+ * (9, 0, o, O, q, *) e omite a aspa de segundos. Sem tolerar essas variantes o
+ * trecho inteiro deixava de ser reconhecido e provocava efeito dominó nas
+ * linhas seguintes.
+ */
+const DEG_OCR = String.raw`[°º\u00BA\u02DA\u00B0oO0q9*]`;
 const PROSE_SEG_RE = new RegExp(
-  String.raw`(\d{1,3}\s*[°ºo]\s*\d{1,2}\s*[${APOS}]?(?:\s*[\d.,]+\s*[${SEC}])?)\s*(?:e|,)\s*(${OCR_DIGIT_TOKEN})\s*(?:m|metros)\s*at[ée]\s+(?:o\s+)?(?:v[ée]rtice|ponto|marco|estaca)\s+([A-Z0-9][\w\-.]{1,20})\s*,?\s*(?:\(\s*Longitude\s*:?\s*(${COORD_DMS})${SEP}Latitude\s*:?\s*(${COORD_DMS})(?:${SEP}Altitude\s*:?\s*(-?[\d.,]+))?)?`,
+  String.raw`(\d{1,3}\s*${DEG_OCR}\s*\d{1,2}(?:\s*[${APOS}](?:\s*[\d.,]+\s*[${SEC}]?)?)?)\s*(?:e|,)\s*(${OCR_DIGIT_TOKEN})\s*(?:m|metros)\s*at[ée]\s+(?:o\s+)?(?:v[ée]rtice|ponto|marco|estaca)\s+([A-Z0-9][\w\-.]{1,20})\s*,?\s*(?:\(\s*Longitude\s*:?\s*(${COORD_DMS})${SEP}Latitude\s*:?\s*(${COORD_DMS})(?:${SEP}Altitude\s*:?\s*(-?[\d.,]+))?)?`,
   "gi",
 );
+
+/** Restaura o símbolo de grau quando o OCR o converteu em dígito/letra. */
+function corrigirGrauOcr(raw: string): { texto: string; corrigido: string | null } {
+  if (/[°º]/.test(raw)) return { texto: raw, corrigido: null };
+  const texto = raw.replace(/^(\s*\d{1,3}\s*)[oO0q9*]/, "$1°");
+  return texto === raw ? { texto, corrigido: null } : { texto, corrigido: `${raw.trim()} → ${texto.trim()}` };
+}
+
 const PROSE_START_RE = new RegExp(
   String.raw`(?:v[ée]rtice|ponto|marco|estaca)\s+([A-Z0-9][\w\-.]{1,20})\s*,?\s*(?:de\s+coordenadas\s*)?\(\s*Longitude\s*:?\s*(${COORD_DMS})${SEP}Latitude\s*:?\s*(${COORD_DMS})(?:${SEP}Altitude\s*:?\s*(-?[\d.,]+))?`,
   "i",
