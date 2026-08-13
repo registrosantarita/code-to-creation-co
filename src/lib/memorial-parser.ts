@@ -254,7 +254,16 @@ function extractCoords(chunk: string): {
 
 /** Reconstitui hifenizações e sinais quebrados por fim de linha do PDF. */
 function repairLineBreaks(text: string): string {
-  return text
+  // Remove linhas curtas sem dígitos (ruído típico de OCR, ex.: "O", "« í")
+  const semRuido = text
+    .split(/\r?\n/)
+    .filter((l) => {
+      const s = l.trim();
+      if (!s) return true;
+      return !(s.length <= 3 && !/\d/.test(s));
+    })
+    .join("\n");
+  return semRuido
     .replace(/\s+/g, " ")
     .replace(/([A-Za-z0-9])-\s+(?=[A-Za-z0-9])/g, "$1-")
     .replace(/([(:,]\s*)-\s+(?=\d)/g, "$1-");
@@ -717,12 +726,13 @@ function parseMeasureTable(rawText: string): StructuredParse | null {
 
 
 /** Memorial em prosa: "108°57' e 18,57 m até o vértice X, (Longitude: ..., Latitude: ... e Altitude: ...)". */
+const SEP = String.raw`\s*(?:,|;|\be\b)?\s*`;
 const PROSE_SEG_RE = new RegExp(
-  String.raw`(\d{1,3}\s*[°ºo]\s*\d{1,2}\s*['′]?(?:\s*[\d.,]+\s*["″])?)\s*(?:e|,)\s*(${OCR_DIGIT_TOKEN})\s*(?:m|metros)\s*at[ée]\s+(?:o\s+)?(?:v[ée]rtice|ponto|marco|estaca)\s+([A-Z0-9][\w\-.]{1,20})\s*,?\s*(?:\(\s*Longitude\s*:?\s*(${COORD_DMS})\s*,?\s*Latitude\s*:?\s*(${COORD_DMS})(?:\s*(?:e|,)\s*Altitude\s*:?\s*(-?[\d.,]+))?)?`,
+  String.raw`(\d{1,3}\s*[°ºo]\s*\d{1,2}\s*['′]?(?:\s*[\d.,]+\s*["″])?)\s*(?:e|,)\s*(${OCR_DIGIT_TOKEN})\s*(?:m|metros)\s*at[ée]\s+(?:o\s+)?(?:v[ée]rtice|ponto|marco|estaca)\s+([A-Z0-9][\w\-.]{1,20})\s*,?\s*(?:\(\s*Longitude\s*:?\s*(${COORD_DMS})${SEP}Latitude\s*:?\s*(${COORD_DMS})(?:${SEP}Altitude\s*:?\s*(-?[\d.,]+))?)?`,
   "gi",
 );
 const PROSE_START_RE = new RegExp(
-  String.raw`(?:v[ée]rtice|ponto|marco|estaca)\s+([A-Z0-9][\w\-.]{1,20})\s*,?\s*(?:de\s+coordenadas\s*)?\(\s*Longitude\s*:?\s*(${COORD_DMS})\s*,?\s*Latitude\s*:?\s*(${COORD_DMS})(?:\s*(?:e|,)\s*Altitude\s*:?\s*(-?[\d.,]+))?`,
+  String.raw`(?:v[ée]rtice|ponto|marco|estaca)\s+([A-Z0-9][\w\-.]{1,20})\s*,?\s*(?:de\s+coordenadas\s*)?\(\s*Longitude\s*:?\s*(${COORD_DMS})${SEP}Latitude\s*:?\s*(${COORD_DMS})(?:${SEP}Altitude\s*:?\s*(-?[\d.,]+))?`,
   "i",
 );
 const PROSE_CONFRONT_RE = /confront(?:ando|a|ante|antes|ação)?\s*(?:-se)?\s*(?:com|:)\s*([^:;]{2,140}?)(?:,\s*com\s+os\s+seguintes|;|\.|:)/gi;
