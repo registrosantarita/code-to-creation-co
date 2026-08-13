@@ -366,6 +366,7 @@ const SIGEF_ROW_RE = new RegExp(
 function parseSigefTable(rawText: string): StructuredParse | null {
   const segments: ParsedSegment[] = [];
   const coords = new Map<string, VertexCoord>();
+  const ocrFixes: string[] = [];
   const altByVertex = new Map<string, number | null>();
 
   for (const line of rawText.split(/\r?\n/)) {
@@ -384,6 +385,8 @@ function parseSigefTable(rawText: string): StructuredParse | null {
       east: null,
     });
     const az = parseAzimuthText(azRaw!);
+    const dist = parseNumberOcr(distRaw!);
+    if (dist.corrigido) ocrFixes.push(dist.corrigido);
     const confrontante = tail
       ? cleanConfrontante(tail.split("|").pop()!.trim())
       : null;
@@ -393,7 +396,7 @@ function parseSigefTable(rawText: string): StructuredParse | null {
       to_vertex: to!,
       bearing_text: azRaw!.trim(),
       azimuth_deg: az === null ? null : normalizeAzimuth(az),
-      distance_m: parseNumber(distRaw!),
+      distance_m: dist.value,
       altitude_from_m: alt,
       altitude_to_m: null,
       confrontante,
@@ -697,7 +700,9 @@ function parseMeasureTable(rawText: string): StructuredParse | null {
     });
   });
 
-  return segments.length >= 3 ? { segments, coords } : null;
+  return segments.length >= 3
+    ? { segments, coords, ...(ocrFixes.length ? { warnings: [avisoOcr(ocrFixes)] } : {}) }
+    : null;
 }
 
 
@@ -755,6 +760,7 @@ function parseProseSegments(flat: string): StructuredParse | null {
   let prevAlt = registrar(prevName, start[2]!, start[3]!, start[4]);
 
   const segments: ParsedSegment[] = [];
+  const ocrFixes: string[] = [];
   PROSE_SEG_RE.lastIndex = 0;
   for (const m of flat.matchAll(PROSE_SEG_RE)) {
     const [, azRaw, distRaw, to, lonRaw, latRaw, altRaw] = m;
@@ -763,13 +769,15 @@ function parseProseSegments(flat: string): StructuredParse | null {
         ? registrar(to!, lonRaw, latRaw, altRaw)
         : (coords.get(to!.toUpperCase())?.alt ?? null);
     const az = parseAzimuthText(azRaw!);
+    const dist = parseNumberOcr(distRaw!);
+    if (dist.corrigido) ocrFixes.push(dist.corrigido);
     segments.push({
       seq: segments.length + 1,
       from_vertex: prevName,
       to_vertex: to!,
       bearing_text: azRaw!.trim(),
       azimuth_deg: az === null ? null : normalizeAzimuth(az),
-      distance_m: parseNumber(distRaw!),
+      distance_m: dist.value,
       altitude_from_m: prevAlt,
       altitude_to_m: alt,
       confrontante: confrontanteEm(m.index ?? 0),
