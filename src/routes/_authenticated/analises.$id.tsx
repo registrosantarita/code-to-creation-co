@@ -276,6 +276,24 @@ function AnaliseDetalhe() {
     onError: (e: Error) => toast.error(e.message),
   });
 
+  const souAdminFn = useServerFn(souAdmin);
+  const admin = useQuery({
+    queryKey: ["sou-admin"],
+    queryFn: () => souAdminFn({}),
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const excluirDocFn = useServerFn(excluirDocumento);
+  const excluirDoc = useMutation({
+    mutationFn: (documentId: string) => excluirDocFn({ data: { documentId } }),
+    onSuccess: () => {
+      refreshDocs();
+      queryClient.invalidateQueries({ queryKey: ["comparisons", id] });
+      toast.success("Documento excluído.");
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
   const reprocessar = useMutation({
     mutationFn: (documentId: string) => extrair({ data: { documentId } }),
     onSuccess: () => {
@@ -284,6 +302,7 @@ function AnaliseDetalhe() {
     },
     onError: (e: Error) => toast.error(e.message),
   });
+
 
   const executarComparacao = useMutation({
     mutationFn: async () => {
