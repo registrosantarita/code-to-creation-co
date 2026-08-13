@@ -57,6 +57,34 @@ export function parseNumber(raw: string): number | null {
   return Number.isFinite(n) ? n : null;
 }
 
+/**
+ * Números vindos de OCR podem trazer letras no lugar de dígitos
+ * (5,A7 em vez de 5,47). Corrige os sósias mais comuns e sinaliza.
+ */
+const OCR_DIGIT_TOKEN = String.raw`[\dOoDIlZzASsGTBbgq.,]+`;
+
+const OCR_DIGITS: Record<string, string> = {
+  O: "0", o: "0", D: "0",
+  I: "1", l: "1",
+  Z: "2", z: "2",
+  A: "4",
+  S: "5", s: "5",
+  G: "6",
+  T: "7",
+  B: "8", b: "8",
+  g: "9", q: "9",
+};
+
+export function parseNumberOcr(raw: string): { value: number | null; corrigido: string | null } {
+  const direto = parseNumber(raw);
+  if (direto !== null) return { value: direto, corrigido: null };
+  const ajustado = raw.replace(/[A-Za-z]/g, (c) => OCR_DIGITS[c] ?? c);
+  if (/[A-Za-z]/.test(ajustado)) return { value: null, corrigido: null };
+  const value = parseNumber(ajustado);
+  if (value === null) return { value: null, corrigido: null };
+  return { value, corrigido: `"${raw.trim()}" lido como "${ajustado.trim()}"` };
+}
+
 /** Graus/minutos/segundos -> graus decimais. */
 export function dmsToDegrees(
   deg: number,
@@ -324,13 +352,14 @@ function extractPerimeter(flat: string, raw = flat): number | null {
 type StructuredParse = {
   segments: ParsedSegment[];
   coords: Map<string, VertexCoord>;
+  warnings?: string[];
 };
 
 const COORD_DMS = String.raw`-?\d{1,3}\s*[°ºo]\s*\d{1,2}\s*['′]\s*[\d.,]+\s*["″]?`;
 
 /** Memorial SIGEF/INCRA em tabela: código, long, lat, altitude, vante, azimute, distância. */
 const SIGEF_ROW_RE = new RegExp(
-  String.raw`^\s*([A-Z0-9][\w\-.]{2,20})\s+(${COORD_DMS})\s+(${COORD_DMS})\s+(-?[\d.,]+)\s+([A-Z0-9][\w\-.]{2,20})\s+(\d{1,3}\s*[°ºo]\s*\d{1,2}\s*['′]?(?:\s*[\d.,]+\s*["″])?)\s+([\d.,]+)\s*(.*)$`,
+  String.raw`^\s*([A-Z0-9][\w\-.]{2,20})\s+(${COORD_DMS})\s+(${COORD_DMS})\s+(-?[\d.,]+)\s+([A-Z0-9][\w\-.]{2,20})\s+(\d{1,3}\s*[°ºo]\s*\d{1,2}\s*['′]?(?:\s*[\d.,]+\s*["″])?)\s+(${OCR_DIGIT_TOKEN})\s*(.*)$`,
   "i",
 );
 
@@ -675,7 +704,7 @@ function parseMeasureTable(rawText: string): StructuredParse | null {
 
 /** Memorial em prosa: "108°57' e 18,57 m até o vértice X, (Longitude: ..., Latitude: ... e Altitude: ...)". */
 const PROSE_SEG_RE = new RegExp(
-  String.raw`(\d{1,3}\s*[°ºo]\s*\d{1,2}\s*['′]?(?:\s*[\d.,]+\s*["″])?)\s*(?:e|,)\s*([\d.,]+)\s*(?:m|metros)\s*at[ée]\s+(?:o\s+)?(?:v[ée]rtice|ponto|marco|estaca)\s+([A-Z0-9][\w\-.]{1,20})\s*,?\s*(?:\(\s*Longitude\s*:?\s*(${COORD_DMS})\s*,?\s*Latitude\s*:?\s*(${COORD_DMS})(?:\s*(?:e|,)\s*Altitude\s*:?\s*(-?[\d.,]+))?)?`,
+  String.raw`(\d{1,3}\s*[°ºo]\s*\d{1,2}\s*['′]?(?:\s*[\d.,]+\s*["″])?)\s*(?:e|,)\s*(${OCR_DIGIT_TOKEN})\s*(?:m|metros)\s*at[ée]\s+(?:o\s+)?(?:v[ée]rtice|ponto|marco|estaca)\s+([A-Z0-9][\w\-.]{1,20})\s*,?\s*(?:\(\s*Longitude\s*:?\s*(${COORD_DMS})\s*,?\s*Latitude\s*:?\s*(${COORD_DMS})(?:\s*(?:e|,)\s*Altitude\s*:?\s*(-?[\d.,]+))?)?`,
   "gi",
 );
 const PROSE_START_RE = new RegExp(
