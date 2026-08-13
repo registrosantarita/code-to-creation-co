@@ -13,6 +13,9 @@ import { exportarRelatorioPdf } from "@/lib/export-registral";
 import { TrechosConferidos, lerTrechos } from "@/components/TrechosConferidos";
 import { TrechosConsolidados } from "@/components/TrechosConsolidados";
 import { getVertices, type VertexCoordRow } from "@/lib/export-registral";
+import { ValidacaoAchado } from "@/components/ValidacaoAchado";
+import { DECISAO_LABEL, lerDecisao } from "@/lib/finding-review";
+
 
 
 
