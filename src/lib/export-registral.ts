@@ -214,7 +214,10 @@ export type RelatorioPdfInput = {
     title: string;
     description: string;
     evidence: unknown;
+    situacao?: string;
+    justificativa?: string;
   }[];
+
 };
 
 const ORDEM_SEV = ["critical", "moderate", "inconclusive", "informative"];
