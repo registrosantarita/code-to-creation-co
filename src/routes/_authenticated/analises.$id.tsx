@@ -753,6 +753,25 @@ function AnaliseDetalhe() {
                           >
                             Reprocessar extração
                           </Button>
+                          {admin.data?.admin && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              disabled={excluirDoc.isPending}
+                              className="text-muted-foreground hover:text-destructive"
+                              onClick={() => {
+                                if (
+                                  confirm(
+                                    `Excluir definitivamente "${d.file_name ?? "documento"}" e seus dados extraídos?`,
+                                  )
+                                )
+                                  excluirDoc.mutate(d.id);
+                              }}
+                            >
+                              Excluir documento
+                            </Button>
+                          )}
+
                           {parcel && (parcel.segments ?? []).length > 0 && (
                             <Button
                               size="sm"
