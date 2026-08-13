@@ -537,6 +537,8 @@ function extrairPartes(texto: string) {
     "cedente",
   ]);
   const usufrutuario = nomeApos(texto, ["usufrutu[áa]ri[oa]", "usufruto\\s+em\\s+favor\\s+de"]);
+  const outorgante = nomeApos(texto, ["outorgante"]);
+  const outorgado = nomeApos(texto, ["outorgad[oa]"]);
   return {
     adquirente,
     conjuge_adq: conjugeDe(texto, adquirente),
@@ -544,8 +546,17 @@ function extrairPartes(texto: string) {
     conjuge_transm: conjugeDe(texto, transmitente),
     usufrutuario,
     conjuge_usu: conjugeDe(texto, usufrutuario),
+    outorgante,
+    conjuge_outorgante: conjugeDe(texto, outorgante),
+    outorgado,
+    conjuge_outorgado: conjugeDe(texto, outorgado),
+    credor: nomeApos(texto, ["credor(?:a)?", "credor(?:a)?\\s+hipotec[áa]ri[oa]", "credor(?:a)?\\s+fiduci[áa]ri[oa]"]),
+    devedor: nomeApos(texto, ["devedor(?:a)?", "devedor(?:a)?\\s+fiduciante", "fiduciante"]),
+    serviente: nomeApos(texto, ["serviente", "pr[ée]dio\\s+serviente", "im[óo]vel\\s+serviente"]),
+    dominante: nomeApos(texto, ["dominante", "pr[ée]dio\\s+dominante", "im[óo]vel\\s+dominante"]),
   };
 }
+
 
 function extrairPrenotacao(texto: string): string | null {
   return capturar(texto, [
