@@ -261,13 +261,19 @@ function Relatorio() {
                   contagens: counts,
                   trechos,
                   extensaoConferidaM: extensaoConferida,
-                  achados: ordenados.map((f) => ({
-                    severity: f.severity,
-                    code: f.code,
-                    title: f.title,
-                    description: f.description,
-                    evidence: f.evidence,
-                  })),
+                  achados: ordenados.map((f) => {
+                    const d = lerDecisao(f);
+                    return {
+                      severity: f.severity,
+                      code: f.code,
+                      title: f.title,
+                      description: f.description,
+                      evidence: f.evidence,
+                      situacao: DECISAO_LABEL[d.decisao],
+                      justificativa: d.justificativa,
+                    };
+                  }),
+
                 },
                 `relatorio-conferencia-${c.id.slice(0, 8)}.pdf`,
               )
