@@ -174,3 +174,39 @@ export const complementarComIA = createServerFn({ method: "POST" })
     if (upError) throw new Error(upError.message);
     return { ok: true as const, note: r.note };
   });
+
+const validacaoSchema = z.object({
+  numero: z.number().int().positive(),
+  decisao: z.enum(["relevado", "confirmado"]),
+  justificativa: z.string().trim().min(1).max(4000),
+  chaves: z.array(z.string().max(400)).min(1),
+});
+
+export const salvarValidacoes = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) =>
+    z
+      .object({
+        setId: z.string().uuid(),
+        validacoes: z.array(validacaoSchema).max(200),
+        acao: z.string().max(60).default("validacao_lote_salva"),
+        detalhe: z.record(z.string(), z.unknown()).default({}),
+      })
+      .parse(input),
+  )
+  .handler(async ({ data, context }) => {
+    const { error } = await context.supabase
+      .from("qualification_sets")
+      .update({ validations: data.validacoes as never })
+      .eq("id", data.setId);
+    if (error) throw new Error(error.message);
+
+    await context.supabase.from("audit_logs").insert({
+      actor_id: context.userId,
+      entity_type: "qualification_validation",
+      entity_id: data.setId,
+      action: data.acao,
+      metadata: JSON.parse(JSON.stringify(data.detalhe)),
+    });
+    return { ok: true as const };
+  });
