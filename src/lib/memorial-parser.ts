@@ -101,10 +101,20 @@ export function dmsToDegrees(
   return deg + min / 60 + sec / 3600;
 }
 
-const DMS_RE =
-  /(\d{1,3})\s*(?:°|º|graus|g)\s*(?:(\d{1,2})\s*(?:'|′|min|m)\s*(?:(\d{1,2}(?:[.,]\d+)?)\s*(?:"|″|”|seg|s)?)?)?/i;
+/**
+ * Marcas de minuto e de segundo aceitas. O OCR troca a apóstrofe reta por
+ * aspas tipográficas, acento agudo, crase etc.; sem tolerar essas variantes
+ * os minutos eram descartados e o azimute virava grau cheio (falsa divergência).
+ */
+export const APOS = String.raw`'\u2019\u2018\u00B4\u0060\u02BC\u2032`;
+export const SEC = String.raw`"\u201D\u201C\u2033\u02BA`;
 
-/** Lê um azimute textual: "123°45'30\"" */
+const DMS_RE = new RegExp(
+  String.raw`(\d{1,3})\s*(?:°|º|graus|g)\s*(?:(\d{1,2})\s*(?:[${APOS}]|min|m)\s*(?:(\d{1,2}(?:[.,]\d+)?)\s*(?:[${SEC}]|seg|s)?)?|(\d{1,2})(?![\d.,]))?`,
+  "i",
+);
+
+/** Lê um azimute textual: "123°45'30\"" (minutos podem vir sem apóstrofe). */
 export function parseAzimuthText(text: string): number | null {
   const m = DMS_RE.exec(text);
   if (!m) {
@@ -112,11 +122,13 @@ export function parseAzimuthText(text: string): number | null {
     return dec ? parseNumber(dec[1]!) : null;
   }
   const d = Number(m[1]);
-  const mi = m[2] ? Number(m[2]) : 0;
+  const minRaw = m[2] ?? m[4];
+  const mi = minRaw ? Number(minRaw) : 0;
   const se = m[3] ? (parseNumber(m[3]) ?? 0) : 0;
   const value = dmsToDegrees(d, mi, se);
   return Number.isFinite(value) ? value : null;
 }
+
 
 /** Converte rumo (NE/SE/SW/NW) em azimute. */
 export function bearingToAzimuth(
