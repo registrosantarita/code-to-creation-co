@@ -1,0 +1,1 @@
+ALTER TABLE public.qualification_sets ADD COLUMN IF NOT EXISTS validations jsonb NOT NULL DEFAULT '[]'::jsonb;

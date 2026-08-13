@@ -899,6 +899,7 @@ export type Database = {
           note: string
           title: string
           updated_at: string
+          validations: Json
         }
         Insert: {
           created_at?: string
@@ -908,6 +909,7 @@ export type Database = {
           note?: string
           title: string
           updated_at?: string
+          validations?: Json
         }
         Update: {
           created_at?: string
@@ -917,6 +919,7 @@ export type Database = {
           note?: string
           title?: string
           updated_at?: string
+          validations?: Json
         }
         Relationships: []
       }
