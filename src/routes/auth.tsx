@@ -175,6 +175,7 @@ function AuthPage() {
         <div className="w-full max-w-sm">
           <div className="flex items-center gap-3">
             <NavArrows showHome={false} />
+            <img src={equalificaLogo.url} alt="e-Qualifica" className="h-7 w-7 object-contain" />
             <Link
               to="/"
               className="text-xs text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
