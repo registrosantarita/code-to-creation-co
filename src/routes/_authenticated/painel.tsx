@@ -208,7 +208,7 @@ function Painel() {
       ) : (
         <ul className="mt-10 grid gap-4 md:grid-cols-2">
           {analyses.map((a) => (
-            <li key={a.id}>
+            <li key={a.id} className="relative">
               <Link
                 to="/analises/$id"
                 params={{ id: a.id }}
@@ -239,9 +239,30 @@ function Painel() {
                   </span>
                 </div>
               </Link>
+              {admin.data?.admin && (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  disabled={excluir.isPending}
+                  className="absolute bottom-3 right-3 h-7 px-2 text-[11px] text-muted-foreground hover:text-destructive"
+                  onClick={() => {
+                    if (
+                      confirm(
+                        `Excluir definitivamente a análise "${a.title}", seus documentos e comparações?`,
+                      )
+                    )
+                      excluir.mutate(a.id);
+                  }}
+                >
+                  <Trash2 className="mr-1 h-3.5 w-3.5" />
+                  Excluir
+                </Button>
+              )}
             </li>
           ))}
         </ul>
+
       )}
     </main>
   );
