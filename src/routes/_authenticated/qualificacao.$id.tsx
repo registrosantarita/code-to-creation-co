@@ -18,6 +18,13 @@ import {
 import { conferirQualificacao, type LinhaConferencia } from "@/lib/qualificacao-compare";
 import { camposFaltantes, qualificacaoVazia, type Qualificacao } from "@/lib/qualificacao-parser";
 import { docColor, docLetra, TONE_CLASS } from "@/lib/labels";
+import {
+  ValidacoesQualificacao,
+  lerValidacoes,
+  mapaValidacoes,
+  DECISAO_LABEL,
+  type ItemDivergente,
+} from "@/components/ValidacoesQualificacao";
 import checktituloLogo from "@/assets/checktitulo-logo.png.asset.json";
 
 export const Route = createFileRoute("/_authenticated/qualificacao/$id")({
@@ -140,6 +147,30 @@ function QualificacaoDetalhe() {
     }
     return [...map.entries()];
   }, [resultado]);
+
+  const validacoes = useMemo(
+    () => lerValidacoes((data?.conjunto as { validations?: unknown } | undefined)?.validations),
+    [data],
+  );
+  const porChave = useMemo(() => mapaValidacoes(validacoes), [validacoes]);
+
+  const chaveDe = (bloco: string, campo: string, idx: number) => `${bloco}||${campo}||${idx}`;
+
+  const itensDivergentes = useMemo<ItemDivergente[]>(() => {
+    const out: ItemDivergente[] = [];
+    for (const [bloco, linhas] of blocos) {
+      linhas.forEach((l, idx) => {
+        if (l.situacao !== "divergente" && l.situacao !== "invalido") return;
+        out.push({
+          chave: chaveDe(bloco, l.campo, idx),
+          bloco,
+          campo: l.campo,
+          detalhe: l.valores.map((v, i) => `Doc. ${docLetra(i)}: ${v ?? "—"}`).join("  ·  "),
+        });
+      });
+    }
+    return out;
+  }, [blocos]);
 
   if (isLoading) return <main className="mx-auto max-w-6xl px-6 py-10 text-sm">Carregando…</main>;
 
@@ -292,6 +323,7 @@ function QualificacaoDetalhe() {
                           >
                             {SITUACAO[l.situacao].label}
                           </span>
+                          <SeloValidacao v={porChave.get(chaveDe(bloco, l.campo, idx))} />
                         </td>
                         <td className="px-3 py-2 text-muted-foreground">{l.observacao ?? "—"}</td>
                       </tr>
@@ -340,6 +372,7 @@ function QualificacaoDetalhe() {
                                   >
                                     {SITUACAO[l.situacao].label}
                                   </span>
+                                  <SeloValidacao v={porChave.get(chaveDe(bloco, l.campo, idx))} />
                                 </td>
                                 <td
                                   rowSpan={l.valores.length}
@@ -358,10 +391,30 @@ function QualificacaoDetalhe() {
               )}
             </div>
           ))}
+
+          <ValidacoesQualificacao
+            setId={id}
+            itens={itensDivergentes}
+            validacoes={validacoes}
+            onSalvo={() => void invalidar()}
+          />
         </section>
       )}
 
     </main>
+  );
+}
+
+function SeloValidacao({
+  v,
+}: {
+  v?: { numero: number; decisao: "relevado" | "confirmado"; justificativa: string };
+}) {
+  if (!v) return null;
+  return (
+    <span className="mt-1 block text-[10px] leading-tight text-muted-foreground">
+      Validação nº {v.numero} — {DECISAO_LABEL[v.decisao]}
+    </span>
   );
 }
 
