@@ -57,6 +57,25 @@ function Painel() {
   const [objective, setObjective] = useState("");
   const [tags, setTags] = useState("");
 
+  const souAdminFn = useServerFn(souAdmin);
+  const admin = useQuery({
+    queryKey: ["sou-admin"],
+    queryFn: () => souAdminFn({}),
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const excluirFn = useServerFn(excluirAnalise);
+  const excluir = useMutation({
+    mutationFn: (analysisId: string) => excluirFn({ data: { analysisId } }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["analyses"] });
+      toast.success("Análise excluída.");
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+
+
   async function signOut() {
     await queryClient.cancelQueries();
     queryClient.clear();
