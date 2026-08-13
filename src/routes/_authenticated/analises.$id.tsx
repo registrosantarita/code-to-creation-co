@@ -841,8 +841,9 @@ function AnaliseDetalhe() {
                 )}
               </div>
               <div className="space-y-2">
-                <div className="flex items-center justify-between gap-2">
+                <div className="flex h-6 items-center justify-between gap-2">
                   <Label>Tipo de comparação</Label>
+
                   <Dialog>
                     <DialogTrigger asChild>
                       <Button
