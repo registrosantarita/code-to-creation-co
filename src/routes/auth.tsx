@@ -150,13 +150,12 @@ function AuthPage() {
   return (
     <div className="grid min-h-screen lg:grid-cols-2">
       <aside className="hidden flex-col justify-between bg-ink p-12 text-ink-foreground lg:flex">
-        <Link to="/" className="flex flex-col items-start gap-4">
+        <Link to="/" className="flex flex-col items-center gap-4">
           <img
             src={logoAsset.url}
             alt="e-Qualifica"
             className="h-44 w-44 object-contain"
           />
-          <span className="font-display text-3xl">e-Qualifica</span>
         </Link>
 
         <div>
