@@ -1554,6 +1554,24 @@ function AnaliseDetalhe() {
                           {c.summary}
                         </p>
                       </Link>
+                      {admin.data?.admin && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          disabled={excluirComp.isPending}
+                          className="mt-1 text-muted-foreground hover:text-destructive"
+                          onClick={() => {
+                            if (
+                              window.confirm(
+                                "Excluir esta comparação? A exclusão será registrada na trilha de auditoria.",
+                              )
+                            )
+                              excluirComp.mutate(c.id);
+                          }}
+                        >
+                          Excluir
+                        </Button>
+                      )}
                     </li>
                   );
                 })}
