@@ -310,7 +310,7 @@ export function exportarRelatorioPdf(
     y += linhas.length * 13 + 6;
   }
 
-  autoTable(doc, {
+    autoTable(doc, {
     startY: y,
     head: [["Documentos comparados", ""]],
     body: [
@@ -321,6 +321,7 @@ export function exportarRelatorioPdf(
     styles: { fontSize: 9, cellPadding: 5 },
     headStyles: { fillColor: [24, 28, 38], textColor: 255 },
     margin: { left: M, right: M },
+    didParseCell: withShrink(doc),
   });
 
   autoTable(doc, {
