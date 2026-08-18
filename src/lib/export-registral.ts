@@ -496,7 +496,7 @@ export function exportarRelatorioPdf(
       3: { cellWidth: "auto" },
       4: { cellWidth: 100 },
     },
-
+    didParseCell: withShrink(doc),
     margin: { left: M, right: M },
   });
 
