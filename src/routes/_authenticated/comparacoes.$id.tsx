@@ -63,7 +63,40 @@ function Relatorio() {
     },
   });
 
+  const analise = useQuery({
+    enabled: !!comparison.data?.analysis_id,
+    queryKey: ["analysis-status", comparison.data?.analysis_id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("analyses")
+        .select("id, status")
+        .eq("id", comparison.data!.analysis_id!)
+        .single();
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  const analiseConcluida =
+    analise.data?.status === "completed" || analise.data?.status === "archived";
+
+  const concluir = useMutation({
+    mutationFn: async () => {
+      const { error } = await supabase
+        .from("analyses")
+        .update({ status: "completed", closed_at: new Date().toISOString() })
+        .eq("id", comparison.data!.analysis_id!);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Análise concluída: o relatório é definitivo.");
+      analise.refetch();
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
   const findings = useQuery({
+
     queryKey: ["findings", id],
     queryFn: async () => {
       const { data, error } = await supabase
