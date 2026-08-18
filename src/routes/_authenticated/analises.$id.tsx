@@ -537,7 +537,10 @@ function AnaliseDetalhe() {
             >
               {STATUS_ANALISE[analysis.data.status]}
             </Badge>
-            <RelatoriosAnalise comparacoes={comparisons.data ?? []} />
+            <RelatoriosAnalise
+              comparacoes={comparisons.data ?? []}
+              onExcluido={() => comparisons.refetch()}
+            />
           </div>
         )}
       </div>

@@ -279,6 +279,38 @@ function Relatorio() {
   const compativeis = ordenados.filter((f) => !ehDivergencia(f.severity));
 
 
+  const baixarPdf = () =>
+    exportarRelatorioPdf(
+      {
+        titulo: `${nomeDoc(c.document_a_id)} × ${nomeDoc(c.document_b_id)}`,
+        tipo: TIPO_COMPARACAO[c.comparison_type] ?? c.comparison_type,
+        classificacao: c.classification,
+        resumo: c.summary,
+        emitidoEm: new Date(c.created_at).toLocaleString("pt-BR"),
+        documentoA: nomeDoc(c.document_a_id),
+        documentoB: nomeDoc(c.document_b_id),
+        tolerancias: tol,
+        contagens: counts,
+        trechos,
+        extensaoConferidaM: extensaoConferida,
+        achados: ordenados.map((f) => {
+          const d = lerDecisao(f);
+          return {
+            severity: f.severity,
+            code: f.code,
+            title: f.title,
+            description: f.description,
+            evidence: f.evidence,
+            situacao:
+              DECISAO_LABEL[d.decisao] +
+              (d.grupo ? ` (validação nº ${d.grupo})` : ""),
+            justificativa: d.justificativa,
+          };
+        }),
+      },
+      `relatorio-conferencia-${c.id.slice(0, 8)}.pdf`,
+    );
+
   return (
     <main className="mx-auto max-w-4xl px-6 py-10 print:py-0">
       <div className="flex items-center justify-between gap-4 print:hidden">
@@ -290,42 +322,7 @@ function Relatorio() {
           ← Voltar à análise
         </Link>
         <div className="flex items-center gap-2">
-          <Button
-            size="sm"
-            onClick={() =>
-              exportarRelatorioPdf(
-                {
-                  titulo: `${nomeDoc(c.document_a_id)} × ${nomeDoc(c.document_b_id)}`,
-                  tipo: TIPO_COMPARACAO[c.comparison_type] ?? c.comparison_type,
-                  classificacao: c.classification,
-                  resumo: c.summary,
-                  emitidoEm: new Date(c.created_at).toLocaleString("pt-BR"),
-                  documentoA: nomeDoc(c.document_a_id),
-                  documentoB: nomeDoc(c.document_b_id),
-                  tolerancias: tol,
-                  contagens: counts,
-                  trechos,
-                  extensaoConferidaM: extensaoConferida,
-                  achados: ordenados.map((f) => {
-                    const d = lerDecisao(f);
-                    return {
-                      severity: f.severity,
-                      code: f.code,
-                      title: f.title,
-                      description: f.description,
-                      evidence: f.evidence,
-                      situacao:
-                        DECISAO_LABEL[d.decisao] +
-                        (d.grupo ? ` (validação nº ${d.grupo})` : ""),
-                      justificativa: d.justificativa,
-                    };
-                  }),
-
-                },
-                `relatorio-conferencia-${c.id.slice(0, 8)}.pdf`,
-              )
-            }
-          >
+          <Button size="sm" onClick={() => baixarPdf()}>
             Baixar relatório (PDF)
           </Button>
           <Button variant="outline" size="sm" onClick={() => window.print()}>
@@ -563,6 +560,22 @@ function Relatorio() {
 
 
       </section>
+
+      <div className="mt-10 flex flex-wrap items-center gap-2 print:hidden">
+        <Button size="sm" onClick={() => baixarPdf()}>
+          Baixar relatório (PDF)
+        </Button>
+        <Button variant="outline" size="sm" onClick={() => window.print()}>
+          Imprimir
+        </Button>
+        <Link
+          to="/analises/$id"
+          params={{ id: c.analysis_id }}
+          className="eyebrow ml-auto hover:text-accent-foreground"
+        >
+          ← Voltar à análise
+        </Link>
+      </div>
 
       <footer className="mt-12 border-t border-border pt-6">
         <p className="text-xs leading-relaxed text-muted-foreground">
