@@ -290,42 +290,7 @@ function Relatorio() {
           ← Voltar à análise
         </Link>
         <div className="flex items-center gap-2">
-          <Button
-            size="sm"
-            onClick={() =>
-              exportarRelatorioPdf(
-                {
-                  titulo: `${nomeDoc(c.document_a_id)} × ${nomeDoc(c.document_b_id)}`,
-                  tipo: TIPO_COMPARACAO[c.comparison_type] ?? c.comparison_type,
-                  classificacao: c.classification,
-                  resumo: c.summary,
-                  emitidoEm: new Date(c.created_at).toLocaleString("pt-BR"),
-                  documentoA: nomeDoc(c.document_a_id),
-                  documentoB: nomeDoc(c.document_b_id),
-                  tolerancias: tol,
-                  contagens: counts,
-                  trechos,
-                  extensaoConferidaM: extensaoConferida,
-                  achados: ordenados.map((f) => {
-                    const d = lerDecisao(f);
-                    return {
-                      severity: f.severity,
-                      code: f.code,
-                      title: f.title,
-                      description: f.description,
-                      evidence: f.evidence,
-                      situacao:
-                        DECISAO_LABEL[d.decisao] +
-                        (d.grupo ? ` (validação nº ${d.grupo})` : ""),
-                      justificativa: d.justificativa,
-                    };
-                  }),
-
-                },
-                `relatorio-conferencia-${c.id.slice(0, 8)}.pdf`,
-              )
-            }
-          >
+          <Button size="sm" onClick={() => baixarPdf()}>
             Baixar relatório (PDF)
           </Button>
           <Button variant="outline" size="sm" onClick={() => window.print()}>
