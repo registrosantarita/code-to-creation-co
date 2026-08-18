@@ -29,6 +29,7 @@ import {
   fmtNum,
 } from "@/lib/labels";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { exportarMatriculaXlsx } from "@/lib/export-matricula";
 import type { VertexCoordRow } from "@/lib/export-registral";
 
