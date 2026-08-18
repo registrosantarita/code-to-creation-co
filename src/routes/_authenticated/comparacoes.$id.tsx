@@ -493,14 +493,14 @@ function Relatorio() {
           onSalvo={() => findings.refetch()}
         />
 
-        {divergentes.length === 0 && ordenados.length > 0 && (
+        {ordenados.length > 0 && (
           <div className="panel mt-8 flex flex-wrap items-center gap-4 p-6 print:hidden">
             <div>
               <h3 className="text-lg">Confirmar conferência</h3>
               <p className="mt-2 max-w-2xl text-sm leading-relaxed text-muted-foreground">
-                Nenhuma divergência foi apontada — apenas trechos compatíveis
-                (informativos). Confirme para encerrar a análise e tornar o
-                relatório definitivo.
+                {divergentes.length > 0
+                  ? "Há divergências aguardando validação humana. Ainda assim, é possível encerrar a análise e tornar o relatório definitivo com os achados registrados."
+                  : "Nenhuma divergência foi apontada — apenas trechos compatíveis (informativos). Confirme para encerrar a análise e tornar o relatório definitivo."}
               </p>
             </div>
             <Button
