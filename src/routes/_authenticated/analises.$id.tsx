@@ -796,9 +796,42 @@ function AnaliseDetalhe() {
                   const parcel = (parcels.data ?? []).find(
                     (p) => p.document_id === d.id,
                   );
+                  const gerarMatricula = async () => {
+                    if (!parcel) return;
+                    const base = (d.file_name ?? "descricao").replace(
+                      /\.[^.]+$/,
+                      "",
+                    );
+                    const r = await exportarMatriculaXlsx(
+                      {
+                        label: parcel.label,
+                        area_m2: parcel.area_m2,
+                        declared_perimeter_m: parcel.declared_perimeter_m,
+                        computed_perimeter_m: parcel.computed_perimeter_m,
+                        vertex_count: parcel.vertex_count,
+                        raw_extraction: parcel.raw_extraction,
+                        segments: (parcel.segments ?? []) as never,
+                      },
+                      `descricao-matricula-${base}.xlsx`,
+                    );
+                    toast.success(
+                      r.sigef
+                        ? `Descrição para matrícula gerada: ${r.linhas} vértices e ${r.confrontacoes} confrontação(ões).`
+                        : `Descrição para matrícula gerada com ${r.linhas} linhas.`,
+                    );
+                  };
+                  const excluirDocumento = () => {
+                    if (
+                      confirm(
+                        `Excluir definitivamente "${d.file_name ?? "documento"}" e seus dados extraídos?`,
+                      )
+                    )
+                      excluirDoc.mutate(d.id);
+                  };
                   return (
                     <AccordionItem key={d.id} value={d.id}>
-                      <AccordionTrigger className="text-left">
+                      <div className="flex w-full items-center gap-2">
+                      <AccordionTrigger className="flex-1 text-left">
                         <div className="flex w-full flex-wrap items-center gap-3 pr-3">
                           <span className="font-display text-base">
                             {d.file_name ?? "Texto colado"}
@@ -832,6 +865,40 @@ function AnaliseDetalhe() {
                           </span>
                         </div>
                       </AccordionTrigger>
+                      <div className="flex shrink-0 flex-wrap items-center gap-1">
+                        {parcel && (parcel.segments ?? []).length > 0 && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="h-7 px-2 text-[11px]"
+                            onClick={gerarMatricula}
+                          >
+                            Extrair texto para Matrícula
+                          </Button>
+                        )}
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="h-7 px-2 text-[11px]"
+                          disabled={reprocessar.isPending}
+                          onClick={() => reprocessar.mutate(d.id)}
+                        >
+                          Reprocessar análise
+                        </Button>
+                        {admin.data?.admin && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-7 px-2 text-[11px] text-muted-foreground hover:text-destructive"
+                            disabled={excluirDoc.isPending}
+                            onClick={excluirDocumento}
+                          >
+                            Excluir documento
+                          </Button>
+                        )}
+                      </div>
+                      </div>
+
                       <AccordionContent>
                         <div className="mb-4 flex flex-wrap items-center gap-3">
                           <Label className="text-xs">Natureza do documento</Label>
