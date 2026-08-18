@@ -22,7 +22,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { STATUS_ANALISE } from "@/lib/labels";
+import { STATUS_ANALISE, STATUS_ANALISE_CLASS } from "@/lib/labels";
 
 export const Route = createFileRoute("/_authenticated/painel")({
   head: () => ({
@@ -259,7 +259,10 @@ function Painel() {
                 </div>
               </Link>
               <div className="flex flex-col items-end justify-between p-6 pl-2">
-                <Badge variant="secondary" className="shrink-0">
+                <Badge
+                  variant="secondary"
+                  className={`shrink-0 ${STATUS_ANALISE_CLASS[a.status]}`}
+                >
                   {STATUS_ANALISE[a.status]}
                 </Badge>
                 {admin.data?.admin && (

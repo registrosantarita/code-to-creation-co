@@ -19,6 +19,7 @@ import {
   CATEGORIA_DOCUMENTO,
   CLASSIFICACAO,
   STATUS_ANALISE,
+  STATUS_ANALISE_CLASS,
   STATUS_DOCUMENTO,
   TIPO_COMPARACAO,
   TONE_CLASS,
@@ -28,6 +29,7 @@ import {
   fmtNum,
 } from "@/lib/labels";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { exportarMatriculaXlsx } from "@/lib/export-matricula";
 import type { VertexCoordRow } from "@/lib/export-registral";
 
@@ -481,9 +483,12 @@ function AnaliseDetalhe() {
         </div>
         {analysis.data && (
           <div className="flex flex-wrap items-center gap-2">
-            <span className="rounded-sm border border-border bg-muted px-3 py-1 text-xs text-muted-foreground">
+            <Badge
+              variant="secondary"
+              className={STATUS_ANALISE_CLASS[analysis.data.status]}
+            >
               {STATUS_ANALISE[analysis.data.status]}
-            </span>
+            </Badge>
             <RelatoriosAnalise comparacoes={comparisons.data ?? []} />
           </div>
         )}
