@@ -283,6 +283,7 @@ export function RelatoriosAnalise({
               );
             })}
           </ul>
+          </>
         )}
       </DialogContent>
     </Dialog>
