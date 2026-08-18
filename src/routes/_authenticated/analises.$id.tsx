@@ -1473,10 +1473,10 @@ function AnaliseDetalhe() {
               {(
                 [
                   ["perimeterPct", "Perímetro (%)", 0.01],
-                  ["distanceM", "Distância (m)", 0.001],
+                  ["perimeterM", "Perímetro (m)", 0.001],
                   ["azimuthDeg", "Azimute (°)", 0.0001],
                   ["altitudeM", "Altitude (m)", 0.01],
-                  ["perimeterM", "Perímetro (m)", 0.001],
+                  ["distanceM", "Distância (m)", 0.001],
                 ] as const
               ).map(([key, label, step]) => (
                 <div key={key} className="space-y-2">
