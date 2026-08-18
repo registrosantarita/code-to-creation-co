@@ -51,21 +51,21 @@ function Index() {
   return (
     <div className="min-h-screen bg-background">
       <section className="bg-ink text-ink-foreground">
-        <div className="mx-auto flex max-w-5xl flex-col items-center px-6 py-20 text-center md:py-28">
+        <div className="mx-auto flex max-w-5xl flex-col items-center justify-center px-6 py-16 text-center md:py-24">
           <img
             src={logoAsset.url}
             alt="e-Qualifica"
-            className="h-40 w-40 object-contain md:h-56 md:w-56"
+            className="h-32 w-32 object-contain md:h-40 md:w-40"
           />
           
-          <div className="rule-gold mt-6 w-40" />
-          <p className="mt-6 text-base tracking-wide text-ink-foreground/80 md:text-lg">
+          <div className="rule-gold mt-4 w-40" />
+          <p className="mt-4 text-base tracking-wide text-ink-foreground/80 md:text-lg">
             Qualificação Registral Assistida
           </p>
           <p className="mt-2 text-xs italic text-ink-foreground/60">
             desenvolvido por Abrahão Jesus de Souza
           </p>
-          <div className="mt-10 flex flex-wrap items-center justify-center gap-3">
+          <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
             <Button asChild size="lg" variant="secondary">
               <Link to={signedIn ? "/conta" : "/auth"}>
                 {signedIn ? "Minha conta" : "Entrar"}
