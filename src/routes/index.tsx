@@ -55,7 +55,7 @@ function Index() {
           <img
             src={logoAsset.url}
             alt="e-Qualifica"
-            className="mb-1 h-32 w-32 object-contain md:h-40 md:w-40"
+            className="mb-[38px] h-32 w-32 object-contain md:h-40 md:w-40"
           />
 
           <div className="rule-gold w-40" />
