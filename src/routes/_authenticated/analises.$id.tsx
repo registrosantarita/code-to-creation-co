@@ -1416,7 +1416,7 @@ function AnaliseDetalhe() {
             <h3 className="mt-8 text-base">Tolerâncias técnicas</h3>
             <div className="mt-3 grid gap-4 sm:grid-cols-2 md:grid-cols-4">
               <div className="space-y-2">
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-[1fr_2fr] gap-3">
                   <div className="space-y-2">
                     <Label htmlFor="areaPct">Área (%)</Label>
                     <Input
