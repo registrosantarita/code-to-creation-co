@@ -102,9 +102,15 @@ function AnaliseDetalhe() {
   const conferirLoteALote = useServerFn(runLotBatchComparison);
 
   const [texto, setTexto] = useState("");
-  const [arquivoPendente, setArquivoPendente] = useState<File | null>(null);
+  const [arquivosPendentes, setArquivosPendentes] = useState<File[]>([]);
+  const [progressoLote, setProgressoLote] = useState<{
+    atual: number;
+    total: number;
+    nome: string;
+  } | null>(null);
   const [nomeTexto, setNomeTexto] = useState("");
-  const [categoria, setCategoria] = useState("memorial");
+  const [categoria, setCategoria] = useState("nao_classificado");
+
   const [docA, setDocA] = useState("");
   const [parcelA, setParcelA] = useState("");
   /** Documentos comparáveis (B, C, D...) confrontados com o paradigma A. */
@@ -257,65 +263,107 @@ function AnaliseDetalhe() {
     onError: (e: Error) => toast.error(e.message),
   });
 
-  const enviarArquivo = useMutation({
-    mutationFn: async (file: File) => {
+  /** Envia um arquivo, cria o documento e dispara a extração. */
+  async function subirArquivo(file: File, uid: string) {
+    if (file.size > 25 * 1024 * 1024) throw new Error("Arquivo acima de 25 MB.");
+    const ext = file.name.split(".").pop()?.toLowerCase() ?? "";
+
+    /** DWG/DXF são convertidos no navegador em memorial tabular. */
+    let textoCad: string | null = null;
+    if (isCadExtension(ext)) {
+      const { lerArquivoCad } = await import("@/lib/cad-reader.browser");
+      const conv = await lerArquivoCad(file);
+      if (!conv.text.trim())
+        throw new Error(
+          conv.aviso ?? "Não foi possível extrair geometria do arquivo CAD.",
+        );
+      if (conv.aviso) toast.warning(conv.aviso);
+      textoCad = conv.text.slice(0, 200000);
+    }
+
+    const path = `${uid}/${id}/${crypto.randomUUID()}.${ext}`;
+    const { error: upErr } = await supabase.storage
+      .from("documentos")
+      .upload(path, file, {
+        contentType: file.type || "application/octet-stream",
+      });
+    if (upErr) throw new Error("Falha no envio do arquivo.");
+    const { data, error } = await supabase
+      .from("documents")
+      .insert({
+        analysis_id: id,
+        source_type: "upload",
+        file_name: file.name.slice(0, 255),
+        file_extension: ext,
+        mime_type: file.type || null,
+        file_size_bytes: file.size,
+        storage_path: path,
+        document_category: categoria as never,
+        ...(textoCad ? { original_text: textoCad } : {}),
+        created_by: uid,
+      })
+      .select("id")
+      .single();
+    if (error) throw error;
+    return extrair({ data: { documentId: data.id } });
+  }
+
+  /** Envio em lote: processa os arquivos selecionados em sequência. */
+  const enviarArquivos = useMutation({
+    mutationFn: async (files: File[]) => {
       const { data: userData } = await supabase.auth.getUser();
       const uid = userData.user?.id;
       if (!uid) throw new Error("Sessão expirada.");
-      if (file.size > 25 * 1024 * 1024)
-        throw new Error("Arquivo acima de 25 MB.");
-      const ext = file.name.split(".").pop()?.toLowerCase() ?? "";
-
-      /** DWG/DXF são convertidos no navegador em memorial tabular. */
-      let textoCad: string | null = null;
-      if (isCadExtension(ext)) {
-        const { lerArquivoCad } = await import("@/lib/cad-reader.browser");
-        const conv = await lerArquivoCad(file);
-        if (!conv.text.trim())
-          throw new Error(
-            conv.aviso ?? "Não foi possível extrair geometria do arquivo CAD.",
-          );
-        if (conv.aviso) toast.warning(conv.aviso);
-        textoCad = conv.text.slice(0, 200000);
+      let ok = 0;
+      const falhas: string[] = [];
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i]!;
+        setProgressoLote({ atual: i + 1, total: files.length, nome: file.name });
+        try {
+          const res = await subirArquivo(file, uid);
+          if (res.ok) {
+            ok++;
+            res.warnings.forEach((w) => toast.warning(`${file.name}: ${w}`));
+            if (res.note) toast.warning(`${file.name}: ${res.note}`);
+          } else {
+            falhas.push(`${file.name}: ${res.message}`);
+          }
+        } catch (e) {
+          falhas.push(`${file.name}: ${(e as Error).message}`);
+        }
+        refreshDocs();
       }
-
-      const path = `${uid}/${id}/${crypto.randomUUID()}.${ext}`;
-      const { error: upErr } = await supabase.storage
-        .from("documentos")
-        .upload(path, file, { contentType: file.type || "application/octet-stream" });
-      if (upErr) throw new Error("Falha no envio do arquivo.");
-      const { data, error } = await supabase
-        .from("documents")
-        .insert({
-          analysis_id: id,
-          source_type: "upload",
-          file_name: file.name.slice(0, 255),
-          file_extension: ext,
-          mime_type: file.type || null,
-          file_size_bytes: file.size,
-          storage_path: path,
-          document_category: categoria as never,
-          ...(textoCad ? { original_text: textoCad } : {}),
-          created_by: uid,
-        })
-        .select("id")
-        .single();
-      if (error) throw error;
-      return extrair({ data: { documentId: data.id } });
+      return { ok, falhas };
     },
-    onSuccess: (res) => {
-      setArquivoPendente(null);
+    onSuccess: ({ ok, falhas }) => {
+      setArquivosPendentes([]);
+      setProgressoLote(null);
       refreshDocs();
-      if (res.ok) {
-        toast.success(`Extração concluída: ${res.segments} segmento(s).`);
-        res.warnings.forEach((w) => toast.warning(w));
-        if (res.note) toast.warning(res.note);
-      } else {
-        toast.warning(res.message);
-      }
+      if (ok > 0) toast.success(`${ok} documento(s) ingerido(s).`);
+      falhas.forEach((f) => toast.warning(f));
+    },
+    onError: (e: Error) => {
+      setProgressoLote(null);
+      toast.error(e.message);
+    },
+  });
+
+  /** Reclassificação da natureza documental após o upload. */
+  const alterarCategoria = useMutation({
+    mutationFn: async (v: { documentId: string; categoria: string }) => {
+      const { error } = await supabase
+        .from("documents")
+        .update({ document_category: v.categoria as never })
+        .eq("id", v.documentId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      refreshDocs();
+      toast.success("Natureza do documento atualizada.");
     },
     onError: (e: Error) => toast.error(e.message),
   });
+
 
   const souAdminFn = useServerFn(souAdmin);
   const admin = useQuery({
@@ -571,7 +619,7 @@ function AnaliseDetalhe() {
             <div className="mt-6 grid gap-6 md:grid-cols-2">
               <div className="space-y-4">
                 <div className="space-y-2">
-                  <Label>Categoria documental</Label>
+                  <Label>Natureza documental (padrão do envio)</Label>
                   <Select value={categoria} onValueChange={setCategoria}>
                     <SelectTrigger>
                       <SelectValue />
@@ -584,26 +632,32 @@ function AnaliseDetalhe() {
                       ))}
                     </SelectContent>
                   </Select>
+                  <p className="text-xs text-muted-foreground">
+                    A natureza pode ser definida ou corrigida depois do envio,
+                    documento por documento, na lista abaixo.
+                  </p>
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="arquivo">Arquivo</Label>
+                  <Label htmlFor="arquivo">Arquivos</Label>
                   <div className="flex items-center gap-2">
                     <Input
                       id="arquivo"
                       type="file"
+                      multiple
                       className="flex-1"
                       accept=".pdf,.txt,.csv,.md,.docx,.xlsx,.png,.jpg,.jpeg,.tif,.tiff,.webp,.kml,.kmz,.geojson,.json,.dwg,.dxf"
-                      disabled={enviarArquivo.isPending}
+                      disabled={enviarArquivos.isPending}
                       onChange={(e) => {
-                        const f = e.target.files?.[0];
-                        if (f) setArquivoPendente(f);
+                        const fs = Array.from(e.target.files ?? []);
+                        if (fs.length)
+                          setArquivosPendentes((prev) => [...prev, ...fs]);
                         e.target.value = "";
                       }}
                     />
                     <Button
                       type="button"
                       variant="outline"
-                      disabled={enviarArquivo.isPending}
+                      disabled={enviarArquivos.isPending}
                       onClick={() =>
                         document.getElementById("arquivo")?.click()
                       }
@@ -613,22 +667,79 @@ function AnaliseDetalhe() {
                   </div>
 
                   <p className="text-xs leading-relaxed text-muted-foreground">
-                    PDFs digitalizados e imagens passam por OCR assistido por IA.
-                    Arquivos KML, KMZ e GeoJSON têm o perímetro, os azimutes e a
-                    área calculados diretamente da geometria (WGS-84). Arquivos
-                    CAD (DWG e DXF) são lidos no próprio navegador: as
-                    polilinhas fechadas do espaço do modelo viram perímetro,
-                    azimutes, distâncias e área, sem consumo de créditos de IA.
+                    Selecione vários arquivos de uma só vez. PDFs digitalizados e
+                    imagens passam por OCR assistido por IA. Arquivos KML, KMZ e
+                    GeoJSON têm o perímetro, os azimutes e a área calculados
+                    diretamente da geometria (WGS-84). Arquivos CAD (DWG e DXF)
+                    são lidos no próprio navegador: as polilinhas fechadas do
+                    espaço do modelo viram perímetro, azimutes, distâncias e
+                    área, sem consumo de créditos de IA.
                   </p>
                 </div>
-                {arquivoPendente && (
+                {arquivosPendentes.length === 1 && (
                   <EstimativaCreditosArquivo
-                    arquivo={arquivoPendente}
-                    processando={enviarArquivo.isPending}
-                    onCancelar={() => setArquivoPendente(null)}
-                    onConfirmar={() => enviarArquivo.mutate(arquivoPendente)}
+                    arquivo={arquivosPendentes[0]!}
+                    processando={enviarArquivos.isPending}
+                    onCancelar={() => setArquivosPendentes([])}
+                    onConfirmar={() =>
+                      enviarArquivos.mutate(arquivosPendentes)
+                    }
                   />
                 )}
+                {arquivosPendentes.length > 1 && (
+                  <div className="space-y-3 rounded-sm border border-border p-4">
+                    <p className="text-sm">
+                      {arquivosPendentes.length} arquivo(s) na fila de envio
+                    </p>
+                    <ul className="max-h-48 space-y-1 overflow-auto text-xs text-muted-foreground">
+                      {arquivosPendentes.map((f, i) => (
+                        <li
+                          key={`${f.name}-${i}`}
+                          className="flex items-center justify-between gap-3"
+                        >
+                          <span className="truncate">{f.name}</span>
+                          {!enviarArquivos.isPending && (
+                            <button
+                              type="button"
+                              className="shrink-0 underline"
+                              onClick={() =>
+                                setArquivosPendentes((prev) =>
+                                  prev.filter((_, j) => j !== i),
+                                )
+                              }
+                            >
+                              remover
+                            </button>
+                          )}
+                        </li>
+                      ))}
+                    </ul>
+                    {progressoLote && (
+                      <p className="text-xs text-muted-foreground">
+                        Processando {progressoLote.atual} de{" "}
+                        {progressoLote.total}: {progressoLote.nome}
+                      </p>
+                    )}
+                    <div className="flex gap-2">
+                      <Button
+                        onClick={() => enviarArquivos.mutate(arquivosPendentes)}
+                        disabled={enviarArquivos.isPending}
+                      >
+                        {enviarArquivos.isPending
+                          ? "Enviando..."
+                          : `Enviar ${arquivosPendentes.length} arquivos`}
+                      </Button>
+                      <Button
+                        variant="outline"
+                        disabled={enviarArquivos.isPending}
+                        onClick={() => setArquivosPendentes([])}
+                      >
+                        Limpar
+                      </Button>
+                    </div>
+                  </div>
+                )}
+
 
               </div>
 
@@ -689,9 +800,16 @@ function AnaliseDetalhe() {
                           <span className="font-display text-base">
                             {d.file_name ?? "Texto colado"}
                           </span>
-                          <span className="eyebrow">
+                          <span
+                            className={`eyebrow ${
+                              d.document_category === "nao_classificado"
+                                ? "text-warning"
+                                : ""
+                            }`}
+                          >
                             {CATEGORIA_DOCUMENTO[d.document_category]}
                           </span>
+
                           {poligonosDe(d.id).length > 1 && (
                             <span className="eyebrow">
                               {poligonosDe(d.id).length} polígonos
@@ -712,6 +830,32 @@ function AnaliseDetalhe() {
                         </div>
                       </AccordionTrigger>
                       <AccordionContent>
+                        <div className="mb-4 flex flex-wrap items-center gap-3">
+                          <Label className="text-xs">Natureza do documento</Label>
+                          <Select
+                            value={d.document_category}
+                            onValueChange={(v) =>
+                              alterarCategoria.mutate({
+                                documentId: d.id,
+                                categoria: v,
+                              })
+                            }
+                          >
+                            <SelectTrigger className="w-64">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {Object.entries(CATEGORIA_DOCUMENTO).map(
+                                ([k, v]) => (
+                                  <SelectItem key={k} value={k}>
+                                    {v}
+                                  </SelectItem>
+                                ),
+                              )}
+                            </SelectContent>
+                          </Select>
+                        </div>
+
                         {d.error_message && (
                           <p className="mb-4 rounded-sm border border-warning/50 bg-warning/10 p-3 text-xs text-foreground">
                             {d.error_message}
