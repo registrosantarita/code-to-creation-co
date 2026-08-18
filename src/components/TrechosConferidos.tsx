@@ -143,8 +143,8 @@ export function TrechosConferidos({
             : ""}
         </p>
 
-        <div className="mt-5 overflow-x-auto">
-          <table className="w-fit border-collapse text-sm [&_td]:whitespace-nowrap [&_td]:px-2 [&_th]:whitespace-nowrap [&_th]:px-2">
+        <div className="mt-5 w-full overflow-x-auto">
+          <table className="w-full border-collapse text-sm [&_td]:whitespace-nowrap [&_td]:px-2 [&_th]:whitespace-nowrap [&_th]:px-2">
             <thead>
               <tr className="border-b border-border text-left">
                 <th className="eyebrow py-2 px-2">#</th>
