@@ -223,14 +223,7 @@ export type RelatorioPdfInput = {
 const ORDEM_SEV = ["critical", "moderate", "inconclusive", "informative"];
 
 function shrinkOnOverflow(doc: jsPDF, minSize = 5) {
-  return (data: {
-    section: string;
-    cell: {
-      raw: unknown;
-      width: number;
-      styles: { fontSize?: number; cellPadding?: number | number[] };
-    };
-  }) => {
+  return (data: any) => {
     if (data.section !== "body") return;
     const text = String(data.cell.raw ?? "");
     if (!text) return;
@@ -247,16 +240,14 @@ function shrinkOnOverflow(doc: jsPDF, minSize = 5) {
   };
 }
 
-function withShrink(
-  doc: jsPDF,
-  handler?: (data: Record<string, unknown>) => void,
-) {
+function withShrink(doc: jsPDF, handler?: (data: any) => void) {
   const shrink = shrinkOnOverflow(doc);
-  return (data: Record<string, unknown>) => {
-    shrink(data as Parameters<typeof shrink>[0]);
+  return (data: any) => {
+    shrink(data);
     handler?.(data);
   };
 }
+
 
 
 
