@@ -830,6 +830,32 @@ function AnaliseDetalhe() {
                         </div>
                       </AccordionTrigger>
                       <AccordionContent>
+                        <div className="mb-4 flex flex-wrap items-center gap-3">
+                          <Label className="text-xs">Natureza do documento</Label>
+                          <Select
+                            value={d.document_category}
+                            onValueChange={(v) =>
+                              alterarCategoria.mutate({
+                                documentId: d.id,
+                                categoria: v,
+                              })
+                            }
+                          >
+                            <SelectTrigger className="w-64">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {Object.entries(CATEGORIA_DOCUMENTO).map(
+                                ([k, v]) => (
+                                  <SelectItem key={k} value={k}>
+                                    {v}
+                                  </SelectItem>
+                                ),
+                              )}
+                            </SelectContent>
+                          </Select>
+                        </div>
+
                         {d.error_message && (
                           <p className="mb-4 rounded-sm border border-warning/50 bg-warning/10 p-3 text-xs text-foreground">
                             {d.error_message}
