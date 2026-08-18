@@ -222,6 +222,51 @@ export type RelatorioPdfInput = {
 
 const ORDEM_SEV = ["critical", "moderate", "inconclusive", "informative"];
 
+function shrinkOnOverflow(doc: jsPDF, minSize = 5) {
+  return (data: {
+    section: "head" | "body" | "foot";
+    cell: {
+      raw: unknown;
+      width: number;
+      styles: { fontSize?: number; cellPadding?: number };
+    };
+  }) => {
+    if (data.section !== "body") return;
+    const text = String(data.cell.raw ?? "");
+    if (!text) return;
+    const baseSize = data.cell.styles.fontSize ?? 8;
+    const padding = (data.cell.styles.cellPadding ?? 0) * 2;
+    const maxWidth = data.cell.width - padding;
+    if (maxWidth <= 0) return;
+    doc.setFontSize(baseSize);
+    const textWidth = doc.getTextWidth(text);
+    if (textWidth <= maxWidth) return;
+    const ratio = maxWidth / textWidth;
+    data.cell.styles.fontSize = Math.max(minSize, baseSize * ratio);
+  };
+}
+
+function withShrink(
+  doc: jsPDF,
+  handler?: (data: {
+    section: "head" | "body" | "foot";
+    row: { index: number };
+    column: { index: number };
+    cell: {
+      raw: unknown;
+      width: number;
+      styles: { fontSize?: number; cellPadding?: number; textColor?: number | [number, number, number]; fontStyle?: string };
+    };
+  }) => void,
+) {
+  const shrink = shrinkOnOverflow(doc);
+  return (data: Parameters<typeof shrink>[0] & Parameters<NonNullable<typeof handler>>[0]) => {
+    shrink(data);
+    handler?.(data);
+  };
+}
+
+
 export function exportarRelatorioPdf(
   input: RelatorioPdfInput,
   nomeArquivo: string,
