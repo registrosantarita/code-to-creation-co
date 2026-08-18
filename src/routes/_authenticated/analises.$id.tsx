@@ -483,9 +483,12 @@ function AnaliseDetalhe() {
         </div>
         {analysis.data && (
           <div className="flex flex-wrap items-center gap-2">
-            <span className="rounded-sm border border-border bg-muted px-3 py-1 text-xs text-muted-foreground">
+            <Badge
+              variant="secondary"
+              className={STATUS_ANALISE_CLASS[analysis.data.status]}
+            >
               {STATUS_ANALISE[analysis.data.status]}
-            </span>
+            </Badge>
             <RelatoriosAnalise comparacoes={comparisons.data ?? []} />
           </div>
         )}
