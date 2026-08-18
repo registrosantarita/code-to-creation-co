@@ -161,28 +161,28 @@ export function TrechosConsolidados({ docA, comparados }: Props) {
         </ul>
 
         <div className="mt-5 overflow-x-auto">
-          <table className="w-auto min-w-full table-auto border-collapse text-sm [&_td]:whitespace-nowrap [&_td]:pr-4 [&_th]:whitespace-nowrap [&_th]:pr-4">
+          <table className="w-fit border-collapse text-sm [&_td]:whitespace-nowrap [&_td]:px-2 [&_th]:whitespace-nowrap [&_th]:px-2">
             <thead>
               <tr className="border-b border-border text-left">
-                <th className="eyebrow py-2 pr-3">#</th>
-                <th className="eyebrow py-2 pr-3">TRECHO DE</th>
-                <th className="eyebrow py-2 pr-3">TRECHO PARA</th>
+                <th className="eyebrow py-2 px-2">#</th>
+                <th className="eyebrow py-2 px-2">TRECHO DE</th>
+                <th className="eyebrow py-2 px-2">TRECHO PARA</th>
                 {temGeo && (
                   <>
-                    <th className="eyebrow py-2 pr-3 text-right">LONGITUDE</th>
-                    <th className="eyebrow py-2 pr-3 text-right">LATITUDE</th>
+                    <th className="eyebrow py-2 px-2 text-right">LONGITUDE</th>
+                    <th className="eyebrow py-2 px-2 text-right">LATITUDE</th>
                   </>
                 )}
                 {temPlana && (
                   <>
-                    <th className="eyebrow py-2 pr-3 text-right">COORD. N(Y)</th>
-                    <th className="eyebrow py-2 pr-3 text-right">COORD. E(X)</th>
+                    <th className="eyebrow py-2 px-2 text-right">COORD. N(Y)</th>
+                    <th className="eyebrow py-2 px-2 text-right">COORD. E(X)</th>
                   </>
                 )}
-                <th className="eyebrow py-2 pr-3 text-right">ALT. (m)</th>
-                <th className="eyebrow py-2 pr-3 text-right">ÂNGULO</th>
-                <th className="eyebrow py-2 pr-3 text-right">DIST. (m)</th>
-                <th className="eyebrow py-2 pr-3 text-center" aria-label="Situação" />
+                <th className="eyebrow py-2 px-2 text-right">ALT. (m)</th>
+                <th className="eyebrow py-2 px-2 text-right">ÂNGULO</th>
+                <th className="eyebrow py-2 px-2 text-right">DIST. (m)</th>
+                <th className="eyebrow py-2 px-2 text-center" aria-label="Situação" />
               </tr>
             </thead>
             <tbody>
@@ -190,8 +190,8 @@ export function TrechosConsolidados({ docA, comparados }: Props) {
                 const base = baseDe(s);
                 return (
                   <tr key={s} className="border-b border-border/60 align-top">
-                    <td className="numeric py-2 pr-3 text-muted-foreground">{s}</td>
-                    <td className="numeric py-2 pr-3">
+                    <td className="numeric py-2 px-2 text-muted-foreground">{s}</td>
+                    <td className="numeric py-2 px-2">
                       <Pilha
                         align="left"
                         itens={pilha(
@@ -201,7 +201,7 @@ export function TrechosConsolidados({ docA, comparados }: Props) {
                         )}
                       />
                     </td>
-                    <td className="numeric py-2 pr-3">
+                    <td className="numeric py-2 px-2">
                       <Pilha
                         align="left"
                         itens={pilha(
@@ -213,7 +213,7 @@ export function TrechosConsolidados({ docA, comparados }: Props) {
                     </td>
                     {temGeo && (
                       <>
-                        <td className="numeric py-2 pr-3">
+                        <td className="numeric py-2 px-2">
                           <Pilha
                             itens={pilha(
                               (t) => coordToDms(coordA(t)?.lon ?? null, "lon"),
@@ -222,7 +222,7 @@ export function TrechosConsolidados({ docA, comparados }: Props) {
                             )}
                           />
                         </td>
-                        <td className="numeric py-2 pr-3">
+                        <td className="numeric py-2 px-2">
                           <Pilha
                             itens={pilha(
                               (t) => coordToDms(coordA(t)?.lat ?? null, "lat"),
@@ -235,7 +235,7 @@ export function TrechosConsolidados({ docA, comparados }: Props) {
                     )}
                     {temPlana && (
                       <>
-                        <td className="numeric py-2 pr-3">
+                        <td className="numeric py-2 px-2">
                           <Pilha
                             itens={pilha(
                               (t) => fmtMedida(coordA(t)?.north ?? null),
@@ -244,7 +244,7 @@ export function TrechosConsolidados({ docA, comparados }: Props) {
                             )}
                           />
                         </td>
-                        <td className="numeric py-2 pr-3">
+                        <td className="numeric py-2 px-2">
                           <Pilha
                             itens={pilha(
                               (t) => fmtMedida(coordA(t)?.east ?? null),
@@ -255,7 +255,7 @@ export function TrechosConsolidados({ docA, comparados }: Props) {
                         </td>
                       </>
                     )}
-                    <td className="numeric py-2 pr-3">
+                    <td className="numeric py-2 px-2">
                       <Pilha
                         itens={pilha(
                           (t) => fmtMedida(t?.cota_a ?? null),
@@ -264,7 +264,7 @@ export function TrechosConsolidados({ docA, comparados }: Props) {
                         )}
                       />
                     </td>
-                    <td className="numeric py-2 pr-3">
+                    <td className="numeric py-2 px-2">
                       <Pilha
                         itens={pilha(
                           (t) =>
@@ -279,7 +279,7 @@ export function TrechosConsolidados({ docA, comparados }: Props) {
                         )}
                       />
                     </td>
-                    <td className="numeric py-2 pr-3">
+                    <td className="numeric py-2 px-2">
                       <Pilha
                         itens={pilha(
                           (t) => fmtMedida(t?.distancia_a ?? null),
@@ -288,7 +288,7 @@ export function TrechosConsolidados({ docA, comparados }: Props) {
                         )}
                       />
                     </td>
-                    <td className="py-2 pr-3">
+                    <td className="py-2 px-2">
                       <div className="flex flex-col items-center gap-1">
                         <span className="invisible h-4" />
                         {comparados.map((d, i) => {
