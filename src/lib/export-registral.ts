@@ -446,14 +446,13 @@ export function exportarRelatorioPdf(
           3: { cellWidth: 66, halign: "right" },
           4: { cellWidth: 130 },
         },
-
-        didParseCell: (data) => {
+        didParseCell: withShrink(doc, (data) => {
           if (data.section === "body" && data.column.index === 4) {
             const ok = confrontacoes[data.row.index]?.ok;
             data.cell.styles.textColor = ok ? [22, 101, 52] : [153, 27, 27];
             data.cell.styles.fontStyle = "bold";
           }
-        },
+        }),
         margin: { left: M, right: M },
       });
     }
