@@ -619,7 +619,7 @@ function AnaliseDetalhe() {
             <div className="mt-6 grid gap-6 md:grid-cols-2">
               <div className="space-y-4">
                 <div className="space-y-2">
-                  <Label>Categoria documental</Label>
+                  <Label>Natureza documental (padrão do envio)</Label>
                   <Select value={categoria} onValueChange={setCategoria}>
                     <SelectTrigger>
                       <SelectValue />
@@ -632,26 +632,32 @@ function AnaliseDetalhe() {
                       ))}
                     </SelectContent>
                   </Select>
+                  <p className="text-xs text-muted-foreground">
+                    A natureza pode ser definida ou corrigida depois do envio,
+                    documento por documento, na lista abaixo.
+                  </p>
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="arquivo">Arquivo</Label>
+                  <Label htmlFor="arquivo">Arquivos</Label>
                   <div className="flex items-center gap-2">
                     <Input
                       id="arquivo"
                       type="file"
+                      multiple
                       className="flex-1"
                       accept=".pdf,.txt,.csv,.md,.docx,.xlsx,.png,.jpg,.jpeg,.tif,.tiff,.webp,.kml,.kmz,.geojson,.json,.dwg,.dxf"
-                      disabled={enviarArquivo.isPending}
+                      disabled={enviarArquivos.isPending}
                       onChange={(e) => {
-                        const f = e.target.files?.[0];
-                        if (f) setArquivoPendente(f);
+                        const fs = Array.from(e.target.files ?? []);
+                        if (fs.length)
+                          setArquivosPendentes((prev) => [...prev, ...fs]);
                         e.target.value = "";
                       }}
                     />
                     <Button
                       type="button"
                       variant="outline"
-                      disabled={enviarArquivo.isPending}
+                      disabled={enviarArquivos.isPending}
                       onClick={() =>
                         document.getElementById("arquivo")?.click()
                       }
@@ -661,22 +667,79 @@ function AnaliseDetalhe() {
                   </div>
 
                   <p className="text-xs leading-relaxed text-muted-foreground">
-                    PDFs digitalizados e imagens passam por OCR assistido por IA.
-                    Arquivos KML, KMZ e GeoJSON têm o perímetro, os azimutes e a
-                    área calculados diretamente da geometria (WGS-84). Arquivos
-                    CAD (DWG e DXF) são lidos no próprio navegador: as
-                    polilinhas fechadas do espaço do modelo viram perímetro,
-                    azimutes, distâncias e área, sem consumo de créditos de IA.
+                    Selecione vários arquivos de uma só vez. PDFs digitalizados e
+                    imagens passam por OCR assistido por IA. Arquivos KML, KMZ e
+                    GeoJSON têm o perímetro, os azimutes e a área calculados
+                    diretamente da geometria (WGS-84). Arquivos CAD (DWG e DXF)
+                    são lidos no próprio navegador: as polilinhas fechadas do
+                    espaço do modelo viram perímetro, azimutes, distâncias e
+                    área, sem consumo de créditos de IA.
                   </p>
                 </div>
-                {arquivoPendente && (
+                {arquivosPendentes.length === 1 && (
                   <EstimativaCreditosArquivo
-                    arquivo={arquivoPendente}
-                    processando={enviarArquivo.isPending}
-                    onCancelar={() => setArquivoPendente(null)}
-                    onConfirmar={() => enviarArquivo.mutate(arquivoPendente)}
+                    arquivo={arquivosPendentes[0]!}
+                    processando={enviarArquivos.isPending}
+                    onCancelar={() => setArquivosPendentes([])}
+                    onConfirmar={() =>
+                      enviarArquivos.mutate(arquivosPendentes)
+                    }
                   />
                 )}
+                {arquivosPendentes.length > 1 && (
+                  <div className="space-y-3 rounded-sm border border-border p-4">
+                    <p className="text-sm">
+                      {arquivosPendentes.length} arquivo(s) na fila de envio
+                    </p>
+                    <ul className="max-h-48 space-y-1 overflow-auto text-xs text-muted-foreground">
+                      {arquivosPendentes.map((f, i) => (
+                        <li
+                          key={`${f.name}-${i}`}
+                          className="flex items-center justify-between gap-3"
+                        >
+                          <span className="truncate">{f.name}</span>
+                          {!enviarArquivos.isPending && (
+                            <button
+                              type="button"
+                              className="shrink-0 underline"
+                              onClick={() =>
+                                setArquivosPendentes((prev) =>
+                                  prev.filter((_, j) => j !== i),
+                                )
+                              }
+                            >
+                              remover
+                            </button>
+                          )}
+                        </li>
+                      ))}
+                    </ul>
+                    {progressoLote && (
+                      <p className="text-xs text-muted-foreground">
+                        Processando {progressoLote.atual} de{" "}
+                        {progressoLote.total}: {progressoLote.nome}
+                      </p>
+                    )}
+                    <div className="flex gap-2">
+                      <Button
+                        onClick={() => enviarArquivos.mutate(arquivosPendentes)}
+                        disabled={enviarArquivos.isPending}
+                      >
+                        {enviarArquivos.isPending
+                          ? "Enviando..."
+                          : `Enviar ${arquivosPendentes.length} arquivos`}
+                      </Button>
+                      <Button
+                        variant="outline"
+                        disabled={enviarArquivos.isPending}
+                        onClick={() => setArquivosPendentes([])}
+                      >
+                        Limpar
+                      </Button>
+                    </div>
+                  </div>
+                )}
+
 
               </div>
 
