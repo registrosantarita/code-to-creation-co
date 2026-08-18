@@ -329,10 +329,14 @@ export function exportarRelatorioPdf(
     doc.setFontSize(9);
     doc.setTextColor(110);
     doc.text(
-      `Trecho total conferido: ${primeiro.de_a ?? "?"} → ${ultimo.ate_a ?? "?"} • ${trechos.length} trecho(s) • ${fmtMedida(extensao)} m • ${trechos.filter((t) => t.ok).length} conforme(s)${primeiro.invertido ? " • conferido por contra-azimute" : ""}`,
+      doc.splitTextToSize(
+        `Trecho total conferido: ${primeiro.de_a ?? "?"} ate ${ultimo.ate_a ?? "?"} - ${trechos.length} trecho(s) - ${fmtMedida(extensao)} m - ${trechos.filter((t) => t.ok).length} conforme(s)${primeiro.invertido ? " - conferido por contra-azimute" : ""}`,
+        W - 2 * M,
+      ) as string[],
       M,
       yTop + 13,
     );
+
     doc.setTextColor(0);
 
     autoTable(doc, {
