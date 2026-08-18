@@ -9,7 +9,7 @@ import {
   runComparison,
   runLotBatchComparison,
 } from "@/lib/registral.functions";
-import { souAdmin, excluirDocumento } from "@/lib/admin.functions";
+import { souAdmin, excluirDocumento, excluirComparacao } from "@/lib/admin.functions";
 import { DEFAULT_TOLERANCES } from "@/lib/comparison-engine";
 import { ehDivergencia, lerDecisao } from "@/lib/finding-review";
 
