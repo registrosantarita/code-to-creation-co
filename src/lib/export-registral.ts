@@ -313,6 +313,29 @@ export function exportarRelatorioPdf(
     margin: { left: M, right: M },
   });
 
+  /**
+   * Escreve o título de uma seção, abrindo nova página quando não há espaço
+   * suficiente abaixo (evita título colado ao rodapé ou órfão).
+   */
+  const secao = (yBase: number, titulo: string, subtitulo: string): number => {
+    const limite = doc.internal.pageSize.getHeight() - 120;
+    let yS = yBase;
+    if (yS > limite) {
+      doc.addPage();
+      yS = M;
+    }
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(11);
+    doc.text(titulo, M, yS);
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(9);
+    doc.setTextColor(110);
+    const sub = doc.splitTextToSize(subtitulo, W - 2 * M) as string[];
+    doc.text(sub, M, yS + 13);
+    doc.setTextColor(0);
+    return yS + 13 + sub.length * 11 + 8;
+  };
+
   const trechos = input.trechos ?? [];
   if (trechos.length > 0) {
     const primeiro = trechos[0]!;
@@ -320,28 +343,15 @@ export function exportarRelatorioPdf(
     const extensao =
       input.extensaoConferidaM ??
       trechos.reduce((acc, t) => acc + (t.distancia_a ?? 0), 0);
-    const yTop =
-      (doc as unknown as { lastAutoTable: { finalY: number } }).lastAutoTable.finalY + 22;
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(11);
-    doc.text("Conferência trecho a trecho", M, yTop);
-    doc.setFont("helvetica", "normal");
-    doc.setFontSize(9);
-    doc.setTextColor(110);
-    doc.text(
-      doc.splitTextToSize(
-        `Trecho total conferido: ${primeiro.de_a ?? "?"} a ${ultimo.ate_a ?? "?"} • ${trechos.length} trecho(s) • ${fmtMedida(extensao)} m • ${trechos.filter((t) => t.ok).length} conforme(s)${primeiro.invertido ? " • conferido por contra-azimute" : ""}`,
-        W - 2 * M,
-      ) as string[],
-      M,
-      yTop + 13,
+    const yTabela = secao(
+      (doc as unknown as { lastAutoTable: { finalY: number } }).lastAutoTable.finalY + 24,
+      "Conferência trecho a trecho",
+      `Trecho total conferido: ${primeiro.de_a ?? "?"} a ${ultimo.ate_a ?? "?"} • ${trechos.length} trecho(s) • ${fmtMedida(extensao)} m • ${trechos.filter((t) => t.ok).length} conforme(s)${primeiro.invertido ? " • conferido por contra-azimute" : ""}`,
     );
 
-    doc.setTextColor(0);
-
     autoTable(doc, {
-      startY: yTop + 24,
-      head: [["#", "Trecho (A)", "Correspondente (B)", "Dist. A/B (m)", "Azimute A/B", "Cota A/B (m)", "Situação"]],
+      startY: yTabela,
+      head: [["#", "Trecho (A)", "Corresp. (B)", "Dist. A/B (m)", "Azimute A/B", "Cota A/B (m)", "Situação"]],
       body: trechos.map((t) => [
         String(t.seq_a),
         `${t.de_a ?? "?"} - ${t.ate_a ?? "?"}`,
