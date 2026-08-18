@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
+import { toast } from "sonner";
+
 import { supabase } from "@/integrations/supabase/client";
 import {
   CLASSIFICACAO,
@@ -63,7 +65,40 @@ function Relatorio() {
     },
   });
 
+  const analise = useQuery({
+    enabled: !!comparison.data?.analysis_id,
+    queryKey: ["analysis-status", comparison.data?.analysis_id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("analyses")
+        .select("id, status")
+        .eq("id", comparison.data!.analysis_id!)
+        .single();
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  const analiseConcluida =
+    analise.data?.status === "completed" || analise.data?.status === "archived";
+
+  const concluir = useMutation({
+    mutationFn: async () => {
+      const { error } = await supabase
+        .from("analyses")
+        .update({ status: "completed", closed_at: new Date().toISOString() })
+        .eq("id", comparison.data!.analysis_id!);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Análise concluída: o relatório é definitivo.");
+      analise.refetch();
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
   const findings = useQuery({
+
     queryKey: ["findings", id],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -467,6 +502,27 @@ function Relatorio() {
           onSalvo={() => findings.refetch()}
         />
 
+        {divergentes.length === 0 && ordenados.length > 0 && (
+          <div className="panel mt-8 flex flex-wrap items-center gap-4 p-6 print:hidden">
+            <div>
+              <h3 className="text-lg">Confirmar conferência</h3>
+              <p className="mt-2 max-w-2xl text-sm leading-relaxed text-muted-foreground">
+                Nenhuma divergência foi apontada — apenas trechos compatíveis
+                (informativos). Confirme para encerrar a análise e tornar o
+                relatório definitivo.
+              </p>
+            </div>
+            <Button
+              size="sm"
+              className="ml-auto"
+              disabled={concluir.isPending || analiseConcluida}
+              onClick={() => concluir.mutate()}
+            >
+              {analiseConcluida ? "Análise já concluída" : "Confirmar análise"}
+            </Button>
+          </div>
+        )}
+
         {compativeis.length > 0 && (
           <div className="mt-8 print:hidden">
             {mostrarOposicoes ? (
@@ -504,6 +560,7 @@ function Relatorio() {
             )}
           </div>
         )}
+
 
       </section>
 

@@ -511,8 +511,9 @@ function AnaliseDetalhe() {
                     {definitiva
                       ? "Análise encerrada: o relatório é definitivo e permanece disponível para consulta."
                       : achados.length === 0
-                        ? "Enquanto estiver em rascunho, a análise é editável. Execute as comparações e valide as divergências para encerrá-la."
+                        ? "Nenhuma divergência a validar — apenas trechos compatíveis (informativos). Confirme para encerrar a análise e tornar o relatório definitivo."
                         : `${achados.length - pendentes.length} de ${achados.length} divergências validadas. Cada divergência deve ser confirmada ou relevada com justificativa, no relatório da comparação, antes do encerramento. Trechos compatíveis não exigem justificativa.`}
+
                   </p>
                 </div>
 
