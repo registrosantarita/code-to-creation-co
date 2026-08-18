@@ -561,6 +561,22 @@ function Relatorio() {
 
       </section>
 
+      <div className="mt-10 flex flex-wrap items-center gap-2 print:hidden">
+        <Button size="sm" onClick={() => baixarPdf()}>
+          Baixar relatório (PDF)
+        </Button>
+        <Button variant="outline" size="sm" onClick={() => window.print()}>
+          Imprimir
+        </Button>
+        <Link
+          to="/analises/$id"
+          params={{ id: c.analysis_id }}
+          className="eyebrow ml-auto hover:text-accent-foreground"
+        >
+          ← Voltar à análise
+        </Link>
+      </div>
+
       <footer className="mt-12 border-t border-border pt-6">
         <p className="text-xs leading-relaxed text-muted-foreground">
           Este relatório é instrumento de apoio à decisão. Não substitui a
