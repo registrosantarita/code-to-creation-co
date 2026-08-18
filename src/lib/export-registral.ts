@@ -387,23 +387,14 @@ export function exportarRelatorioPdf(
 
     const confrontacoes = agruparConfrontantes(trechos);
     if (confrontacoes.length > 0) {
-      const yConf =
-        (doc as unknown as { lastAutoTable: { finalY: number } }).lastAutoTable.finalY + 22;
-      doc.setFont("helvetica", "bold");
-      doc.setFontSize(11);
-      doc.text("Imóveis confrontantes", M, yConf);
-      doc.setFont("helvetica", "normal");
-      doc.setFontSize(9);
-      doc.setTextColor(110);
-      doc.text(
+      const yConfTabela = secao(
+        (doc as unknown as { lastAutoTable: { finalY: number } }).lastAutoTable.finalY + 24,
+        "Imóveis confrontantes",
         "Caminhamento resumido por confrontação: do vértice inicial ao final de cada divisa comum.",
-        M,
-        yConf + 13,
       );
-      doc.setTextColor(0);
 
       autoTable(doc, {
-        startY: yConf + 24,
+        startY: yConfTabela,
         head: [["Confrontação", "Caminhamento", "Trechos", "Extensão (m)", "Situação"]],
         body: confrontacoes.map((g) => [
           g.confrontante,
