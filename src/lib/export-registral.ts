@@ -352,13 +352,17 @@ export function exportarRelatorioPdf(
         t.ok ? "OK — correto" : `X — ${t.problemas.join("; ")}`,
       ]),
       theme: "grid",
+      rowPageBreak: "avoid",
       styles: { fontSize: 8, cellPadding: 4, overflow: "linebreak", valign: "top" },
-      headStyles: { fillColor: [24, 28, 38], textColor: 255 },
+      headStyles: { fillColor: [24, 28, 38], textColor: 255, valign: "middle" },
       columnStyles: {
-        0: { cellWidth: 22 },
-        3: { cellWidth: 78, halign: "right" },
-        4: { cellWidth: 86, halign: "right" },
-        5: { cellWidth: 70, halign: "right" },
+        0: { cellWidth: 20, halign: "right" },
+        1: { cellWidth: 68 },
+        2: { cellWidth: 68 },
+        3: { cellWidth: 76, halign: "right" },
+        4: { cellWidth: 84, halign: "right" },
+        5: { cellWidth: 66, halign: "right" },
+        6: { cellWidth: "auto" },
       },
       didParseCell: (data) => {
         if (data.section === "body" && data.column.index === 6) {
@@ -369,6 +373,7 @@ export function exportarRelatorioPdf(
       },
       margin: { left: M, right: M },
     });
+
 
     const confrontacoes = agruparConfrontantes(trechos);
     if (confrontacoes.length > 0) {
