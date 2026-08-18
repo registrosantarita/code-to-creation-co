@@ -175,3 +175,40 @@ export const excluirDocumento = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     return { ok: true };
   });
+
+/** Exclusão de uma comparação (e respectivos achados). Somente admin, com registro em auditoria. */
+export const excluirComparacao = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) => z.object({ comparisonId: z.string().uuid() }).parse(input))
+  .handler(async ({ data, context }) => {
+    await exigirAdmin(context);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    const { data: comp } = await supabaseAdmin
+      .from("comparisons")
+      .select("id, analysis_id, comparison_type, classification, summary")
+      .eq("id", data.comparisonId)
+      .maybeSingle();
+    if (!comp) throw new Error("Comparação não encontrada.");
+
+    const { error } = await supabaseAdmin
+      .from("comparisons")
+      .delete()
+      .eq("id", data.comparisonId);
+    if (error) throw new Error(error.message);
+
+    await supabaseAdmin.from("audit_logs").insert({
+      actor_id: context.userId,
+      entity_type: "comparison",
+      entity_id: comp.id,
+      action: "delete",
+      metadata: {
+        analysis_id: comp.analysis_id,
+        tipo: comp.comparison_type,
+        classificacao: comp.classification,
+        resumo: comp.summary,
+      },
+    });
+
+    return { ok: true, analysisId: comp.analysis_id };
+  });
