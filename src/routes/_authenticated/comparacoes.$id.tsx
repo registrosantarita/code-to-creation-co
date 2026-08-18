@@ -431,13 +431,10 @@ function Relatorio() {
         );
 
         // Na comparação múltipla exibe apenas a conferência consolidada.
-        return c.comparison_type === "custom" && temConsolidado ? (
+        return temConsolidado ? (
           <>{tabelaConsolidada}</>
         ) : (
-          <>
-            {parAPar}
-            {tabelaConsolidada}
-          </>
+          <>{parAPar}</>
         );
       })()}
 
