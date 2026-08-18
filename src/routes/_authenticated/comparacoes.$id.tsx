@@ -430,12 +430,9 @@ function Relatorio() {
           />
         );
 
-        // Na comparação múltipla a visão consolidada vem primeiro.
+        // Na comparação múltipla exibe apenas a conferência consolidada.
         return c.comparison_type === "custom" && temConsolidado ? (
-          <>
-            {tabelaConsolidada}
-            {parAPar}
-          </>
+          <>{tabelaConsolidada}</>
         ) : (
           <>
             {parAPar}
