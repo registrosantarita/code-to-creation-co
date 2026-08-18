@@ -397,18 +397,23 @@ export function exportarRelatorioPdf(
         head: [["Confrontação", "Caminhamento", "Trechos", "Extensão (m)", "Situação"]],
         body: confrontacoes.map((g) => [
           g.confrontante,
-          `${g.de} → ${g.ate}`,
+          `${g.de} a ${g.ate}`,
           String(g.trechos),
           fmtMedida(g.extensao_m),
           g.ok ? "OK — correto" : `X — ${g.problemas.join("; ")}`,
         ]),
         theme: "grid",
+        rowPageBreak: "avoid",
         styles: { fontSize: 8, cellPadding: 4, overflow: "linebreak", valign: "top" },
-        headStyles: { fillColor: [24, 28, 38], textColor: 255 },
+        headStyles: { fillColor: [24, 28, 38], textColor: 255, valign: "middle" },
         columnStyles: {
-          2: { cellWidth: 44, halign: "right" },
-          3: { cellWidth: 68, halign: "right" },
+          0: { cellWidth: "auto" },
+          1: { cellWidth: 96 },
+          2: { cellWidth: 42, halign: "right" },
+          3: { cellWidth: 66, halign: "right" },
+          4: { cellWidth: 130 },
         },
+
         didParseCell: (data) => {
           if (data.section === "body" && data.column.index === 4) {
             const ok = confrontacoes[data.row.index]?.ok;
