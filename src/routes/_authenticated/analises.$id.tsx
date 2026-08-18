@@ -1099,52 +1099,20 @@ function AnaliseDetalhe() {
                               size="sm"
                               disabled={excluirDoc.isPending}
                               className="text-muted-foreground hover:text-destructive"
-                              onClick={() => {
-                                if (
-                                  confirm(
-                                    `Excluir definitivamente "${d.file_name ?? "documento"}" e seus dados extraídos?`,
-                                  )
-                                )
-                                  excluirDoc.mutate(d.id);
-                              }}
+                              onClick={excluirDocumento}
                             >
                               Excluir documento
                             </Button>
                           )}
 
                           {parcel && (parcel.segments ?? []).length > 0 && (
-                            <Button
-                              size="sm"
-
-                              onClick={async () => {
-                                const base = (d.file_name ?? "descricao").replace(
-                                  /\.[^.]+$/,
-                                  "",
-                                );
-                                const r = await exportarMatriculaXlsx(
-                                  {
-                                    label: parcel.label,
-                                    area_m2: parcel.area_m2,
-                                    declared_perimeter_m: parcel.declared_perimeter_m,
-                                    computed_perimeter_m: parcel.computed_perimeter_m,
-                                    vertex_count: parcel.vertex_count,
-                                    raw_extraction: parcel.raw_extraction,
-                                    segments: (parcel.segments ?? []) as never,
-                                  },
-                                  `descricao-matricula-${base}.xlsx`,
-                                );
-                                toast.success(
-                                  r.sigef
-                                    ? `Descrição para matrícula gerada: ${r.linhas} vértices e ${r.confrontacoes} confrontação(ões).`
-                                    : `Descrição para matrícula gerada com ${r.linhas} linhas.`,
-                                );
-                              }}
-                            >
+                            <Button size="sm" onClick={gerarMatricula}>
                               Gerar descrição para Matrícula
                             </Button>
                           )}
 
                         </div>
+
 
                       </AccordionContent>
                     </AccordionItem>
