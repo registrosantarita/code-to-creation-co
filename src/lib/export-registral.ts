@@ -438,15 +438,21 @@ export function exportarRelatorioPdf(
     head: [["Severidade", "Código", "Achado", "Descrição", "Validação humana"]],
     body:
       achados.length > 0
-        ? achados.map((f) => [
-            SEVERIDADE[f.severity]?.label ?? f.severity,
-            f.code,
-            f.title,
-            f.description,
-            [f.situacao ?? "Aguardando validação", f.justificativa]
-              .filter(Boolean)
-              .join(" — "),
-          ])
+        ? achados.map((f) => {
+            const validacao =
+              f.severity === "informative"
+                ? "Trecho compatível."
+                : [f.situacao ?? "Aguardando validação", f.justificativa]
+                    .filter(Boolean)
+                    .join(" — ");
+            return [
+              SEVERIDADE[f.severity]?.label ?? f.severity,
+              f.code,
+              f.title,
+              f.description,
+              validacao,
+            ];
+          })
         : [["—", "—", "Nenhum achado registrado", "", ""]],
     theme: "striped",
     rowPageBreak: "avoid",
