@@ -263,65 +263,107 @@ function AnaliseDetalhe() {
     onError: (e: Error) => toast.error(e.message),
   });
 
-  const enviarArquivo = useMutation({
-    mutationFn: async (file: File) => {
+  /** Envia um arquivo, cria o documento e dispara a extração. */
+  async function subirArquivo(file: File, uid: string) {
+    if (file.size > 25 * 1024 * 1024) throw new Error("Arquivo acima de 25 MB.");
+    const ext = file.name.split(".").pop()?.toLowerCase() ?? "";
+
+    /** DWG/DXF são convertidos no navegador em memorial tabular. */
+    let textoCad: string | null = null;
+    if (isCadExtension(ext)) {
+      const { lerArquivoCad } = await import("@/lib/cad-reader.browser");
+      const conv = await lerArquivoCad(file);
+      if (!conv.text.trim())
+        throw new Error(
+          conv.aviso ?? "Não foi possível extrair geometria do arquivo CAD.",
+        );
+      if (conv.aviso) toast.warning(conv.aviso);
+      textoCad = conv.text.slice(0, 200000);
+    }
+
+    const path = `${uid}/${id}/${crypto.randomUUID()}.${ext}`;
+    const { error: upErr } = await supabase.storage
+      .from("documentos")
+      .upload(path, file, {
+        contentType: file.type || "application/octet-stream",
+      });
+    if (upErr) throw new Error("Falha no envio do arquivo.");
+    const { data, error } = await supabase
+      .from("documents")
+      .insert({
+        analysis_id: id,
+        source_type: "upload",
+        file_name: file.name.slice(0, 255),
+        file_extension: ext,
+        mime_type: file.type || null,
+        file_size_bytes: file.size,
+        storage_path: path,
+        document_category: categoria as never,
+        ...(textoCad ? { original_text: textoCad } : {}),
+        created_by: uid,
+      })
+      .select("id")
+      .single();
+    if (error) throw error;
+    return extrair({ data: { documentId: data.id } });
+  }
+
+  /** Envio em lote: processa os arquivos selecionados em sequência. */
+  const enviarArquivos = useMutation({
+    mutationFn: async (files: File[]) => {
       const { data: userData } = await supabase.auth.getUser();
       const uid = userData.user?.id;
       if (!uid) throw new Error("Sessão expirada.");
-      if (file.size > 25 * 1024 * 1024)
-        throw new Error("Arquivo acima de 25 MB.");
-      const ext = file.name.split(".").pop()?.toLowerCase() ?? "";
-
-      /** DWG/DXF são convertidos no navegador em memorial tabular. */
-      let textoCad: string | null = null;
-      if (isCadExtension(ext)) {
-        const { lerArquivoCad } = await import("@/lib/cad-reader.browser");
-        const conv = await lerArquivoCad(file);
-        if (!conv.text.trim())
-          throw new Error(
-            conv.aviso ?? "Não foi possível extrair geometria do arquivo CAD.",
-          );
-        if (conv.aviso) toast.warning(conv.aviso);
-        textoCad = conv.text.slice(0, 200000);
+      let ok = 0;
+      const falhas: string[] = [];
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i]!;
+        setProgressoLote({ atual: i + 1, total: files.length, nome: file.name });
+        try {
+          const res = await subirArquivo(file, uid);
+          if (res.ok) {
+            ok++;
+            res.warnings.forEach((w) => toast.warning(`${file.name}: ${w}`));
+            if (res.note) toast.warning(`${file.name}: ${res.note}`);
+          } else {
+            falhas.push(`${file.name}: ${res.message}`);
+          }
+        } catch (e) {
+          falhas.push(`${file.name}: ${(e as Error).message}`);
+        }
+        refreshDocs();
       }
-
-      const path = `${uid}/${id}/${crypto.randomUUID()}.${ext}`;
-      const { error: upErr } = await supabase.storage
-        .from("documentos")
-        .upload(path, file, { contentType: file.type || "application/octet-stream" });
-      if (upErr) throw new Error("Falha no envio do arquivo.");
-      const { data, error } = await supabase
-        .from("documents")
-        .insert({
-          analysis_id: id,
-          source_type: "upload",
-          file_name: file.name.slice(0, 255),
-          file_extension: ext,
-          mime_type: file.type || null,
-          file_size_bytes: file.size,
-          storage_path: path,
-          document_category: categoria as never,
-          ...(textoCad ? { original_text: textoCad } : {}),
-          created_by: uid,
-        })
-        .select("id")
-        .single();
-      if (error) throw error;
-      return extrair({ data: { documentId: data.id } });
+      return { ok, falhas };
     },
-    onSuccess: (res) => {
-      setArquivoPendente(null);
+    onSuccess: ({ ok, falhas }) => {
+      setArquivosPendentes([]);
+      setProgressoLote(null);
       refreshDocs();
-      if (res.ok) {
-        toast.success(`Extração concluída: ${res.segments} segmento(s).`);
-        res.warnings.forEach((w) => toast.warning(w));
-        if (res.note) toast.warning(res.note);
-      } else {
-        toast.warning(res.message);
-      }
+      if (ok > 0) toast.success(`${ok} documento(s) ingerido(s).`);
+      falhas.forEach((f) => toast.warning(f));
+    },
+    onError: (e: Error) => {
+      setProgressoLote(null);
+      toast.error(e.message);
+    },
+  });
+
+  /** Reclassificação da natureza documental após o upload. */
+  const alterarCategoria = useMutation({
+    mutationFn: async (v: { documentId: string; categoria: string }) => {
+      const { error } = await supabase
+        .from("documents")
+        .update({ document_category: v.categoria as never })
+        .eq("id", v.documentId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      refreshDocs();
+      toast.success("Natureza do documento atualizada.");
     },
     onError: (e: Error) => toast.error(e.message),
   });
+
 
   const souAdminFn = useServerFn(souAdmin);
   const admin = useQuery({
