@@ -342,6 +342,7 @@ export function exportarRelatorioPdf(
     styles: { fontSize: 9, cellPadding: 5, halign: "center" },
     headStyles: { fillColor: [24, 28, 38], textColor: 255, halign: "center" },
     margin: { left: M, right: M },
+    didParseCell: withShrink(doc),
   });
 
   /**
