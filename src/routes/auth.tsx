@@ -149,27 +149,30 @@ function AuthPage() {
 
   return (
     <div className="grid min-h-screen lg:grid-cols-2">
-      <aside className="hidden flex-col items-center justify-between bg-ink p-12 text-center text-ink-foreground lg:flex">
-        <Link to="/" className="flex flex-col items-center gap-4">
-          <img
-            src={logoAsset.url}
-            alt="e-Qualifica"
-            className="h-44 w-44 object-contain"
-          />
-        </Link>
+      <aside className="hidden flex-col items-center justify-center bg-ink p-12 text-center text-ink-foreground lg:flex">
+        <div className="flex flex-1 flex-col items-center justify-center">
+          <Link to="/" className="flex flex-col items-center">
+            <img
+              src={logoAsset.url}
+              alt="e-Qualifica"
+              className="h-44 w-44 object-contain"
+            />
+          </Link>
 
-        <div className="flex flex-col items-center">
-          <div className="rule-gold w-32" />
-          <h1 className="mt-8 max-w-md text-4xl leading-tight">
-            Trilha de auditoria integral para cada conclusão técnica.
-          </h1>
-          <p className="mt-6 max-w-md text-sm leading-relaxed text-ink-foreground/70">
-            O acesso é individual e nominal. Cada extração, comparação e achado
-            fica vinculado ao usuário responsável.
-          </p>
+          <div className="mt-[38px] flex flex-col items-center">
+            <div className="rule-gold w-32" />
+            <h1 className="mt-8 max-w-md text-4xl leading-tight">
+              Trilha de auditoria integral para cada conclusão técnica.
+            </h1>
+            <p className="mt-6 max-w-md text-sm leading-relaxed text-ink-foreground/70">
+              O acesso é individual e nominal. Cada extração, comparação e achado
+              fica vinculado ao usuário responsável.
+            </p>
+          </div>
         </div>
         <p className="eyebrow text-ink-foreground/50">Área restrita</p>
       </aside>
+
 
       <main className="flex items-center justify-center px-6 py-16">
         <div className="w-full max-w-sm">
