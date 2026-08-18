@@ -1533,10 +1533,9 @@ function AnaliseDetalhe() {
                   return (
                     <li key={c.id} className="flex items-start gap-2">
                       <Link
-                        className="flex-1"
                         to="/comparacoes/$id"
                         params={{ id: c.id }}
-                        className="panel block p-5 transition-colors hover:border-accent"
+                        className="panel block flex-1 p-5 transition-colors hover:border-accent"
                       >
                         <div className="flex flex-wrap items-center gap-3">
                           <span className="font-display text-base">
