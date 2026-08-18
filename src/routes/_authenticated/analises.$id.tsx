@@ -9,7 +9,7 @@ import {
   runComparison,
   runLotBatchComparison,
 } from "@/lib/registral.functions";
-import { souAdmin, excluirDocumento } from "@/lib/admin.functions";
+import { souAdmin, excluirDocumento, excluirComparacao } from "@/lib/admin.functions";
 import { DEFAULT_TOLERANCES } from "@/lib/comparison-engine";
 import { ehDivergencia, lerDecisao } from "@/lib/finding-review";
 
@@ -380,6 +380,18 @@ function AnaliseDetalhe() {
       queryClient.invalidateQueries({ queryKey: ["comparisons", id] });
       queryClient.invalidateQueries({ queryKey: ["findings-analise", id] });
       toast.success("Documento excluído.");
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const excluirCompFn = useServerFn(excluirComparacao);
+  const excluirComp = useMutation({
+    mutationFn: (comparisonId: string) => excluirCompFn({ data: { comparisonId } }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["comparisons", id] });
+      queryClient.invalidateQueries({ queryKey: ["findings-analise", id] });
+      queryClient.invalidateQueries({ queryKey: ["audit", id] });
+      toast.success("Comparação excluída e registrada na trilha de auditoria.");
     },
     onError: (e: Error) => toast.error(e.message),
   });
@@ -1519,11 +1531,11 @@ function AnaliseDetalhe() {
                 {comparisons.data!.map((c) => {
                   const cls = CLASSIFICACAO[c.classification ?? "inconclusive"]!;
                   return (
-                    <li key={c.id}>
+                    <li key={c.id} className="flex items-start gap-2">
                       <Link
                         to="/comparacoes/$id"
                         params={{ id: c.id }}
-                        className="panel block p-5 transition-colors hover:border-accent"
+                        className="panel block flex-1 p-5 transition-colors hover:border-accent"
                       >
                         <div className="flex flex-wrap items-center gap-3">
                           <span className="font-display text-base">
@@ -1542,6 +1554,24 @@ function AnaliseDetalhe() {
                           {c.summary}
                         </p>
                       </Link>
+                      {admin.data?.admin && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          disabled={excluirComp.isPending}
+                          className="mt-1 text-muted-foreground hover:text-destructive"
+                          onClick={() => {
+                            if (
+                              window.confirm(
+                                "Excluir esta comparação? A exclusão será registrada na trilha de auditoria.",
+                              )
+                            )
+                              excluirComp.mutate(c.id);
+                          }}
+                        >
+                          Excluir
+                        </Button>
+                      )}
                     </li>
                   );
                 })}
