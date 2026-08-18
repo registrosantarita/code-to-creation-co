@@ -175,7 +175,7 @@ export function TrechosConferidos({
                 <th className="eyebrow py-2 px-2 text-right">ALT. (m)</th>
                 <th className="eyebrow py-2 px-2 text-right">ÂNGULO</th>
                 <th className="eyebrow py-2 px-2 text-right">DIST. (m)</th>
-                <th className="eyebrow py-2 px-2 text-center" aria-label="Situação" />
+                <th className="eyebrow py-2 px-2 text-center w-full" aria-label="Situação" />
               </tr>
             </thead>
             <tbody>
