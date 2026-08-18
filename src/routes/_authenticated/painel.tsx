@@ -259,7 +259,10 @@ function Painel() {
                 </div>
               </Link>
               <div className="flex flex-col items-end justify-between p-6 pl-2">
-                <Badge variant="secondary" className="shrink-0">
+                <Badge
+                  variant="secondary"
+                  className={`shrink-0 ${STATUS_ANALISE_CLASS[a.status]}`}
+                >
                   {STATUS_ANALISE[a.status]}
                 </Badge>
                 {admin.data?.admin && (
