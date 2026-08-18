@@ -513,6 +513,7 @@ export function exportarRelatorioPdf(
     theme: "plain",
     styles: { fontSize: 7.5, cellPadding: 4, overflow: "linebreak", textColor: 90 },
     headStyles: { fontStyle: "bold", textColor: 30 },
+    didParseCell: withShrink(doc),
     margin: { left: M, right: M },
   });
 
