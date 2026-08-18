@@ -384,6 +384,18 @@ function AnaliseDetalhe() {
     onError: (e: Error) => toast.error(e.message),
   });
 
+  const excluirCompFn = useServerFn(excluirComparacao);
+  const excluirComp = useMutation({
+    mutationFn: (comparisonId: string) => excluirCompFn({ data: { comparisonId } }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["comparisons", id] });
+      queryClient.invalidateQueries({ queryKey: ["findings-analise", id] });
+      queryClient.invalidateQueries({ queryKey: ["audit", id] });
+      toast.success("Comparação excluída e registrada na trilha de auditoria.");
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
   const reprocessar = useMutation({
     mutationFn: (documentId: string) => extrair({ data: { documentId } }),
     onSuccess: () => {
