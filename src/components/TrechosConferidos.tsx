@@ -144,38 +144,38 @@ export function TrechosConferidos({
         </p>
 
         <div className="mt-5 overflow-x-auto">
-          <table className="w-auto min-w-full table-auto border-collapse text-sm [&_td]:whitespace-nowrap [&_td]:pr-4 [&_th]:whitespace-nowrap [&_th]:pr-4">
+          <table className="w-fit border-collapse text-sm [&_td]:whitespace-nowrap [&_td]:px-2 [&_th]:whitespace-nowrap [&_th]:px-2">
             <thead>
               <tr className="border-b border-border text-left">
-                <th className="eyebrow py-2 pr-3">#</th>
+                <th className="eyebrow py-2 px-2">#</th>
                 <th
-                  className="eyebrow py-2 pr-3"
+                  className="eyebrow py-2 px-2"
                   title={`Doc. ${letraA}: ${labelA ?? ""} / Doc. ${letraB}: ${labelB ?? ""}`}
                 >
                   TRECHO DE
                 </th>
                 <th
-                  className="eyebrow py-2 pr-3"
+                  className="eyebrow py-2 px-2"
                   title={`Doc. ${letraA}: ${labelA ?? ""} / Doc. ${letraB}: ${labelB ?? ""}`}
                 >
                   TRECHO PARA
                 </th>
                 {temGeo && (
                   <>
-                    <th className="eyebrow py-2 pr-3 text-right">LONGITUDE</th>
-                    <th className="eyebrow py-2 pr-3 text-right">LATITUDE</th>
+                    <th className="eyebrow py-2 px-2 text-right">LONGITUDE</th>
+                    <th className="eyebrow py-2 px-2 text-right">LATITUDE</th>
                   </>
                 )}
                 {temPlana && (
                   <>
-                    <th className="eyebrow py-2 pr-3 text-right">COORD. N(Y)</th>
-                    <th className="eyebrow py-2 pr-3 text-right">COORD. E(X)</th>
+                    <th className="eyebrow py-2 px-2 text-right">COORD. N(Y)</th>
+                    <th className="eyebrow py-2 px-2 text-right">COORD. E(X)</th>
                   </>
                 )}
-                <th className="eyebrow py-2 pr-3 text-right">ALT. (m)</th>
-                <th className="eyebrow py-2 pr-3 text-right">ÂNGULO</th>
-                <th className="eyebrow py-2 pr-3 text-right">DIST. (m)</th>
-                <th className="eyebrow py-2 pr-3 text-center" aria-label="Situação" />
+                <th className="eyebrow py-2 px-2 text-right">ALT. (m)</th>
+                <th className="eyebrow py-2 px-2 text-right">ÂNGULO</th>
+                <th className="eyebrow py-2 px-2 text-right">DIST. (m)</th>
+                <th className="eyebrow py-2 px-2 text-center" aria-label="Situação" />
               </tr>
             </thead>
             <tbody>
@@ -187,8 +187,8 @@ export function TrechosConferidos({
                     key={`${t.seq_a}-${t.seq_b}`}
                     className="border-b border-border/60 align-top"
                   >
-                    <td className="numeric py-2 pr-3 text-muted-foreground">{t.seq_a}</td>
-                    <td className="numeric py-2 pr-3">
+                    <td className="numeric py-2 px-2 text-muted-foreground">{t.seq_a}</td>
+                    <td className="numeric py-2 px-2">
                       <Par
                         a={t.de_a ?? "?"}
                         b={t.de_b ?? "?"}
@@ -197,7 +197,7 @@ export function TrechosConferidos({
                         align="left"
                       />
                     </td>
-                    <td className="numeric py-2 pr-3">
+                    <td className="numeric py-2 px-2">
                       <Par
                         a={t.ate_a ?? "?"}
                         b={t.ate_b ?? "?"}
@@ -208,7 +208,7 @@ export function TrechosConferidos({
                     </td>
                     {temGeo && (
                       <>
-                        <td className="numeric py-2 pr-3">
+                        <td className="numeric py-2 px-2">
                           <Par
                             a={coordToDms(v?.lon ?? null, "lon")}
                             b={coordToDms(w?.lon ?? null, "lon")}
@@ -216,7 +216,7 @@ export function TrechosConferidos({
                             corB={corB}
                           />
                         </td>
-                        <td className="numeric py-2 pr-3">
+                        <td className="numeric py-2 px-2">
                           <Par
                             a={coordToDms(v?.lat ?? null, "lat")}
                             b={coordToDms(w?.lat ?? null, "lat")}
@@ -228,7 +228,7 @@ export function TrechosConferidos({
                     )}
                     {temPlana && (
                       <>
-                        <td className="numeric py-2 pr-3">
+                        <td className="numeric py-2 px-2">
                           <Par
                             a={fmtMedida(v?.north ?? null)}
                             b={fmtMedida(w?.north ?? null)}
@@ -236,7 +236,7 @@ export function TrechosConferidos({
                             corB={corB}
                           />
                         </td>
-                        <td className="numeric py-2 pr-3">
+                        <td className="numeric py-2 px-2">
                           <Par
                             a={fmtMedida(v?.east ?? null)}
                             b={fmtMedida(w?.east ?? null)}
@@ -246,7 +246,7 @@ export function TrechosConferidos({
                         </td>
                       </>
                     )}
-                    <td className="numeric py-2 pr-3">
+                    <td className="numeric py-2 px-2">
                       <Par
                         a={fmtMedida(t.cota_a)}
                         b={fmtMedida(t.cota_b)}
@@ -254,7 +254,7 @@ export function TrechosConferidos({
                         corB={corB}
                       />
                     </td>
-                    <td className="numeric py-2 pr-3">
+                    <td className="numeric py-2 px-2">
                       <Par
                         a={anguloLiteral(t.azimute_txt_a, t.azimute_a, t.azimute_txt_b)}
                         b={anguloLiteral(t.azimute_txt_b, t.azimute_b, t.azimute_txt_a)}
@@ -263,7 +263,7 @@ export function TrechosConferidos({
                         corB={corB}
                       />
                     </td>
-                    <td className="numeric py-2 pr-3">
+                    <td className="numeric py-2 px-2">
                       <Par
                         a={fmtMedida(t.distancia_a)}
                         b={fmtMedida(t.distancia_b)}
@@ -272,7 +272,7 @@ export function TrechosConferidos({
                       />
                     </td>
 
-                    <td className="py-2 pr-3">
+                    <td className="py-2 px-2">
                       <Situacao ok={t.ok} problemas={t.problemas} comparado={t.comparado ?? true} />
                     </td>
                   </tr>
