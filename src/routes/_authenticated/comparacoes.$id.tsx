@@ -467,6 +467,27 @@ function Relatorio() {
           onSalvo={() => findings.refetch()}
         />
 
+        {divergentes.length === 0 && ordenados.length > 0 && (
+          <div className="panel mt-8 flex flex-wrap items-center gap-4 p-6 print:hidden">
+            <div>
+              <h3 className="text-lg">Confirmar conferência</h3>
+              <p className="mt-2 max-w-2xl text-sm leading-relaxed text-muted-foreground">
+                Nenhuma divergência foi apontada — apenas trechos compatíveis
+                (informativos). Confirme para encerrar a análise e tornar o
+                relatório definitivo.
+              </p>
+            </div>
+            <Button
+              size="sm"
+              className="ml-auto"
+              disabled={concluir.isPending || analiseConcluida}
+              onClick={() => concluir.mutate()}
+            >
+              {analiseConcluida ? "Análise já concluída" : "Confirmar análise"}
+            </Button>
+          </div>
+        )}
+
         {compativeis.length > 0 && (
           <div className="mt-8 print:hidden">
             {mostrarOposicoes ? (
@@ -504,6 +525,7 @@ function Relatorio() {
             )}
           </div>
         )}
+
 
       </section>
 
