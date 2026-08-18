@@ -102,9 +102,15 @@ function AnaliseDetalhe() {
   const conferirLoteALote = useServerFn(runLotBatchComparison);
 
   const [texto, setTexto] = useState("");
-  const [arquivoPendente, setArquivoPendente] = useState<File | null>(null);
+  const [arquivosPendentes, setArquivosPendentes] = useState<File[]>([]);
+  const [progressoLote, setProgressoLote] = useState<{
+    atual: number;
+    total: number;
+    nome: string;
+  } | null>(null);
   const [nomeTexto, setNomeTexto] = useState("");
-  const [categoria, setCategoria] = useState("memorial");
+  const [categoria, setCategoria] = useState("nao_classificado");
+
   const [docA, setDocA] = useState("");
   const [parcelA, setParcelA] = useState("");
   /** Documentos comparáveis (B, C, D...) confrontados com o paradigma A. */
