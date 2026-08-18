@@ -8,6 +8,17 @@ export const STATUS_ANALISE: Record<string, string> = {
   error: "Erro",
 };
 
+export const STATUS_ANALISE_CLASS: Record<string, string> = {
+  draft: "border border-border bg-muted text-muted-foreground",
+  processing: "border border-warning/40 bg-warning/15 text-warning-foreground",
+  ready: "border border-success/40 bg-success/10 text-success",
+  review_pending: "border border-accent/40 bg-accent/15 text-accent-foreground",
+  completed: "border border-primary/40 bg-primary/15 text-primary",
+  archived: "border border-border bg-muted text-muted-foreground",
+  error: "border border-destructive/40 bg-destructive/10 text-destructive",
+};
+
+
 export const STATUS_DOCUMENTO: Record<string, string> = {
   uploaded: "Recebido",
   parsed: "Extraído",
