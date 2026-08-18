@@ -293,7 +293,7 @@ export function TrechosConferidos({
           </p>
 
           <div className="mt-5 overflow-x-auto">
-            <table className="w-auto min-w-full table-auto border-collapse text-sm">
+            <table className="w-auto min-w-full table-auto border-collapse text-sm [&_td]:whitespace-nowrap [&_th]:whitespace-nowrap">
               <thead>
                 <tr className="border-b border-border text-left">
                   <th className="eyebrow py-2 pr-3">Confrontação</th>
@@ -309,7 +309,7 @@ export function TrechosConferidos({
                     key={`${g.confrontante}-${i}`}
                     className="border-b border-border/60 align-top"
                   >
-                    <td className="py-2 pr-3">
+                    <td className="whitespace-nowrap py-2 pr-3">
                       <Par
                         a={g.confrontante || "—"}
                         b={g.confrontante_b || "—"}
@@ -318,7 +318,7 @@ export function TrechosConferidos({
                         align="left"
                       />
                     </td>
-                    <td className="numeric py-2 pr-3">
+                    <td className="numeric whitespace-nowrap py-2 pr-3">
                       <Par
                         a={`${g.de} → ${g.ate}`}
                         b={
@@ -331,7 +331,7 @@ export function TrechosConferidos({
                         align="left"
                       />
                     </td>
-                    <td className="numeric py-2 pr-3 text-right">
+                    <td className="numeric whitespace-nowrap py-2 pr-3 text-right">
                       <Par
                         a={String(g.trechos)}
                         b={g.trechos_b > 0 ? String(g.trechos_b) : "—"}
@@ -339,7 +339,7 @@ export function TrechosConferidos({
                         corB={corB}
                       />
                     </td>
-                    <td className="numeric py-2 pr-3 text-right">
+                    <td className="numeric whitespace-nowrap py-2 pr-3 text-right">
                       <Par
                         a={fmtMedida(g.extensao_m)}
                         b={g.extensao_b_m == null ? "—" : fmtMedida(g.extensao_b_m)}
@@ -347,7 +347,7 @@ export function TrechosConferidos({
                         corB={corB}
                       />
                     </td>
-                    <td className="py-2 pr-3">
+                    <td className="whitespace-nowrap py-2 pr-3">
                       <Situacao ok={g.ok} problemas={g.problemas} />
                     </td>
                   </tr>

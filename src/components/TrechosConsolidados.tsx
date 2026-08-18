@@ -332,7 +332,7 @@ export function TrechosConsolidados({ docA, comparados }: Props) {
         <section className="panel mt-8 p-6">
           <h2 className="text-lg">Imóveis confrontantes — consolidado</h2>
           <div className="mt-5 overflow-x-auto">
-            <table className="w-auto min-w-full table-auto border-collapse text-sm">
+            <table className="w-auto min-w-full table-auto border-collapse text-sm [&_td]:whitespace-nowrap [&_th]:whitespace-nowrap">
               <thead>
                 <tr className="border-b border-border text-left">
                   <th className="eyebrow py-2 pr-3">Confrontação</th>
@@ -347,7 +347,7 @@ export function TrechosConsolidados({ docA, comparados }: Props) {
                   if (!base) return null;
                   return (
                     <tr key={i} className="border-b border-border/60 align-top">
-                      <td className="py-2 pr-3">
+                      <td className="whitespace-nowrap py-2 pr-3">
                         <Pilha
                           align="left"
                           itens={[
@@ -359,7 +359,7 @@ export function TrechosConsolidados({ docA, comparados }: Props) {
                           ]}
                         />
                       </td>
-                      <td className="numeric py-2 pr-3">
+                      <td className="numeric whitespace-nowrap py-2 pr-3">
                         <Pilha
                           align="left"
                           itens={[
@@ -377,7 +377,7 @@ export function TrechosConsolidados({ docA, comparados }: Props) {
                           ]}
                         />
                       </td>
-                      <td className="numeric py-2 pr-3">
+                      <td className="numeric whitespace-nowrap py-2 pr-3">
                         <Pilha
                           itens={[
                             { texto: String(base.trechos), cor: corA },
@@ -391,7 +391,7 @@ export function TrechosConsolidados({ docA, comparados }: Props) {
                           ]}
                         />
                       </td>
-                      <td className="numeric py-2 pr-3">
+                      <td className="numeric whitespace-nowrap py-2 pr-3">
                         <Pilha
                           itens={[
                             { texto: fmtMedida(base.extensao_m), cor: corA },
