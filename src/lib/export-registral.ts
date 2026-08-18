@@ -313,6 +313,29 @@ export function exportarRelatorioPdf(
     margin: { left: M, right: M },
   });
 
+  /**
+   * Escreve o título de uma seção, abrindo nova página quando não há espaço
+   * suficiente abaixo (evita título colado ao rodapé ou órfão).
+   */
+  const secao = (yBase: number, titulo: string, subtitulo: string): number => {
+    const limite = doc.internal.pageSize.getHeight() - 120;
+    let yS = yBase;
+    if (yS > limite) {
+      doc.addPage();
+      yS = M;
+    }
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(11);
+    doc.text(titulo, M, yS);
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(9);
+    doc.setTextColor(110);
+    const sub = doc.splitTextToSize(subtitulo, W - 2 * M) as string[];
+    doc.text(sub, M, yS + 13);
+    doc.setTextColor(0);
+    return yS + 13 + sub.length * 11 + 8;
+  };
+
   const trechos = input.trechos ?? [];
   if (trechos.length > 0) {
     const primeiro = trechos[0]!;
@@ -320,24 +343,15 @@ export function exportarRelatorioPdf(
     const extensao =
       input.extensaoConferidaM ??
       trechos.reduce((acc, t) => acc + (t.distancia_a ?? 0), 0);
-    const yTop =
-      (doc as unknown as { lastAutoTable: { finalY: number } }).lastAutoTable.finalY + 22;
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(11);
-    doc.text("Conferência trecho a trecho", M, yTop);
-    doc.setFont("helvetica", "normal");
-    doc.setFontSize(9);
-    doc.setTextColor(110);
-    doc.text(
-      `Trecho total conferido: ${primeiro.de_a ?? "?"} → ${ultimo.ate_a ?? "?"} • ${trechos.length} trecho(s) • ${fmtMedida(extensao)} m • ${trechos.filter((t) => t.ok).length} conforme(s)${primeiro.invertido ? " • conferido por contra-azimute" : ""}`,
-      M,
-      yTop + 13,
+    const yTabela = secao(
+      (doc as unknown as { lastAutoTable: { finalY: number } }).lastAutoTable.finalY + 24,
+      "Conferência trecho a trecho",
+      `Trecho total conferido: ${primeiro.de_a ?? "?"} a ${ultimo.ate_a ?? "?"} • ${trechos.length} trecho(s) • ${fmtMedida(extensao)} m • ${trechos.filter((t) => t.ok).length} conforme(s)${primeiro.invertido ? " • conferido por contra-azimute" : ""}`,
     );
-    doc.setTextColor(0);
 
     autoTable(doc, {
-      startY: yTop + 24,
-      head: [["#", "Trecho (A)", "Correspondente (B)", "Dist. A/B (m)", "Azimute A/B", "Cota A/B (m)", "Situação"]],
+      startY: yTabela,
+      head: [["#", "Trecho (A)", "Corresp. (B)", "Dist. A/B (m)", "Azimute A/B", "Cota A/B (m)", "Situação"]],
       body: trechos.map((t) => [
         String(t.seq_a),
         `${t.de_a ?? "?"} - ${t.ate_a ?? "?"}`,
@@ -348,13 +362,17 @@ export function exportarRelatorioPdf(
         t.ok ? "OK — correto" : `X — ${t.problemas.join("; ")}`,
       ]),
       theme: "grid",
+      rowPageBreak: "avoid",
       styles: { fontSize: 8, cellPadding: 4, overflow: "linebreak", valign: "top" },
-      headStyles: { fillColor: [24, 28, 38], textColor: 255 },
+      headStyles: { fillColor: [24, 28, 38], textColor: 255, valign: "middle" },
       columnStyles: {
-        0: { cellWidth: 22 },
-        3: { cellWidth: 78, halign: "right" },
-        4: { cellWidth: 86, halign: "right" },
-        5: { cellWidth: 70, halign: "right" },
+        0: { cellWidth: 20, halign: "right" },
+        1: { cellWidth: 68 },
+        2: { cellWidth: 68 },
+        3: { cellWidth: 76, halign: "right" },
+        4: { cellWidth: 84, halign: "right" },
+        5: { cellWidth: 66, halign: "right" },
+        6: { cellWidth: "auto" },
       },
       didParseCell: (data) => {
         if (data.section === "body" && data.column.index === 6) {
@@ -366,40 +384,37 @@ export function exportarRelatorioPdf(
       margin: { left: M, right: M },
     });
 
+
     const confrontacoes = agruparConfrontantes(trechos);
     if (confrontacoes.length > 0) {
-      const yConf =
-        (doc as unknown as { lastAutoTable: { finalY: number } }).lastAutoTable.finalY + 22;
-      doc.setFont("helvetica", "bold");
-      doc.setFontSize(11);
-      doc.text("Imóveis confrontantes", M, yConf);
-      doc.setFont("helvetica", "normal");
-      doc.setFontSize(9);
-      doc.setTextColor(110);
-      doc.text(
+      const yConfTabela = secao(
+        (doc as unknown as { lastAutoTable: { finalY: number } }).lastAutoTable.finalY + 24,
+        "Imóveis confrontantes",
         "Caminhamento resumido por confrontação: do vértice inicial ao final de cada divisa comum.",
-        M,
-        yConf + 13,
       );
-      doc.setTextColor(0);
 
       autoTable(doc, {
-        startY: yConf + 24,
+        startY: yConfTabela,
         head: [["Confrontação", "Caminhamento", "Trechos", "Extensão (m)", "Situação"]],
         body: confrontacoes.map((g) => [
           g.confrontante,
-          `${g.de} → ${g.ate}`,
+          `${g.de} a ${g.ate}`,
           String(g.trechos),
           fmtMedida(g.extensao_m),
           g.ok ? "OK — correto" : `X — ${g.problemas.join("; ")}`,
         ]),
         theme: "grid",
+        rowPageBreak: "avoid",
         styles: { fontSize: 8, cellPadding: 4, overflow: "linebreak", valign: "top" },
-        headStyles: { fillColor: [24, 28, 38], textColor: 255 },
+        headStyles: { fillColor: [24, 28, 38], textColor: 255, valign: "middle" },
         columnStyles: {
-          2: { cellWidth: 44, halign: "right" },
-          3: { cellWidth: 68, halign: "right" },
+          0: { cellWidth: "auto" },
+          1: { cellWidth: 96 },
+          2: { cellWidth: 42, halign: "right" },
+          3: { cellWidth: 66, halign: "right" },
+          4: { cellWidth: 130 },
         },
+
         didParseCell: (data) => {
           if (data.section === "body" && data.column.index === 4) {
             const ok = confrontacoes[data.row.index]?.ok;
@@ -434,14 +449,17 @@ export function exportarRelatorioPdf(
           ])
         : [["—", "—", "Nenhum achado registrado", "", ""]],
     theme: "striped",
+    rowPageBreak: "avoid",
     styles: { fontSize: 8.5, cellPadding: 5, valign: "top", overflow: "linebreak" },
-    headStyles: { fillColor: [24, 28, 38], textColor: 255 },
+    headStyles: { fillColor: [24, 28, 38], textColor: 255, valign: "middle" },
     columnStyles: {
-      0: { cellWidth: 58 },
-      1: { cellWidth: 78 },
-      2: { cellWidth: 100 },
-      4: { cellWidth: 110 },
+      0: { cellWidth: 56 },
+      1: { cellWidth: 104, fontSize: 7.5 },
+      2: { cellWidth: 92 },
+      3: { cellWidth: "auto" },
+      4: { cellWidth: 100 },
     },
+
     margin: { left: M, right: M },
   });
 
