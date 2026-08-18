@@ -448,14 +448,17 @@ export function exportarRelatorioPdf(
           ])
         : [["—", "—", "Nenhum achado registrado", "", ""]],
     theme: "striped",
+    rowPageBreak: "avoid",
     styles: { fontSize: 8.5, cellPadding: 5, valign: "top", overflow: "linebreak" },
-    headStyles: { fillColor: [24, 28, 38], textColor: 255 },
+    headStyles: { fillColor: [24, 28, 38], textColor: 255, valign: "middle" },
     columnStyles: {
-      0: { cellWidth: 58 },
-      1: { cellWidth: 78 },
-      2: { cellWidth: 100 },
-      4: { cellWidth: 110 },
+      0: { cellWidth: 56 },
+      1: { cellWidth: 104, fontSize: 7.5 },
+      2: { cellWidth: 92 },
+      3: { cellWidth: "auto" },
+      4: { cellWidth: 100 },
     },
+
     margin: { left: M, right: M },
   });
 
