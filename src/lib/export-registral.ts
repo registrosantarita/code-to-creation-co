@@ -222,6 +222,35 @@ export type RelatorioPdfInput = {
 
 const ORDEM_SEV = ["critical", "moderate", "inconclusive", "informative"];
 
+function shrinkOnOverflow(doc: jsPDF, minSize = 5) {
+  return (data: any) => {
+    if (data.section !== "body") return;
+    const text = String(data.cell.raw ?? "");
+    if (!text) return;
+    const baseSize = data.cell.styles.fontSize ?? 8;
+    const pad = data.cell.styles.cellPadding;
+    const padding = (typeof pad === "number" ? pad : Array.isArray(pad) ? pad[1] ?? pad[0] ?? 0 : 0) * 2;
+    const maxWidth = data.cell.width - padding;
+    if (maxWidth <= 0) return;
+    doc.setFontSize(baseSize);
+    const textWidth = doc.getTextWidth(text);
+    if (textWidth <= maxWidth) return;
+    const ratio = maxWidth / textWidth;
+    data.cell.styles.fontSize = Math.max(minSize, baseSize * ratio);
+  };
+}
+
+function withShrink(doc: jsPDF, handler?: (data: any) => void) {
+  const shrink = shrinkOnOverflow(doc);
+  return (data: any) => {
+    shrink(data);
+    handler?.(data);
+  };
+}
+
+
+
+
 export function exportarRelatorioPdf(
   input: RelatorioPdfInput,
   nomeArquivo: string,
@@ -265,7 +294,7 @@ export function exportarRelatorioPdf(
     y += linhas.length * 13 + 6;
   }
 
-  autoTable(doc, {
+    autoTable(doc, {
     startY: y,
     head: [["Documentos comparados", ""]],
     body: [
@@ -276,6 +305,7 @@ export function exportarRelatorioPdf(
     styles: { fontSize: 9, cellPadding: 5 },
     headStyles: { fillColor: [24, 28, 38], textColor: 255 },
     margin: { left: M, right: M },
+    didParseCell: withShrink(doc),
   });
 
   autoTable(doc, {
@@ -294,6 +324,7 @@ export function exportarRelatorioPdf(
     styles: { fontSize: 9, cellPadding: 5 },
     headStyles: { fillColor: [24, 28, 38], textColor: 255 },
     margin: { left: M, right: M },
+    didParseCell: withShrink(doc),
   });
 
   autoTable(doc, {
@@ -311,6 +342,7 @@ export function exportarRelatorioPdf(
     styles: { fontSize: 9, cellPadding: 5, halign: "center" },
     headStyles: { fillColor: [24, 28, 38], textColor: 255, halign: "center" },
     margin: { left: M, right: M },
+    didParseCell: withShrink(doc),
   });
 
   /**
@@ -374,13 +406,13 @@ export function exportarRelatorioPdf(
         5: { cellWidth: 66, halign: "right" },
         6: { cellWidth: "auto" },
       },
-      didParseCell: (data) => {
+      didParseCell: withShrink(doc, (data) => {
         if (data.section === "body" && data.column.index === 6) {
           const ok = trechos[data.row.index]?.ok;
           data.cell.styles.textColor = ok ? [22, 101, 52] : [153, 27, 27];
           data.cell.styles.fontStyle = "bold";
         }
-      },
+      }),
       margin: { left: M, right: M },
     });
 
@@ -414,14 +446,13 @@ export function exportarRelatorioPdf(
           3: { cellWidth: 66, halign: "right" },
           4: { cellWidth: 130 },
         },
-
-        didParseCell: (data) => {
+        didParseCell: withShrink(doc, (data) => {
           if (data.section === "body" && data.column.index === 4) {
             const ok = confrontacoes[data.row.index]?.ok;
             data.cell.styles.textColor = ok ? [22, 101, 52] : [153, 27, 27];
             data.cell.styles.fontStyle = "bold";
           }
-        },
+        }),
         margin: { left: M, right: M },
       });
     }
@@ -465,7 +496,7 @@ export function exportarRelatorioPdf(
       3: { cellWidth: "auto" },
       4: { cellWidth: 100 },
     },
-
+    didParseCell: withShrink(doc),
     margin: { left: M, right: M },
   });
 
@@ -482,6 +513,7 @@ export function exportarRelatorioPdf(
     theme: "plain",
     styles: { fontSize: 7.5, cellPadding: 4, overflow: "linebreak", textColor: 90 },
     headStyles: { fontStyle: "bold", textColor: 30 },
+    didParseCell: withShrink(doc),
     margin: { left: M, right: M },
   });
 
