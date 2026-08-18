@@ -224,18 +224,19 @@ const ORDEM_SEV = ["critical", "moderate", "inconclusive", "informative"];
 
 function shrinkOnOverflow(doc: jsPDF, minSize = 5) {
   return (data: {
-    section: "head" | "body" | "foot";
+    section: string;
     cell: {
       raw: unknown;
       width: number;
-      styles: { fontSize?: number; cellPadding?: number };
+      styles: { fontSize?: number; cellPadding?: number | number[] };
     };
   }) => {
     if (data.section !== "body") return;
     const text = String(data.cell.raw ?? "");
     if (!text) return;
     const baseSize = data.cell.styles.fontSize ?? 8;
-    const padding = (data.cell.styles.cellPadding ?? 0) * 2;
+    const pad = data.cell.styles.cellPadding;
+    const padding = (typeof pad === "number" ? pad : Array.isArray(pad) ? pad[1] ?? pad[0] ?? 0 : 0) * 2;
     const maxWidth = data.cell.width - padding;
     if (maxWidth <= 0) return;
     doc.setFontSize(baseSize);
@@ -248,23 +249,15 @@ function shrinkOnOverflow(doc: jsPDF, minSize = 5) {
 
 function withShrink(
   doc: jsPDF,
-  handler?: (data: {
-    section: "head" | "body" | "foot";
-    row: { index: number };
-    column: { index: number };
-    cell: {
-      raw: unknown;
-      width: number;
-      styles: { fontSize?: number; cellPadding?: number; textColor?: number | [number, number, number]; fontStyle?: string };
-    };
-  }) => void,
+  handler?: (data: Record<string, unknown>) => void,
 ) {
   const shrink = shrinkOnOverflow(doc);
-  return (data: Parameters<typeof shrink>[0] & Parameters<NonNullable<typeof handler>>[0]) => {
-    shrink(data);
+  return (data: Record<string, unknown>) => {
+    shrink(data as Parameters<typeof shrink>[0]);
     handler?.(data);
   };
 }
+
 
 
 export function exportarRelatorioPdf(
