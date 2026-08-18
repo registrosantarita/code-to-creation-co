@@ -182,6 +182,54 @@ export function RelatoriosAnalise({
             Nenhuma comparação registrada nesta análise.
           </p>
         ) : (
+          <>
+          <div className="flex flex-wrap items-center gap-2 border-b border-border pb-3">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setSelecionados(comparacoes.map((c) => c.id))}
+            >
+              Selecionar todos
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              disabled={selecionados.length === 0}
+              onClick={() => setSelecionados([])}
+            >
+              Limpar seleção
+            </Button>
+            <span className="text-xs text-muted-foreground">
+              {selecionados.length} selecionado(s)
+            </span>
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button
+                  variant="destructive"
+                  size="sm"
+                  className="ml-auto"
+                  disabled={selecionados.length === 0 || excluindo}
+                >
+                  {excluindo ? "Excluindo..." : "Excluir selecionados"}
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Excluir relatórios?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    {selecionados.length} relatório(s) de comparação e seus
+                    achados serão removidos definitivamente desta análise.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                  <AlertDialogAction onClick={() => excluirSelecionados()}>
+                    Excluir
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          </div>
           <ul className="max-h-[60vh] space-y-3 overflow-y-auto pr-1">
             {comparacoes.map((c) => {
               const cls = CLASSIFICACAO[c.classification ?? "inconclusive"]!;
@@ -191,6 +239,11 @@ export function RelatoriosAnalise({
                   className="rounded-sm border border-border p-4"
                 >
                   <div className="flex flex-wrap items-center gap-2">
+                    <Checkbox
+                      checked={selecionados.includes(c.id)}
+                      onCheckedChange={() => alternar(c.id)}
+                      aria-label="Selecionar relatório"
+                    />
                     <span className="font-display text-sm">
                       {TIPO_COMPARACAO[c.comparison_type] ?? c.comparison_type}
                     </span>
