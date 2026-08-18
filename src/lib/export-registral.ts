@@ -324,6 +324,7 @@ export function exportarRelatorioPdf(
     styles: { fontSize: 9, cellPadding: 5 },
     headStyles: { fillColor: [24, 28, 38], textColor: 255 },
     margin: { left: M, right: M },
+    didParseCell: withShrink(doc),
   });
 
   autoTable(doc, {
