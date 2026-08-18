@@ -22,7 +22,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { STATUS_ANALISE } from "@/lib/labels";
+import { STATUS_ANALISE, STATUS_ANALISE_CLASS } from "@/lib/labels";
 
 export const Route = createFileRoute("/_authenticated/painel")({
   head: () => ({
