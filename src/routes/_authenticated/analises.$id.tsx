@@ -1531,8 +1531,9 @@ function AnaliseDetalhe() {
                 {comparisons.data!.map((c) => {
                   const cls = CLASSIFICACAO[c.classification ?? "inconclusive"]!;
                   return (
-                    <li key={c.id}>
+                    <li key={c.id} className="flex items-start gap-2">
                       <Link
+                        className="flex-1"
                         to="/comparacoes/$id"
                         params={{ id: c.id }}
                         className="panel block p-5 transition-colors hover:border-accent"
