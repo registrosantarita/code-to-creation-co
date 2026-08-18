@@ -800,9 +800,16 @@ function AnaliseDetalhe() {
                           <span className="font-display text-base">
                             {d.file_name ?? "Texto colado"}
                           </span>
-                          <span className="eyebrow">
+                          <span
+                            className={`eyebrow ${
+                              d.document_category === "nao_classificado"
+                                ? "text-warning"
+                                : ""
+                            }`}
+                          >
                             {CATEGORIA_DOCUMENTO[d.document_category]}
                           </span>
+
                           {poligonosDe(d.id).length > 1 && (
                             <span className="eyebrow">
                               {poligonosDe(d.id).length} polígonos
