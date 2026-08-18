@@ -1415,8 +1415,8 @@ function AnaliseDetalhe() {
 
             <h3 className="mt-8 text-base">Tolerâncias técnicas</h3>
             <div className="mt-3 grid gap-4 sm:grid-cols-2 md:grid-cols-4">
-              <div className="space-y-2">
-                <div className="grid grid-cols-[1fr_2fr] gap-3">
+              <div className="space-y-2 md:col-span-2">
+                <div className="grid grid-cols-[minmax(5.5rem,0.65fr)_minmax(0,2fr)] gap-3">
                   <div className="space-y-2">
                     <Label htmlFor="areaPct">Área (%)</Label>
                     <Input
@@ -1434,13 +1434,13 @@ function AnaliseDetalhe() {
                     <Label htmlFor="areaM2">
                       Área ({unidadeArea === "ha" ? "ha" : "m²"})
                     </Label>
-                    <div className="flex gap-2">
+                    <div className="grid grid-cols-[minmax(0,1fr)_4rem] gap-2">
                       <Input
                         id="areaM2"
                         type="number"
                         step={unidadeArea === "ha" ? 0.0001 : 0.01}
                         min={0}
-                        className="flex-1"
+                        className="min-w-0"
                         value={
                           unidadeArea === "ha" ? tol.areaM2 / 10000 : tol.areaM2
                         }
@@ -1457,7 +1457,7 @@ function AnaliseDetalhe() {
                         value={unidadeArea}
                         onValueChange={(v) => setUnidadeArea(v as "m2" | "ha")}
                       >
-                        <SelectTrigger className="w-20 px-2">
+                        <SelectTrigger className="w-16 px-2">
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
