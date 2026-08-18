@@ -406,13 +406,13 @@ export function exportarRelatorioPdf(
         5: { cellWidth: 66, halign: "right" },
         6: { cellWidth: "auto" },
       },
-      didParseCell: (data) => {
+      didParseCell: withShrink(doc, (data) => {
         if (data.section === "body" && data.column.index === 6) {
           const ok = trechos[data.row.index]?.ok;
           data.cell.styles.textColor = ok ? [22, 101, 52] : [153, 27, 27];
           data.cell.styles.fontStyle = "bold";
         }
-      },
+      }),
       margin: { left: M, right: M },
     });
 
