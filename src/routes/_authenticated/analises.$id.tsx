@@ -1415,9 +1415,63 @@ function AnaliseDetalhe() {
 
             <h3 className="mt-8 text-base">Tolerâncias técnicas</h3>
             <div className="mt-3 grid gap-4 sm:grid-cols-2 md:grid-cols-4">
+              <div className="space-y-2">
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-2">
+                    <Label htmlFor="areaPct">Área (%)</Label>
+                    <Input
+                      id="areaPct"
+                      type="number"
+                      step={0.01}
+                      min={0}
+                      value={tol.areaPct}
+                      onChange={(e) =>
+                        setTol({ ...tol, areaPct: Number(e.target.value) })
+                      }
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="areaM2">
+                      Área ({unidadeArea === "ha" ? "ha" : "m²"})
+                    </Label>
+                    <div className="flex gap-2">
+                      <Input
+                        id="areaM2"
+                        type="number"
+                        step={unidadeArea === "ha" ? 0.0001 : 0.01}
+                        min={0}
+                        className="flex-1"
+                        value={
+                          unidadeArea === "ha" ? tol.areaM2 / 10000 : tol.areaM2
+                        }
+                        onChange={(e) =>
+                          setTol({
+                            ...tol,
+                            areaM2:
+                              Number(e.target.value) *
+                              (unidadeArea === "ha" ? 10000 : 1),
+                          })
+                        }
+                      />
+                      <Select
+                        value={unidadeArea}
+                        onValueChange={(v) => setUnidadeArea(v as "m2" | "ha")}
+                      >
+                        <SelectTrigger className="w-20 px-2">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="m2">m²</SelectItem>
+                          <SelectItem value="ha">ha</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
               {(
                 [
-                  ["areaPct", "Área (%)", 0.01],
                   ["perimeterPct", "Perímetro (%)", 0.01],
                   ["distanceM", "Distância (m)", 0.001],
                   ["azimuthDeg", "Azimute (°)", 0.0001],
@@ -1439,44 +1493,6 @@ function AnaliseDetalhe() {
                   />
                 </div>
               ))}
-
-              <div className="space-y-2">
-                <Label htmlFor="areaM2">
-                  Área ({unidadeArea === "ha" ? "ha" : "m²"})
-                </Label>
-                <div className="flex gap-2">
-                  <Input
-                    id="areaM2"
-                    type="number"
-                    step={unidadeArea === "ha" ? 0.0001 : 0.01}
-                    min={0}
-                    className="flex-1"
-                    value={
-                      unidadeArea === "ha" ? tol.areaM2 / 10000 : tol.areaM2
-                    }
-                    onChange={(e) =>
-                      setTol({
-                        ...tol,
-                        areaM2:
-                          Number(e.target.value) *
-                          (unidadeArea === "ha" ? 10000 : 1),
-                      })
-                    }
-                  />
-                  <Select
-                    value={unidadeArea}
-                    onValueChange={(v) => setUnidadeArea(v as "m2" | "ha")}
-                  >
-                    <SelectTrigger className="w-24">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="m2">m²</SelectItem>
-                      <SelectItem value="ha">ha</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
             </div>
             <p className="mt-3 text-xs leading-relaxed text-muted-foreground">
               Área e perímetro conferem quando a diferença fica dentro do
