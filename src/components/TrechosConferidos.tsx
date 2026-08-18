@@ -125,7 +125,7 @@ export function TrechosConferidos({
 
   return (
     <>
-      <section className="panel relative left-1/2 mt-8 w-[min(96rem,calc(100vw-3rem))] max-w-[96rem] -translate-x-1/2 p-6 print:left-0 print:w-full print:translate-x-0">
+      <section className="panel mx-auto mt-8 w-fit max-w-[min(96rem,calc(100vw-3rem))] p-6 print:w-full print:max-w-none">
         <h2 className="text-lg">Conferência trecho a trecho</h2>
         <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
           Trecho total conferido: <span className="numeric">{inicio}</span> →{" "}
@@ -144,7 +144,7 @@ export function TrechosConferidos({
         </p>
 
         <div className="mt-5 w-full overflow-x-auto">
-          <table className="w-full border-collapse text-sm [&_td]:whitespace-nowrap [&_td]:px-2 [&_th]:whitespace-nowrap [&_th]:px-2">
+          <table className="mx-auto w-auto border-collapse text-sm [&_td]:whitespace-nowrap [&_td]:px-2 [&_th]:whitespace-nowrap [&_th]:px-2">
             <thead>
               <tr className="border-b border-border text-left">
                 <th className="eyebrow py-2 px-2">#</th>
@@ -175,7 +175,7 @@ export function TrechosConferidos({
                 <th className="eyebrow py-2 px-2 text-right">ALT. (m)</th>
                 <th className="eyebrow py-2 px-2 text-right">ÂNGULO</th>
                 <th className="eyebrow py-2 px-2 text-right">DIST. (m)</th>
-                <th className="eyebrow py-2 px-2 text-center w-full" aria-label="Situação" />
+                <th className="eyebrow py-2 px-2 text-center" aria-label="Situação" />
               </tr>
             </thead>
             <tbody>
