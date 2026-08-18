@@ -42,11 +42,50 @@ type ComparacaoResumo = {
 
 export function RelatoriosAnalise({
   comparacoes,
+  onExcluido,
 }: {
   comparacoes: ComparacaoResumo[];
+  onExcluido?: () => void;
 }) {
   const [aberto, setAberto] = useState(false);
   const [gerando, setGerando] = useState<string | null>(null);
+  const [selecionados, setSelecionados] = useState<string[]>([]);
+  const [excluindo, setExcluindo] = useState(false);
+
+  const alternar = (id: string) =>
+    setSelecionados((s) =>
+      s.includes(id) ? s.filter((x) => x !== id) : [...s, id],
+    );
+
+  async function excluirSelecionados() {
+    setExcluindo(true);
+    try {
+      const { error: e1 } = await supabase
+        .from("findings")
+        .delete()
+        .in("comparison_id", selecionados);
+      if (e1) throw e1;
+      const { error } = await supabase
+        .from("comparisons")
+        .delete()
+        .in("id", selecionados);
+      if (error) throw error;
+      toast.success(
+        selecionados.length === 1
+          ? "Relatório excluído."
+          : `${selecionados.length} relatórios excluídos.`,
+      );
+      setSelecionados([]);
+      onExcluido?.();
+    } catch (err) {
+      toast.error(
+        err instanceof Error ? err.message : "Não foi possível excluir.",
+      );
+    } finally {
+      setExcluindo(false);
+    }
+  }
+
 
   async function gerar(comparacaoId: string) {
     setGerando(comparacaoId);
