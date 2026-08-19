@@ -383,26 +383,8 @@ function LoteDetalhe() {
                   )}
                 </div>
 
-                {todosOnus.length > 0 && (
-                  <ul className="mt-3 space-y-1 text-sm">
-                    {todosOnus.map((o, i) => (
-                      <li
-                        key={`${rotuloAto(o.tipo, o.numero)}-${i}`}
-                        className={
-                          o.vigente === false
-                            ? "text-muted-foreground line-through"
-                            : "text-foreground"
-                        }
-                      >
-                        {rotuloAto(o.tipo, o.numero)}
-                        {o.gravame ? ` — ${o.gravame.toUpperCase()}` : ""}
-                        {o.vigente === false
-                          ? ` (cancelado${o.cancelado_por ? ` por ${o.cancelado_por}` : ""})`
-                          : ""}
-                      </li>
-                    ))}
-                  </ul>
-                )}
+                <TabelaOnus itens={todosOnus as never} origem={r.label} />
+
 
                 {props.length > 0 && (
                   <ul className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-sm">
