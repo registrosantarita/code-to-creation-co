@@ -54,7 +54,7 @@ export const obterConjunto = createServerFn({ method: "POST" })
       context.supabase
         .from("qualification_docs")
         .select(
-          "id, label, file_name, file_extension, source_type, doc_role, extracted, extraction_source, raw_text, created_at",
+          "id, label, file_name, file_extension, source_type, doc_role, doc_species, extracted, extraction_source, raw_text, created_at",
         )
         .eq("set_id", data.id)
         .order("created_at", { ascending: true }),
