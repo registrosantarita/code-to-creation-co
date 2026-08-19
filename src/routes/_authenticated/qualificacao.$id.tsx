@@ -25,6 +25,8 @@ import {
   DECISAO_LABEL,
   type ItemDivergente,
 } from "@/components/ValidacoesQualificacao";
+import { extrairOnusMatricula } from "@/lib/matricula-index-parser";
+import { TabelaOnus } from "@/components/TabelaOnus";
 import checktituloLogo from "@/assets/checktitulo-logo.png.asset.json";
 
 export const Route = createFileRoute("/_authenticated/qualificacao/$id")({
@@ -120,6 +122,24 @@ function QualificacaoDetalhe() {
     () => (modo === "titulo_x_titulo" ? titulos : [...titulos, ...matriculas]),
     [modo, titulos, matriculas],
   );
+
+  // Ônus e direitos reais: apenas para documentos que sejam matrícula
+  // (papel "matrícula" ou texto com estrutura de matrícula).
+  const onusPorDoc = useMemo(() => {
+    const ehMatricula = (d: { doc_role?: string | null; raw_text?: string | null }) =>
+      d.doc_role === "matricula" ||
+      /matr[íi]cula\s*(?:n[.º°]*)?\s*[:\-]?\s*[\d.]{1,12}/i.test(d.raw_text ?? "");
+    return ordenados
+      .map((d, i) => ({ doc: d, indice: i }))
+      .filter(({ doc }) => ehMatricula(doc as never))
+      .map(({ doc, indice }) => ({
+        id: doc.id,
+        indice,
+        label: doc.label,
+        itens: extrairOnusMatricula(((doc as { raw_text?: string | null }).raw_text ?? "")),
+      }));
+  }, [ordenados]);
+
 
   const prontoParaConferir =
     modo === "titulo_x_titulo"
@@ -264,6 +284,22 @@ function QualificacaoDetalhe() {
           />
         )}
       </section>
+
+      {onusPorDoc.length > 0 && (
+        <section className="mt-10">
+          <h2 className="font-display text-lg text-foreground">
+            Ônus e Direitos Reais registrados na Matrícula
+          </h2>
+          {onusPorDoc.map((o) => (
+            <TabelaOnus
+              key={o.id}
+              itens={o.itens}
+              titulo={`Doc. ${docLetra(o.indice)} — ${o.label}`}
+            />
+          ))}
+        </section>
+      )}
+
 
       {!prontoParaConferir && (
         <p className="mt-6 rounded-md border border-border bg-card p-5 text-sm text-muted-foreground">

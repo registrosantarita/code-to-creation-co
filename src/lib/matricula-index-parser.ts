@@ -352,6 +352,20 @@ function extrairAtos(texto: string): { atos: IndexAto[]; onus: IndexAto[]; onusC
   return { atos, ...aplicarVigencia(atos) };
 }
 
+/**
+ * Ônus e direitos reais registrados na matrícula (vigentes e cancelados),
+ * na ordem em que aparecem no documento. Usado pelo CheckIndex e, no
+ * CheckTítulo, quando o documento conferido for uma matrícula.
+ */
+export function extrairOnusMatricula(textoBruto: string): IndexAto[] {
+  const texto = (textoBruto ?? "").replace(/\r/g, "");
+  if (!texto.trim()) return [];
+  const { onus, onusCancelados } = extrairAtos(texto);
+  const ordem = (a: IndexAto) => `${a.tipo ?? ""}${String(a.numero ?? "").padStart(6, "0")}`;
+  return [...onus, ...onusCancelados].sort((a, b) => ordem(a).localeCompare(ordem(b)));
+}
+
+
 
 export function extrairIndiceMatricula(textoBruto: string): MatriculaIndexada {
   const texto = textoBruto.replace(/\r/g, "");
