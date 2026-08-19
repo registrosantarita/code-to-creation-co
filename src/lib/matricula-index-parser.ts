@@ -4,6 +4,10 @@
  * de IA é consumido nesta etapa.
  */
 
+import { nomeValido } from "./qualificacao-parser";
+
+
+
 export type IndexProprietario = {
   nome: string | null;
   cpf_cnpj: string | null;
