@@ -318,12 +318,13 @@ function extrairPessoas(t: string): Pessoa[] {
     if (ehCnpj) p.cnpj = bruto;
     else p.cpf = bruto;
 
-    // Nome: último nome próprio antes do documento.
-    // O titular é o primeiro nome próprio da sentença que contém o documento
-    // (nomes posteriores costumam ser o cônjuge ou o representante).
+    // Nome: primeiro candidato válido da sentença que contém o documento.
+    // Logradouros, atos e ônus (ex.: "Rua das Flores", "Reserva de Usufruto",
+    // "Gravame") são descartados por nomeValido().
     const sentenca = antes.split(/(?<=[.;])\s+(?=[A-ZÁÉÍÓÚ])/).pop() ?? antes;
-    const nomes = sentenca.match(new RegExp(NOME, "g"));
-    p.nome = nomes?.length ? nomes[0]!.trim() : null;
+    const nomes = (sentenca.match(new RegExp(NOME, "g")) ?? []).map((n) => n.trim());
+    p.nome = nomes.find(nomeValido) ?? null;
+
 
     p.rg = primeiro(janela, /(?:RG|C[ée]dula de Identidade|identidade)\s*(?:n[º°.]?\s*)?[:\-]?\s*([\d.\-\/A-Za-z]{5,15})/i);
     p.orgao_rg = primeiro(janela, /(?:SSP|SESP|SJS|DETRAN|PC|IFP|IIRGD)[\s/-]{0,3}([A-Z]{2})/);
