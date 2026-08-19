@@ -97,6 +97,8 @@ export const adicionarDocumento = createServerFn({ method: "POST" })
     if (!texto.trim()) throw new Error(note ?? "Nenhum texto pôde ser extraído deste documento.");
 
     const dados = extrairQualificacao(texto);
+    const { classificarEspecie } = await import("./qualificacao-especie");
+    const especie = classificarEspecie(texto, data.fileName);
     const { data: row, error } = await context.supabase
       .from("qualification_docs")
       .insert({
@@ -106,6 +108,7 @@ export const adicionarDocumento = createServerFn({ method: "POST" })
         file_extension: (data.extension ?? "").replace(".", "").toLowerCase() || null,
         source_type: data.base64 ? "upload" : "pasted_text",
         doc_role: data.docRole,
+        doc_species: especie,
         raw_text: texto.slice(0, 400000),
         extracted: JSON.parse(JSON.stringify(dados)),
         extraction_source: "deterministico",
