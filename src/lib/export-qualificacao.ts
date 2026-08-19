@@ -23,7 +23,13 @@ export type DocRelatorio = {
 
 export type OnusRelatorio = {
   documento: string;
-  itens: { ato?: string; especie?: string; data?: string; situacao?: string; teor?: string }[];
+  itens: {
+    ato?: string | undefined;
+    especie?: string | undefined;
+    data?: string | undefined;
+    situacao?: string | undefined;
+    teor?: string | undefined;
+  }[];
 };
 
 export type RelatorioQualificacaoInput = {
