@@ -198,7 +198,8 @@ function extrairProprietarios(texto: string): IndexProprietario[] {
     const doc = digitos(m[2] ?? "");
     if (doc.length !== 11 && doc.length !== 14) continue;
     const nome = limpar(m[1]);
-    if (!nome || nome.split(" ").length < 2) continue;
+    if (!nomeValido(nome)) continue;
+
     if (!encontrados.has(doc)) {
       encontrados.set(doc, { nome: nome.toUpperCase(), cpf_cnpj: formatarDoc(doc), fracao: null });
     }
