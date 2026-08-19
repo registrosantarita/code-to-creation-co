@@ -184,7 +184,7 @@ export function conferirQualificacao(
       if (!chaves.includes(k)) chaves.push(k);
     }
 
-  chaves.forEach((chave, idx) => {
+  (pessoasAtivas ? chaves : []).forEach((chave, idx) => {
     const porDoc = docs.map((d) => d.dados.pessoas.find((p) => chavePessoa(p) === chave) ?? null);
     const nome = porDoc.find((p) => p?.nome)?.nome ?? `Parte ${idx + 1}`;
     const bloco = `Parte — ${nome}`;
