@@ -123,6 +123,24 @@ function QualificacaoDetalhe() {
     [modo, titulos, matriculas],
   );
 
+  // Ônus e direitos reais: apenas para documentos que sejam matrícula
+  // (papel "matrícula" ou texto com estrutura de matrícula).
+  const onusPorDoc = useMemo(() => {
+    const ehMatricula = (d: { doc_role?: string | null; raw_text?: string | null }) =>
+      d.doc_role === "matricula" ||
+      /matr[íi]cula\s*(?:n[.º°]*)?\s*[:\-]?\s*[\d.]{1,12}/i.test(d.raw_text ?? "");
+    return ordenados
+      .map((d, i) => ({ doc: d, indice: i }))
+      .filter(({ doc }) => ehMatricula(doc as never))
+      .map(({ doc, indice }) => ({
+        id: doc.id,
+        indice,
+        label: doc.label,
+        itens: extrairOnusMatricula(((doc as { raw_text?: string | null }).raw_text ?? "")),
+      }));
+  }, [ordenados]);
+
+
   const prontoParaConferir =
     modo === "titulo_x_titulo"
       ? titulos.length >= 2
