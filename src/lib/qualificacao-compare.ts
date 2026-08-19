@@ -209,7 +209,7 @@ export function conferirQualificacao(
     }
 
     // Regra registral: casado exige regime de bens e data do casamento.
-    for (let i = 0; i < n; i++) {
+    for (let i = 0; ativo("estado_civil") && i < n; i++) {
       const p = porDoc[i];
       if (!p) continue;
       const casado = /casad|uni[ãa]o est[áa]vel/i.test(p.estado_civil ?? "");
