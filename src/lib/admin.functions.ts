@@ -212,3 +212,43 @@ export const excluirComparacao = createServerFn({ method: "POST" })
 
     return { ok: true, analysisId: comp.analysis_id };
   });
+
+/** Exclusão de comparação do CheckTítulo — restrita a administradores. */
+export const excluirComparacaoQualificacao = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) =>
+    z.object({ ids: z.array(z.string().uuid()).min(1).max(50) }).parse(input),
+  )
+  .handler(async ({ data, context }) => {
+    await exigirAdmin(context);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    const { data: comps } = await supabaseAdmin
+      .from("qualification_comparisons")
+      .select("id, set_id, title, classification, summary")
+      .in("id", data.ids);
+    if (!comps?.length) throw new Error("Comparação não encontrada.");
+
+    const { error } = await supabaseAdmin
+      .from("qualification_comparisons")
+      .delete()
+      .in("id", data.ids);
+    if (error) throw new Error(error.message);
+
+    await supabaseAdmin.from("audit_logs").insert(
+      comps.map((c) => ({
+        actor_id: context.userId,
+        entity_type: "qualification_comparison",
+        entity_id: c.id,
+        action: "delete",
+        metadata: {
+          set_id: c.set_id,
+          titulo: c.title,
+          classificacao: c.classification,
+          resumo: c.summary,
+        },
+      })),
+    );
+
+    return { ok: true as const, setId: comps[0]!.set_id };
+  });
