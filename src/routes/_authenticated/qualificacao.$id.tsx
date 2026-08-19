@@ -25,6 +25,8 @@ import {
   DECISAO_LABEL,
   type ItemDivergente,
 } from "@/components/ValidacoesQualificacao";
+import { extrairOnusMatricula } from "@/lib/matricula-index-parser";
+import { TabelaOnus } from "@/components/TabelaOnus";
 import checktituloLogo from "@/assets/checktitulo-logo.png.asset.json";
 
 export const Route = createFileRoute("/_authenticated/qualificacao/$id")({
