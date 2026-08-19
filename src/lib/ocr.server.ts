@@ -25,11 +25,48 @@ const IMAGE_MIME: Record<string, string> = {
   tiff: "image/tiff",
 };
 
-const PROMPT =
-  "Transcreva integralmente o texto deste documento técnico registral em português. " +
-  "Preserve a ordem de leitura, quebras de linha, tabelas (em linhas separadas por ponto e vírgula) " +
-  "e todos os números, azimutes (graus, minutos, segundos), distâncias, áreas e nomes de confrontantes " +
-  "exatamente como aparecem. Não resuma, não comente e não traduza. Responda apenas com a transcrição.";
+const PROMPT = [
+  "Você é um sistema de OCR de altíssima precisão para documentos registrais e notariais em português do Brasil.",
+  "Transcreva INTEGRALMENTE o texto do documento, caractere por caractere, preservando a ordem de leitura,",
+  "quebras de linha, parágrafos e tabelas (linhas separadas por ponto e vírgula).",
+  "",
+  "Regras obrigatórias:",
+  "1. Preserve exatamente números, CPF/CNPJ, RG, CEP, datas, matrículas, azimutes (graus, minutos, segundos),",
+  "   distâncias, áreas, percentuais e nomes próprios, com a pontuação original (pontos, hífens, barras).",
+  "2. E-MAILS: transcreva o endereço completo em uma única sequência, sem espaços, sempre com o caractere '@'",
+  "   e o ponto do domínio (ex.: nome.sobrenome@dominio.com.br). Nunca escreva 'arroba', '(a)', '@ ' com espaço,",
+  "   nem substitua '@' por 'a', 'à', 'ø' ou '©'. Se houver 'www', 'http' ou '.com', mantenha a forma literal.",
+  "3. Letras isoladas e iniciais abreviadas (ex.: 'J.', 'M. de A.') devem ser transcritas como letras,",
+  "   nunca convertidas em números ou símbolos. Atenção a confusões típicas: J/1/7, I/l/1, O/0, S/5, B/8, Z/2,",
+  "   G/6, rn/m, cl/d. Escolha a leitura que faça sentido no contexto da frase em português.",
+  "4. Mantenha acentuação, cedilha, maiúsculas/minúsculas e símbolos como §, º, ª, %, R$, °, ', \".",
+  "5. Transcreva também carimbos, selos, rodapés, cabeçalhos, assinaturas legíveis e dados de contato.",
+  "6. Se um trecho for realmente ilegível, escreva [ilegível] apenas nesse trecho.",
+  "",
+  "Não resuma, não corrija, não comente, não traduza e não acrescente nada.",
+  "Responda apenas com a transcrição.",
+].join("\n");
+
+const MODEL = "google/gemini-3.7-flash";
+
+/** Correções pós-OCR de artefatos recorrentes em endereços de e-mail e sites. */
+export function normalizarOcr(text: string): string {
+  return (
+    text
+      // "nome (arroba) dominio" / "nome arroba dominio" -> "nome@dominio"
+      .replace(/\s*[([{]?\s*arroba\s*[)\]}]?\s*/gi, "@")
+      // espaços ao redor do @ dentro de um e-mail
+      .replace(/([A-Za-z0-9._%+-])\s*@\s*([A-Za-z0-9-])/g, "$1@$2")
+      // espaços dentro do domínio: "gmail. com. br"
+      .replace(/(@[A-Za-z0-9.-]*[A-Za-z0-9])\s*\.\s*(com|net|org|gov|edu|adv|jus|br|inf|eco)\b/gi, "$1.$2")
+      .replace(/\b(com|net|org|gov|edu|adv|jus|inf)\s*\.\s*br\b/gi, "$1.br")
+      // "www . dominio . com"
+      .replace(/\bwww\s*\.\s*/gi, "www.")
+      // símbolos comumente confundidos com @ entre partes de um e-mail
+      .replace(/([A-Za-z0-9._%+-]{2,})\s*[©øΘ⊙]\s*([A-Za-z0-9-]+\.[A-Za-z]{2,})/g, "$1@$2")
+      .replace(/[ \t]+\n/g, "\n")
+  );
+}
 
 export type OcrUsage = {
   model: string;
@@ -37,6 +74,7 @@ export type OcrUsage = {
   completionTokens: number;
   totalTokens: number;
 };
+
 
 export type OcrResult = { text: string; note?: string; usage?: OcrUsage };
 
@@ -69,9 +107,19 @@ export async function ocrDocument(
     method: "POST",
     headers: { "Content-Type": "application/json", "Lovable-API-Key": key },
     body: JSON.stringify({
-      model: "google/gemini-3.6-flash",
-      messages: [{ role: "user", content }],
+      model: MODEL,
+      temperature: 0,
+      top_p: 1,
+      messages: [
+        {
+          role: "system",
+          content:
+            "Você transcreve documentos com fidelidade literal absoluta, sem interpretar, resumir ou corrigir.",
+        },
+        { role: "user", content },
+      ],
     }),
+
   });
 
   if (response.status === 429) {
@@ -96,11 +144,11 @@ export async function ocrDocument(
       total_tokens?: number;
     };
   };
-  const text = json.choices?.[0]?.message?.content ?? "";
+  const text = normalizarOcr(json.choices?.[0]?.message?.content ?? "");
   const prompt = json.usage?.prompt_tokens ?? 0;
   const completion = json.usage?.completion_tokens ?? 0;
   const usage: OcrUsage = {
-    model: json.model ?? "google/gemini-3.6-flash",
+    model: json.model ?? MODEL,
     promptTokens: prompt,
     completionTokens: completion,
     totalTokens: json.usage?.total_tokens ?? prompt + completion,
@@ -113,4 +161,5 @@ export async function ocrDocument(
     usage,
     note: "Texto obtido por OCR assistido por IA. Confira a transcrição antes da qualificação.",
   };
+
 }
