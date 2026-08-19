@@ -505,7 +505,7 @@ function nomeApos(texto: string, rotulos: string[]): string | null {
       new RegExp(`${rot}\\s*(?:\\(a\\))?\\s*[:\\-]?\\s*([A-ZÀ-Ÿ][A-Za-zÀ-ÿ'’.\\- ]{5,80})`, "i"),
     );
     const v = limpar(m?.[1]);
-    if (v && v.split(" ").length >= 2) return v.toUpperCase();
+    if (v && nomeValido(v)) return v.toUpperCase();
   }
   return null;
 }
@@ -520,8 +520,9 @@ function conjugeDe(texto: string, nome: string | null): string | null {
     /(?:casad[oa]\s+(?:com|de)|c[ôo]njuge|e\s+sua\s+(?:esposa|mulher)|e\s+seu\s+marido)\s*[:\-]?\s*([A-ZÀ-Ÿ][A-Za-zÀ-ÿ'’.\- ]{5,80})/i,
   );
   const v = limpar(m?.[1]);
-  return v && v.split(" ").length >= 2 ? v.toUpperCase() : null;
+  return v && nomeValido(v) ? v.toUpperCase() : null;
 }
+
 
 function extrairPartes(texto: string) {
   const adquirente = nomeApos(texto, [
