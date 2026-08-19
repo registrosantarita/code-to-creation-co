@@ -306,7 +306,10 @@ export const criarComparacao = createServerFn({ method: "POST" })
     const resultado = conferirQualificacao(
       ordenados.map((d, i) => ({
         rotulo: `Doc. ${String.fromCharCode(65 + i)}`,
-        dados: { ...qualificacaoVazia(), ...((d.extracted ?? {}) as never) },
+        dados: {
+          ...qualificacaoVazia(),
+          ...((d.extracted ?? {}) as unknown as Qualificacao),
+        },
       })),
       data.criterios,
     );
