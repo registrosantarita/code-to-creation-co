@@ -16,7 +16,8 @@ import {
   obterLote,
 } from "@/lib/checkindex.functions";
 import { exportarCsv, exportarJson, exportarXlsx, type RegistroIndexado } from "@/lib/export-index";
-import { rotuloAto } from "@/lib/matricula-index-parser";
+import type { IndexAto } from "@/lib/matricula-index-parser";
+import { TabelaOnus } from "@/components/TabelaOnus";
 
 export const Route = createFileRoute("/_authenticated/indexacao/$id")({
   head: () => ({
