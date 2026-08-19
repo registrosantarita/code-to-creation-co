@@ -222,7 +222,7 @@ export type RelatorioPdfInput = {
 
 const ORDEM_SEV = ["critical", "moderate", "inconclusive", "informative"];
 
-function shrinkOnOverflow(doc: jsPDF, minSize = 5) {
+export function shrinkOnOverflow(doc: jsPDF, minSize = 5) {
   return (data: any) => {
     if (data.section !== "body") return;
     const text = String(data.cell.raw ?? "");
