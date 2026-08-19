@@ -352,10 +352,12 @@ function extrairPessoas(t: string): Pessoa[] {
       janela,
       /(?:casad[oa][^.;\n]{0,80}?(?:desde|em)|data do casamento\s*[:\-]?)\s*(\d{2}[/.\-]\d{2}[/.\-]\d{4}|\d{1,2}\s+de\s+[a-zç]+\s+de\s+\d{4})/i,
     );
-    p.conjuge = primeiro(
+    const conjugeBruto = primeiro(
       janela,
       new RegExp(`(?:c[ôo]njuge|esposa|esposo|marido|casad[oa][^.;\\n]{0,90}?\\bcom\\b)\\s*[:\\-]?\\s*(${NOME})`, "i"),
     );
+    p.conjuge = nomeValido(conjugeBruto) ? conjugeBruto : null;
+
 
     pessoas.push(p);
   }
