@@ -683,10 +683,19 @@ function NovaComparacao({
     lista.includes(v) ? lista.filter((x) => x !== v) : [...lista, v];
 
   async function enviar() {
-    if (!paradigma) return toast.error("Escolha o documento paradigma.");
+    if (!paradigma) {
+      toast.error("Escolha o documento paradigma.");
+      return;
+    }
     const alvos = comparaveis.filter((c) => c !== paradigma);
-    if (!alvos.length) return toast.error("Escolha ao menos um documento comparável.");
-    if (!criterios.length) return toast.error("Escolha ao menos um critério.");
+    if (!alvos.length) {
+      toast.error("Escolha ao menos um documento comparável.");
+      return;
+    }
+    if (!criterios.length) {
+      toast.error("Escolha ao menos um critério.");
+      return;
+    }
     setSalvando(true);
     try {
       await criar({ title: titulo, paradigmDocId: paradigma, comparedDocIds: alvos, criterios });
