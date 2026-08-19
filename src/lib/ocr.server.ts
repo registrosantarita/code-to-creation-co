@@ -144,11 +144,11 @@ export async function ocrDocument(
       total_tokens?: number;
     };
   };
-  const text = json.choices?.[0]?.message?.content ?? "";
+  const text = normalizarOcr(json.choices?.[0]?.message?.content ?? "");
   const prompt = json.usage?.prompt_tokens ?? 0;
   const completion = json.usage?.completion_tokens ?? 0;
   const usage: OcrUsage = {
-    model: json.model ?? "google/gemini-3.6-flash",
+    model: json.model ?? MODEL,
     promptTokens: prompt,
     completionTokens: completion,
     totalTokens: json.usage?.total_tokens ?? prompt + completion,
@@ -161,4 +161,5 @@ export async function ocrDocument(
     usage,
     note: "Texto obtido por OCR assistido por IA. Confira a transcrição antes da qualificação.",
   };
+
 }
