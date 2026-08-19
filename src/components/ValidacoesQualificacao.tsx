@@ -117,7 +117,9 @@ export function ValidacoesQualificacao({
   ) => {
     setSalvando(true);
     try {
-      await salvarFn({ data: { setId, validacoes: lista, acao, detalhe } });
+      if (comparacaoId)
+        await salvarComparacaoFn({ data: { comparacaoId, validacoes: lista, acao, detalhe } });
+      else await salvarFn({ data: { setId, validacoes: lista, acao, detalhe } });
       toast.success(sucesso);
       onSalvo();
       return true;
