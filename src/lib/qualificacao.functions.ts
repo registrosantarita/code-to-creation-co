@@ -228,10 +228,10 @@ export const classificarDocumento = createServerFn({ method: "POST" })
       .parse(input),
   )
   .handler(async ({ data, context }) => {
-    const patch: Record<string, string> = {};
-    if (data.especie) patch["doc_species"] = data.especie;
-    if (data.docRole) patch["doc_role"] = data.docRole;
-    if (data.label) patch["label"] = data.label;
+    const patch: { doc_species?: string; doc_role?: string; label?: string } = {};
+    if (data.especie) patch.doc_species = data.especie;
+    if (data.docRole) patch.doc_role = data.docRole;
+    if (data.label) patch.label = data.label;
     if (!Object.keys(patch).length) return { ok: true as const };
     const { error } = await context.supabase
       .from("qualification_docs")
