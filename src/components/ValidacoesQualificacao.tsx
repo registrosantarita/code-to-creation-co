@@ -71,12 +71,15 @@ export function mapaValidacoes(
  */
 export function ValidacoesQualificacao({
   setId,
+  comparacaoId,
   itens,
   validacoes,
   modo = "divergencia",
   onSalvo,
 }: {
   setId: string;
+  /** Quando informado, as validações ficam vinculadas à comparação. */
+  comparacaoId?: string;
   itens: ItemDivergente[];
   validacoes: ValidacaoQualificacao[];
   modo?: "divergencia" | "oposicao";
@@ -85,6 +88,7 @@ export function ValidacoesQualificacao({
   const oposicoes = modo === "oposicao";
   const rotulo = oposicoes ? "Oposição" : "Validação";
   const salvarFn = useServerFn(salvarValidacoes);
+  const salvarComparacaoFn = useServerFn(salvarValidacoesComparacao);
   const [sel, setSel] = useState<Record<string, boolean>>({});
   const [texto, setTexto] = useState("");
   const [salvando, setSalvando] = useState(false);
