@@ -115,23 +115,66 @@ export type ResultadoQualificacao = {
   classificacao: "compatible" | "compatible_with_remarks" | "incompatible" | "inconclusive";
 };
 
-export function conferirQualificacao(docs: DocQualificacao[]): ResultadoQualificacao {
+/** Critérios selecionáveis na criação de uma comparação. */
+export const CRITERIOS = [
+  { id: "identificacao", rotulo: "Partes e identificação" },
+  { id: "estado_civil", rotulo: "Estado civil e regime de bens" },
+  { id: "endereco", rotulo: "Endereço das partes" },
+  { id: "imovel", rotulo: "Cadastros do imóvel" },
+  { id: "cadeia", rotulo: "Cadeia registral" },
+  { id: "onus", rotulo: "Ônus e direitos reais" },
+] as const;
+
+export type CriterioId = (typeof CRITERIOS)[number]["id"];
+
+export const CRITERIOS_PADRAO: CriterioId[] = [
+  "identificacao",
+  "estado_civil",
+  "endereco",
+  "imovel",
+  "cadeia",
+  "onus",
+];
+
+const GRUPO_PESSOA: Record<string, CriterioId> = {
+  nome: "identificacao",
+  cpf: "identificacao",
+  cnpj: "identificacao",
+  rg: "identificacao",
+  orgao_rg: "identificacao",
+  nacionalidade: "identificacao",
+  profissao: "identificacao",
+  endereco: "endereco",
+  estado_civil: "estado_civil",
+  regime_bens: "estado_civil",
+  data_casamento: "estado_civil",
+  conjuge: "estado_civil",
+};
+
+export function conferirQualificacao(
+  docs: DocQualificacao[],
+  criterios: string[] = [...CRITERIOS_PADRAO],
+): ResultadoQualificacao {
   const linhas: LinhaConferencia[] = [];
   const n = docs.length;
+  const ativo = (c: CriterioId) => criterios.includes(c);
+  const pessoasAtivas = ativo("identificacao") || ativo("estado_civil") || ativo("endereco");
 
   // Cadastros do imóvel
-  for (const c of CAMPOS_IMOVEL) {
-    linhas.push(
-      avaliar("Cadastros do imóvel", c.rotulo, Boolean(c.critico), docs.map((d) => d.dados.imovel[c.chave] ?? null)),
-    );
-  }
+  if (ativo("imovel"))
+    for (const c of CAMPOS_IMOVEL) {
+      linhas.push(
+        avaliar("Cadastros do imóvel", c.rotulo, Boolean(c.critico), docs.map((d) => d.dados.imovel[c.chave] ?? null)),
+      );
+    }
 
   // Cadeia registral
-  for (const c of CAMPOS_CADEIA) {
-    linhas.push(
-      avaliar("Cadeia registral", c.rotulo, Boolean(c.critico), docs.map((d) => d.dados.cadeia[c.chave] ?? null)),
-    );
-  }
+  if (ativo("cadeia"))
+    for (const c of CAMPOS_CADEIA) {
+      linhas.push(
+        avaliar("Cadeia registral", c.rotulo, Boolean(c.critico), docs.map((d) => d.dados.cadeia[c.chave] ?? null)),
+      );
+    }
 
   // Partes
   const chaves: string[] = [];
