@@ -201,6 +201,8 @@ export function conferirQualificacao(
     }
 
     for (const c of CAMPOS_PESSOA) {
+      const grupo = GRUPO_PESSOA[c.chave as string] ?? "identificacao";
+      if (!ativo(grupo)) continue;
       const valores = porDoc.map((p) => (p ? (p[c.chave] ?? null) : null));
       if (valores.every((v) => !v)) continue;
       linhas.push(avaliar(bloco, c.rotulo, Boolean(c.critico), valores));
