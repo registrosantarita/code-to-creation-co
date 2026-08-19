@@ -4,6 +4,10 @@
  * de IA é consumido nesta etapa.
  */
 
+import { nomeValido } from "./qualificacao-parser";
+
+
+
 export type IndexProprietario = {
   nome: string | null;
   cpf_cnpj: string | null;
@@ -194,7 +198,9 @@ function extrairProprietarios(texto: string): IndexProprietario[] {
     const doc = digitos(m[2] ?? "");
     if (doc.length !== 11 && doc.length !== 14) continue;
     const nome = limpar(m[1]);
-    if (!nome || nome.split(" ").length < 2) continue;
+    if (!nome || !nomeValido(nome)) continue;
+
+
     if (!encontrados.has(doc)) {
       encontrados.set(doc, { nome: nome.toUpperCase(), cpf_cnpj: formatarDoc(doc), fracao: null });
     }
@@ -505,7 +511,7 @@ function nomeApos(texto: string, rotulos: string[]): string | null {
       new RegExp(`${rot}\\s*(?:\\(a\\))?\\s*[:\\-]?\\s*([A-ZÀ-Ÿ][A-Za-zÀ-ÿ'’.\\- ]{5,80})`, "i"),
     );
     const v = limpar(m?.[1]);
-    if (v && v.split(" ").length >= 2) return v.toUpperCase();
+    if (v && nomeValido(v)) return v.toUpperCase();
   }
   return null;
 }
@@ -520,8 +526,9 @@ function conjugeDe(texto: string, nome: string | null): string | null {
     /(?:casad[oa]\s+(?:com|de)|c[ôo]njuge|e\s+sua\s+(?:esposa|mulher)|e\s+seu\s+marido)\s*[:\-]?\s*([A-ZÀ-Ÿ][A-Za-zÀ-ÿ'’.\- ]{5,80})/i,
   );
   const v = limpar(m?.[1]);
-  return v && v.split(" ").length >= 2 ? v.toUpperCase() : null;
+  return v && nomeValido(v) ? v.toUpperCase() : null;
 }
+
 
 function extrairPartes(texto: string) {
   const adquirente = nomeApos(texto, [

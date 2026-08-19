@@ -183,6 +183,65 @@ function primeiro(texto: string, re: RegExp): string | null {
 
 const NOME = "[A-ZÁÂÃÀÉÊÍÓÔÕÚÇ][\\wÀ-ÿ'.-]+(?:\\s+(?:d[aeo]s?|e|[A-ZÁÂÃÀÉÊÍÓÔÕÚÇ][\\wÀ-ÿ'.-]+)){1,7}";
 
+/**
+ * Termos que jamais compõem nome de pessoa: logradouros, atos registrais,
+ * ônus, órgãos e rótulos de documento. Se qualquer palavra do candidato
+ * estiver aqui, o texto não é tratado como nome.
+ */
+const TERMOS_NAO_NOME = new Set(
+  [
+    // logradouros e endereço
+    "rua","avenida","av","travessa","alameda","rodovia","estrada","praca","praça","largo","viela",
+    "beco","quadra","lote","bairro","distrito","municipio","município","comarca","estado","cep",
+    "numero","número","apartamento","apto","bloco","andar","condominio","condomínio","chacara",
+    "chácara","sitio","sítio","fazenda","gleba","setor","zona","cidade","logradouro","km",
+    // atos, ônus e institutos
+    "gravame","gravames","usufruto","usufrutuario","usufrutuário","reserva","hipoteca","penhora",
+    "arresto","sequestro","alienacao","alienação","fiduciaria","fiduciária","servidao","servidão",
+    "clausula","cláusula","incomunicabilidade","impenhorabilidade","inalienabilidade","caucao","caução",
+    "compra","venda","doacao","doação","permuta","cessao","cessão","direitos","promessa","dacao","dação",
+    "pagamento","partilha","inventario","inventário","arrematacao","arrematação","adjudicacao","adjudicação",
+    "penhor","anticrese","enfiteuse","superficie","superfície","averbacao","averbação","registro",
+    "matricula","matrícula","transcricao","transcrição","livro","folha","ficha","protocolo","prenotacao",
+    "prenotação","escritura","publica","pública","procuracao","procuração","certidao","certidão",
+    "titulo","título","imovel","imóvel","area","área","perimetro","perímetro","confrontante",
+    // órgãos e entidades
+    "cartorio","cartório","oficio","ofício","tabelionato","serventia","comarca","prefeitura",
+    "municipal","estadual","federal","receita","fazenda","banco","caixa","economica","econômica",
+    "juizo","juízo","vara","tribunal","justica","justiça","secretaria","instituto","incra","inss",
+    // rótulos comuns
+    "adquirente","transmitente","outorgante","outorgado","credor","devedor","proprietario",
+    "proprietário","titular","requerente","interessado","parte","partes","natureza","observacao",
+    "observação","valor","total","data","real","reais",
+  ],
+);
+
+const PALAVRA_LIGACAO = new Set(["da","de","do","das","dos","e","del","di","van","von","y"]);
+
+/** Heurística: o candidato extraído é mesmo um nome de pessoa? */
+export function nomeValido(candidato: string | null | undefined): boolean {
+  const bruto = (candidato ?? "").trim();
+  if (bruto.length < 5) return false;
+  if (/\d/.test(bruto)) return false;
+
+  const tokens = bruto.split(/\s+/).filter(Boolean);
+  if (tokens.length < 2) return false;
+
+  const simples = (s: string) =>
+    s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^\wÀ-ÿ]/g, "").toLowerCase();
+
+  let proprios = 0;
+  for (const tk of tokens) {
+    const s = simples(tk);
+    if (!s) continue;
+    if (TERMOS_NAO_NOME.has(s)) return false;
+    if (!PALAVRA_LIGACAO.has(s) && !/^[a-z]\.?$/i.test(tk)) proprios++;
+  }
+  // pelo menos dois vocábulos próprios (nome + sobrenome)
+  return proprios >= 2;
+}
+
+
 const REGIMES = [
   "comunhão parcial de bens",
   "comunhão universal de bens",
@@ -259,12 +318,13 @@ function extrairPessoas(t: string): Pessoa[] {
     if (ehCnpj) p.cnpj = bruto;
     else p.cpf = bruto;
 
-    // Nome: último nome próprio antes do documento.
-    // O titular é o primeiro nome próprio da sentença que contém o documento
-    // (nomes posteriores costumam ser o cônjuge ou o representante).
+    // Nome: primeiro candidato válido da sentença que contém o documento.
+    // Logradouros, atos e ônus (ex.: "Rua das Flores", "Reserva de Usufruto",
+    // "Gravame") são descartados por nomeValido().
     const sentenca = antes.split(/(?<=[.;])\s+(?=[A-ZÁÉÍÓÚ])/).pop() ?? antes;
-    const nomes = sentenca.match(new RegExp(NOME, "g"));
-    p.nome = nomes?.length ? nomes[0]!.trim() : null;
+    const nomes = (sentenca.match(new RegExp(NOME, "g")) ?? []).map((n) => n.trim());
+    p.nome = nomes.find(nomeValido) ?? null;
+
 
     p.rg = primeiro(janela, /(?:RG|C[ée]dula de Identidade|identidade)\s*(?:n[º°.]?\s*)?[:\-]?\s*([\d.\-\/A-Za-z]{5,15})/i);
     p.orgao_rg = primeiro(janela, /(?:SSP|SESP|SJS|DETRAN|PC|IFP|IIRGD)[\s/-]{0,3}([A-Z]{2})/);
@@ -292,10 +352,12 @@ function extrairPessoas(t: string): Pessoa[] {
       janela,
       /(?:casad[oa][^.;\n]{0,80}?(?:desde|em)|data do casamento\s*[:\-]?)\s*(\d{2}[/.\-]\d{2}[/.\-]\d{4}|\d{1,2}\s+de\s+[a-zç]+\s+de\s+\d{4})/i,
     );
-    p.conjuge = primeiro(
+    const conjugeBruto = primeiro(
       janela,
       new RegExp(`(?:c[ôo]njuge|esposa|esposo|marido|casad[oa][^.;\\n]{0,90}?\\bcom\\b)\\s*[:\\-]?\\s*(${NOME})`, "i"),
     );
+    p.conjuge = nomeValido(conjugeBruto) ? conjugeBruto : null;
+
 
     pessoas.push(p);
   }
