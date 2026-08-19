@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
-import { salvarValidacoes } from "@/lib/qualificacao.functions";
+import { salvarValidacoes, salvarValidacoesComparacao } from "@/lib/qualificacao.functions";
 
 export type DecisaoQualificacao = "relevado" | "confirmado" | "oposicao";
 
@@ -71,12 +71,15 @@ export function mapaValidacoes(
  */
 export function ValidacoesQualificacao({
   setId,
+  comparacaoId,
   itens,
   validacoes,
   modo = "divergencia",
   onSalvo,
 }: {
   setId: string;
+  /** Quando informado, as validações ficam vinculadas à comparação. */
+  comparacaoId?: string;
   itens: ItemDivergente[];
   validacoes: ValidacaoQualificacao[];
   modo?: "divergencia" | "oposicao";
@@ -85,6 +88,7 @@ export function ValidacoesQualificacao({
   const oposicoes = modo === "oposicao";
   const rotulo = oposicoes ? "Oposição" : "Validação";
   const salvarFn = useServerFn(salvarValidacoes);
+  const salvarComparacaoFn = useServerFn(salvarValidacoesComparacao);
   const [sel, setSel] = useState<Record<string, boolean>>({});
   const [texto, setTexto] = useState("");
   const [salvando, setSalvando] = useState(false);
@@ -113,7 +117,9 @@ export function ValidacoesQualificacao({
   ) => {
     setSalvando(true);
     try {
-      await salvarFn({ data: { setId, validacoes: lista, acao, detalhe } });
+      if (comparacaoId)
+        await salvarComparacaoFn({ data: { comparacaoId, validacoes: lista, acao, detalhe } });
+      else await salvarFn({ data: { setId, validacoes: lista, acao, detalhe } });
       toast.success(sucesso);
       onSalvo();
       return true;

@@ -54,7 +54,7 @@ export const obterConjunto = createServerFn({ method: "POST" })
       context.supabase
         .from("qualification_docs")
         .select(
-          "id, label, file_name, file_extension, source_type, doc_role, extracted, extraction_source, raw_text, created_at",
+          "id, label, file_name, file_extension, source_type, doc_role, doc_species, extracted, extraction_source, raw_text, created_at",
         )
         .eq("set_id", data.id)
         .order("created_at", { ascending: true }),
@@ -97,6 +97,8 @@ export const adicionarDocumento = createServerFn({ method: "POST" })
     if (!texto.trim()) throw new Error(note ?? "Nenhum texto pôde ser extraído deste documento.");
 
     const dados = extrairQualificacao(texto);
+    const { classificarEspecie } = await import("./qualificacao-especie");
+    const especie = classificarEspecie(texto, data.fileName);
     const { data: row, error } = await context.supabase
       .from("qualification_docs")
       .insert({
@@ -106,6 +108,7 @@ export const adicionarDocumento = createServerFn({ method: "POST" })
         file_extension: (data.extension ?? "").replace(".", "").toLowerCase() || null,
         source_type: data.base64 ? "upload" : "pasted_text",
         doc_role: data.docRole,
+        doc_species: especie,
         raw_text: texto.slice(0, 400000),
         extracted: JSON.parse(JSON.stringify(dados)),
         extraction_source: "deterministico",
@@ -205,6 +208,167 @@ export const salvarValidacoes = createServerFn({ method: "POST" })
       actor_id: context.userId,
       entity_type: "qualification_validation",
       entity_id: data.setId,
+      action: data.acao,
+      metadata: JSON.parse(JSON.stringify(data.detalhe)),
+    });
+    return { ok: true as const };
+  });
+
+/** Classificação do documento: espécie e papel na conferência. */
+export const classificarDocumento = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) =>
+    z
+      .object({
+        id: z.string().uuid(),
+        especie: z.string().max(40).optional(),
+        docRole: z.enum(["titulo", "matricula"]).optional(),
+        label: z.string().trim().max(120).optional(),
+      })
+      .parse(input),
+  )
+  .handler(async ({ data, context }) => {
+    const patch: { doc_species?: string; doc_role?: string; label?: string } = {};
+    if (data.especie) patch.doc_species = data.especie;
+    if (data.docRole) patch.doc_role = data.docRole;
+    if (data.label) patch.label = data.label;
+    if (!Object.keys(patch).length) return { ok: true as const };
+    const { error } = await context.supabase
+      .from("qualification_docs")
+      .update(patch)
+      .eq("id", data.id);
+    if (error) throw new Error(error.message);
+    return { ok: true as const };
+  });
+
+export const listarComparacoes = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) => z.object({ setId: z.string().uuid() }).parse(input))
+  .handler(async ({ data, context }) => {
+    const { data: rows, error } = await context.supabase
+      .from("qualification_comparisons")
+      .select(
+        "id, title, paradigm_doc_id, compared_doc_ids, criteria, summary, classification, created_at",
+      )
+      .eq("set_id", data.setId)
+      .order("created_at", { ascending: false });
+    if (error) throw new Error(error.message);
+    return rows ?? [];
+  });
+
+export const obterComparacao = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) => z.object({ id: z.string().uuid() }).parse(input))
+  .handler(async ({ data, context }) => {
+    const { data: row, error } = await context.supabase
+      .from("qualification_comparisons")
+      .select("*")
+      .eq("id", data.id)
+      .maybeSingle();
+    if (error) throw new Error(error.message);
+    if (!row) throw new Error("Comparação não encontrada.");
+    return row;
+  });
+
+/**
+ * Cria uma comparação: o resultado é calculado no servidor, de forma
+ * determinística, e gravado junto com os critérios adotados.
+ */
+export const criarComparacao = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) =>
+    z
+      .object({
+        setId: z.string().uuid(),
+        title: z.string().trim().max(160).default(""),
+        paradigmDocId: z.string().uuid(),
+        comparedDocIds: z.array(z.string().uuid()).min(1).max(20),
+        criterios: z.array(z.string().max(40)).min(1),
+      })
+      .parse(input),
+  )
+  .handler(async ({ data, context }) => {
+    const ids = [data.paradigmDocId, ...data.comparedDocIds.filter((i) => i !== data.paradigmDocId)];
+    const { data: docs, error } = await context.supabase
+      .from("qualification_docs")
+      .select("id, label, doc_role, doc_species, extracted")
+      .eq("set_id", data.setId)
+      .in("id", ids);
+    if (error) throw new Error(error.message);
+    if (!docs || docs.length < 2) throw new Error("Selecione ao menos dois documentos válidos.");
+
+    const ordenados = ids
+      .map((id) => docs.find((d) => d.id === id))
+      .filter((d): d is NonNullable<typeof d> => Boolean(d));
+
+    const { conferirQualificacao } = await import("./qualificacao-compare");
+    const { qualificacaoVazia } = await import("./qualificacao-parser");
+    const resultado = conferirQualificacao(
+      ordenados.map((d, i) => ({
+        rotulo: `Doc. ${String.fromCharCode(65 + i)}`,
+        dados: {
+          ...qualificacaoVazia(),
+          ...((d.extracted ?? {}) as unknown as Qualificacao),
+        },
+      })),
+      data.criterios,
+    );
+
+    const resumo =
+      `${resultado.resumo.conformes} conformes · ${resultado.resumo.divergentes} divergentes · ` +
+      `${resultado.resumo.invalidos} inválidos · ${resultado.resumo.incompletos} não comparados.`;
+
+    const { data: row, error: insErr } = await context.supabase
+      .from("qualification_comparisons")
+      .insert({
+        set_id: data.setId,
+        title: data.title || `Comparação de ${ordenados.length} documento(s)`,
+        paradigm_doc_id: data.paradigmDocId,
+        compared_doc_ids: ids.slice(1),
+        criteria: data.criterios,
+        result: JSON.parse(JSON.stringify({ ...resultado, documentos: ordenados.map((d) => ({ id: d.id, label: d.label, doc_role: d.doc_role, doc_species: d.doc_species })) })),
+        summary: resumo,
+        classification: resultado.classificacao,
+        created_by: context.userId,
+      })
+      .select("id")
+      .single();
+    if (insErr || !row) throw new Error(insErr?.message ?? "Falha ao criar a comparação.");
+
+    await context.supabase.from("audit_logs").insert({
+      actor_id: context.userId,
+      entity_type: "qualification_comparison",
+      entity_id: row.id,
+      action: "comparacao_criada",
+      metadata: { set_id: data.setId, criterios: data.criterios, documentos: ids },
+    });
+
+    return { id: row.id };
+  });
+
+export const salvarValidacoesComparacao = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) =>
+    z
+      .object({
+        comparacaoId: z.string().uuid(),
+        validacoes: z.array(validacaoSchema).max(200),
+        acao: z.string().max(60).default("validacao_lote_salva"),
+        detalhe: z.record(z.string(), z.unknown()).default({}),
+      })
+      .parse(input),
+  )
+  .handler(async ({ data, context }) => {
+    const { error } = await context.supabase
+      .from("qualification_comparisons")
+      .update({ validations: data.validacoes as never })
+      .eq("id", data.comparacaoId);
+    if (error) throw new Error(error.message);
+
+    await context.supabase.from("audit_logs").insert({
+      actor_id: context.userId,
+      entity_type: "qualification_comparison_validation",
+      entity_id: data.comparacaoId,
       action: data.acao,
       metadata: JSON.parse(JSON.stringify(data.detalhe)),
     });

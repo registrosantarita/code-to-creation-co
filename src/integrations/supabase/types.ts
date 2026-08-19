@@ -834,11 +834,75 @@ export type Database = {
         }
         Relationships: []
       }
+      qualification_comparisons: {
+        Row: {
+          classification: string
+          compared_doc_ids: string[]
+          created_at: string
+          created_by: string
+          criteria: string[]
+          id: string
+          paradigm_doc_id: string | null
+          result: Json
+          set_id: string
+          summary: string
+          title: string
+          updated_at: string
+          validations: Json
+        }
+        Insert: {
+          classification?: string
+          compared_doc_ids?: string[]
+          created_at?: string
+          created_by: string
+          criteria?: string[]
+          id?: string
+          paradigm_doc_id?: string | null
+          result?: Json
+          set_id: string
+          summary?: string
+          title?: string
+          updated_at?: string
+          validations?: Json
+        }
+        Update: {
+          classification?: string
+          compared_doc_ids?: string[]
+          created_at?: string
+          created_by?: string
+          criteria?: string[]
+          id?: string
+          paradigm_doc_id?: string | null
+          result?: Json
+          set_id?: string
+          summary?: string
+          title?: string
+          updated_at?: string
+          validations?: Json
+        }
+        Relationships: [
+          {
+            foreignKeyName: "qualification_comparisons_paradigm_doc_id_fkey"
+            columns: ["paradigm_doc_id"]
+            isOneToOne: false
+            referencedRelation: "qualification_docs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "qualification_comparisons_set_id_fkey"
+            columns: ["set_id"]
+            isOneToOne: false
+            referencedRelation: "qualification_sets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       qualification_docs: {
         Row: {
           created_at: string
           created_by: string
           doc_role: string
+          doc_species: string
           extracted: Json
           extraction_source: string
           file_extension: string | null
@@ -854,6 +918,7 @@ export type Database = {
           created_at?: string
           created_by: string
           doc_role?: string
+          doc_species?: string
           extracted?: Json
           extraction_source?: string
           file_extension?: string | null
@@ -869,6 +934,7 @@ export type Database = {
           created_at?: string
           created_by?: string
           doc_role?: string
+          doc_species?: string
           extracted?: Json
           extraction_source?: string
           file_extension?: string | null

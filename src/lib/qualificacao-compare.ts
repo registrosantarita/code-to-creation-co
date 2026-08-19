@@ -115,23 +115,66 @@ export type ResultadoQualificacao = {
   classificacao: "compatible" | "compatible_with_remarks" | "incompatible" | "inconclusive";
 };
 
-export function conferirQualificacao(docs: DocQualificacao[]): ResultadoQualificacao {
+/** Critérios selecionáveis na criação de uma comparação. */
+export const CRITERIOS = [
+  { id: "identificacao", rotulo: "Partes e identificação" },
+  { id: "estado_civil", rotulo: "Estado civil e regime de bens" },
+  { id: "endereco", rotulo: "Endereço das partes" },
+  { id: "imovel", rotulo: "Cadastros do imóvel" },
+  { id: "cadeia", rotulo: "Cadeia registral" },
+  { id: "onus", rotulo: "Ônus e direitos reais" },
+] as const;
+
+export type CriterioId = (typeof CRITERIOS)[number]["id"];
+
+export const CRITERIOS_PADRAO: CriterioId[] = [
+  "identificacao",
+  "estado_civil",
+  "endereco",
+  "imovel",
+  "cadeia",
+  "onus",
+];
+
+const GRUPO_PESSOA: Record<string, CriterioId> = {
+  nome: "identificacao",
+  cpf: "identificacao",
+  cnpj: "identificacao",
+  rg: "identificacao",
+  orgao_rg: "identificacao",
+  nacionalidade: "identificacao",
+  profissao: "identificacao",
+  endereco: "endereco",
+  estado_civil: "estado_civil",
+  regime_bens: "estado_civil",
+  data_casamento: "estado_civil",
+  conjuge: "estado_civil",
+};
+
+export function conferirQualificacao(
+  docs: DocQualificacao[],
+  criterios: string[] = [...CRITERIOS_PADRAO],
+): ResultadoQualificacao {
   const linhas: LinhaConferencia[] = [];
   const n = docs.length;
+  const ativo = (c: CriterioId) => criterios.includes(c);
+  const pessoasAtivas = ativo("identificacao") || ativo("estado_civil") || ativo("endereco");
 
   // Cadastros do imóvel
-  for (const c of CAMPOS_IMOVEL) {
-    linhas.push(
-      avaliar("Cadastros do imóvel", c.rotulo, Boolean(c.critico), docs.map((d) => d.dados.imovel[c.chave] ?? null)),
-    );
-  }
+  if (ativo("imovel"))
+    for (const c of CAMPOS_IMOVEL) {
+      linhas.push(
+        avaliar("Cadastros do imóvel", c.rotulo, Boolean(c.critico), docs.map((d) => d.dados.imovel[c.chave] ?? null)),
+      );
+    }
 
   // Cadeia registral
-  for (const c of CAMPOS_CADEIA) {
-    linhas.push(
-      avaliar("Cadeia registral", c.rotulo, Boolean(c.critico), docs.map((d) => d.dados.cadeia[c.chave] ?? null)),
-    );
-  }
+  if (ativo("cadeia"))
+    for (const c of CAMPOS_CADEIA) {
+      linhas.push(
+        avaliar("Cadeia registral", c.rotulo, Boolean(c.critico), docs.map((d) => d.dados.cadeia[c.chave] ?? null)),
+      );
+    }
 
   // Partes
   const chaves: string[] = [];
@@ -141,7 +184,7 @@ export function conferirQualificacao(docs: DocQualificacao[]): ResultadoQualific
       if (!chaves.includes(k)) chaves.push(k);
     }
 
-  chaves.forEach((chave, idx) => {
+  (pessoasAtivas ? chaves : []).forEach((chave, idx) => {
     const porDoc = docs.map((d) => d.dados.pessoas.find((p) => chavePessoa(p) === chave) ?? null);
     const nome = porDoc.find((p) => p?.nome)?.nome ?? `Parte ${idx + 1}`;
     const bloco = `Parte — ${nome}`;
@@ -158,13 +201,15 @@ export function conferirQualificacao(docs: DocQualificacao[]): ResultadoQualific
     }
 
     for (const c of CAMPOS_PESSOA) {
+      const grupo = GRUPO_PESSOA[c.chave as string] ?? "identificacao";
+      if (!ativo(grupo)) continue;
       const valores = porDoc.map((p) => (p ? (p[c.chave] ?? null) : null));
       if (valores.every((v) => !v)) continue;
       linhas.push(avaliar(bloco, c.rotulo, Boolean(c.critico), valores));
     }
 
     // Regra registral: casado exige regime de bens e data do casamento.
-    for (let i = 0; i < n; i++) {
+    for (let i = 0; ativo("estado_civil") && i < n; i++) {
       const p = porDoc[i];
       if (!p) continue;
       const casado = /casad|uni[ãa]o est[áa]vel/i.test(p.estado_civil ?? "");
