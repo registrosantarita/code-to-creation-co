@@ -378,7 +378,7 @@ function LoteDetalhe() {
                   )}
                 </div>
 
-                <TabelaOnus itens={todosOnus as never} origem={r.label} />
+                <TabelaOnus itens={todosOnus} origem={r.label} />
 
 
                 {props.length > 0 && (
