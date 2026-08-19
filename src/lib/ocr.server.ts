@@ -107,9 +107,19 @@ export async function ocrDocument(
     method: "POST",
     headers: { "Content-Type": "application/json", "Lovable-API-Key": key },
     body: JSON.stringify({
-      model: "google/gemini-3.6-flash",
-      messages: [{ role: "user", content }],
+      model: MODEL,
+      temperature: 0,
+      top_p: 1,
+      messages: [
+        {
+          role: "system",
+          content:
+            "Você transcreve documentos com fidelidade literal absoluta, sem interpretar, resumir ou corrigir.",
+        },
+        { role: "user", content },
+      ],
     }),
+
   });
 
   if (response.status === 429) {
