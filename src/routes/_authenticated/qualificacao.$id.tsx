@@ -285,6 +285,22 @@ function QualificacaoDetalhe() {
         )}
       </section>
 
+      {onusPorDoc.length > 0 && (
+        <section className="mt-10">
+          <h2 className="font-display text-lg text-foreground">
+            Ônus e Direitos Reais registrados na Matrícula
+          </h2>
+          {onusPorDoc.map((o) => (
+            <TabelaOnus
+              key={o.id}
+              itens={o.itens}
+              titulo={`Doc. ${docLetra(o.indice)} — ${o.label}`}
+            />
+          ))}
+        </section>
+      )}
+
+
       {!prontoParaConferir && (
         <p className="mt-6 rounded-md border border-border bg-card p-5 text-sm text-muted-foreground">
           {modo === "titulo_x_titulo"
