@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
-import { salvarValidacoes } from "@/lib/qualificacao.functions";
+import { salvarValidacoes, salvarValidacoesComparacao } from "@/lib/qualificacao.functions";
 
 export type DecisaoQualificacao = "relevado" | "confirmado" | "oposicao";
 
