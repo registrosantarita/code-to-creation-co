@@ -32,6 +32,7 @@ import { Route as AuthenticatedIndexacaoIndexRouteImport } from './routes/_authe
 import { Route as AuthenticatedIndexacaoIdRouteImport } from './routes/_authenticated/indexacao.$id'
 import { Route as AuthenticatedQualificacaoIndexRouteImport } from './routes/_authenticated/qualificacao.index'
 import { Route as AuthenticatedQualificacaoIdRouteImport } from './routes/_authenticated/qualificacao.$id'
+import { Route as AuthenticatedQuestioncheckIndexRouteImport } from './routes/_authenticated/questioncheck.index'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -155,6 +156,12 @@ const AuthenticatedQualificacaoIdRoute =
     path: '/qualificacao/$id',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedQuestioncheckIndexRoute =
+  AuthenticatedQuestioncheckIndexRouteImport.update({
+    id: '/questioncheck/',
+    path: '/questioncheck/',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -179,6 +186,7 @@ export interface FileRoutesByFullPath {
   '/qualificacao/$id': typeof AuthenticatedQualificacaoIdRoute
   '/indexacao/': typeof AuthenticatedIndexacaoIndexRoute
   '/qualificacao/': typeof AuthenticatedQualificacaoIndexRoute
+  '/questioncheck/': typeof AuthenticatedQuestioncheckIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -203,6 +211,7 @@ export interface FileRoutesByTo {
   '/qualificacao/$id': typeof AuthenticatedQualificacaoIdRoute
   '/indexacao': typeof AuthenticatedIndexacaoIndexRoute
   '/qualificacao': typeof AuthenticatedQualificacaoIndexRoute
+  '/questioncheck': typeof AuthenticatedQuestioncheckIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -229,6 +238,7 @@ export interface FileRoutesById {
   '/_authenticated/qualificacao/$id': typeof AuthenticatedQualificacaoIdRoute
   '/_authenticated/indexacao/': typeof AuthenticatedIndexacaoIndexRoute
   '/_authenticated/qualificacao/': typeof AuthenticatedQualificacaoIndexRoute
+  '/_authenticated/questioncheck/': typeof AuthenticatedQuestioncheckIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -255,6 +265,7 @@ export interface FileRouteTypes {
     | '/qualificacao/$id'
     | '/indexacao/'
     | '/qualificacao/'
+    | '/questioncheck/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -279,6 +290,7 @@ export interface FileRouteTypes {
     | '/qualificacao/$id'
     | '/indexacao'
     | '/qualificacao'
+    | '/questioncheck'
   id:
     | '__root__'
     | '/'
@@ -304,6 +316,7 @@ export interface FileRouteTypes {
     | '/_authenticated/qualificacao/$id'
     | '/_authenticated/indexacao/'
     | '/_authenticated/qualificacao/'
+    | '/_authenticated/questioncheck/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -484,6 +497,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedQualificacaoIdRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/questioncheck/': {
+      id: '/_authenticated/questioncheck/'
+      path: '/questioncheck'
+      fullPath: '/questioncheck/'
+      preLoaderRoute: typeof AuthenticatedQuestioncheckIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
   }
 }
 
@@ -499,6 +519,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedQualificacaoIdRoute: typeof AuthenticatedQualificacaoIdRoute
   AuthenticatedIndexacaoIndexRoute: typeof AuthenticatedIndexacaoIndexRoute
   AuthenticatedQualificacaoIndexRoute: typeof AuthenticatedQualificacaoIndexRoute
+  AuthenticatedQuestioncheckIndexRoute: typeof AuthenticatedQuestioncheckIndexRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
@@ -513,6 +534,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedQualificacaoIdRoute: AuthenticatedQualificacaoIdRoute,
   AuthenticatedIndexacaoIndexRoute: AuthenticatedIndexacaoIndexRoute,
   AuthenticatedQualificacaoIndexRoute: AuthenticatedQualificacaoIndexRoute,
+  AuthenticatedQuestioncheckIndexRoute: AuthenticatedQuestioncheckIndexRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =
