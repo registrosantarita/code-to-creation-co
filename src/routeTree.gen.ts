@@ -33,6 +33,7 @@ import { Route as AuthenticatedIndexacaoIdRouteImport } from './routes/_authenti
 import { Route as AuthenticatedQualificacaoIndexRouteImport } from './routes/_authenticated/qualificacao.index'
 import { Route as AuthenticatedQualificacaoIdRouteImport } from './routes/_authenticated/qualificacao.$id'
 import { Route as AuthenticatedQuestioncheckIndexRouteImport } from './routes/_authenticated/questioncheck.index'
+import { Route as AuthenticatedQuestioncheckIdRouteImport } from './routes/_authenticated/questioncheck.$id'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -162,6 +163,12 @@ const AuthenticatedQuestioncheckIndexRoute =
     path: '/questioncheck/',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedQuestioncheckIdRoute =
+  AuthenticatedQuestioncheckIdRouteImport.update({
+    id: '/questioncheck/$id',
+    path: '/questioncheck/$id',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -184,6 +191,7 @@ export interface FileRoutesByFullPath {
   '/comparacoes/$id': typeof AuthenticatedComparacoesIdRoute
   '/indexacao/$id': typeof AuthenticatedIndexacaoIdRoute
   '/qualificacao/$id': typeof AuthenticatedQualificacaoIdRoute
+  '/questioncheck/$id': typeof AuthenticatedQuestioncheckIdRoute
   '/indexacao/': typeof AuthenticatedIndexacaoIndexRoute
   '/qualificacao/': typeof AuthenticatedQualificacaoIndexRoute
   '/questioncheck/': typeof AuthenticatedQuestioncheckIndexRoute
@@ -209,6 +217,7 @@ export interface FileRoutesByTo {
   '/comparacoes/$id': typeof AuthenticatedComparacoesIdRoute
   '/indexacao/$id': typeof AuthenticatedIndexacaoIdRoute
   '/qualificacao/$id': typeof AuthenticatedQualificacaoIdRoute
+  '/questioncheck/$id': typeof AuthenticatedQuestioncheckIdRoute
   '/indexacao': typeof AuthenticatedIndexacaoIndexRoute
   '/qualificacao': typeof AuthenticatedQualificacaoIndexRoute
   '/questioncheck': typeof AuthenticatedQuestioncheckIndexRoute
@@ -236,6 +245,7 @@ export interface FileRoutesById {
   '/_authenticated/comparacoes/$id': typeof AuthenticatedComparacoesIdRoute
   '/_authenticated/indexacao/$id': typeof AuthenticatedIndexacaoIdRoute
   '/_authenticated/qualificacao/$id': typeof AuthenticatedQualificacaoIdRoute
+  '/_authenticated/questioncheck/$id': typeof AuthenticatedQuestioncheckIdRoute
   '/_authenticated/indexacao/': typeof AuthenticatedIndexacaoIndexRoute
   '/_authenticated/qualificacao/': typeof AuthenticatedQualificacaoIndexRoute
   '/_authenticated/questioncheck/': typeof AuthenticatedQuestioncheckIndexRoute
@@ -263,6 +273,7 @@ export interface FileRouteTypes {
     | '/comparacoes/$id'
     | '/indexacao/$id'
     | '/qualificacao/$id'
+    | '/questioncheck/$id'
     | '/indexacao/'
     | '/qualificacao/'
     | '/questioncheck/'
@@ -288,6 +299,7 @@ export interface FileRouteTypes {
     | '/comparacoes/$id'
     | '/indexacao/$id'
     | '/qualificacao/$id'
+    | '/questioncheck/$id'
     | '/indexacao'
     | '/qualificacao'
     | '/questioncheck'
@@ -314,6 +326,7 @@ export interface FileRouteTypes {
     | '/_authenticated/comparacoes/$id'
     | '/_authenticated/indexacao/$id'
     | '/_authenticated/qualificacao/$id'
+    | '/_authenticated/questioncheck/$id'
     | '/_authenticated/indexacao/'
     | '/_authenticated/qualificacao/'
     | '/_authenticated/questioncheck/'
@@ -504,6 +517,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedQuestioncheckIndexRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/questioncheck/$id': {
+      id: '/_authenticated/questioncheck/$id'
+      path: '/questioncheck/$id'
+      fullPath: '/questioncheck/$id'
+      preLoaderRoute: typeof AuthenticatedQuestioncheckIdRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
   }
 }
 
@@ -517,6 +537,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedComparacoesIdRoute: typeof AuthenticatedComparacoesIdRoute
   AuthenticatedIndexacaoIdRoute: typeof AuthenticatedIndexacaoIdRoute
   AuthenticatedQualificacaoIdRoute: typeof AuthenticatedQualificacaoIdRoute
+  AuthenticatedQuestioncheckIdRoute: typeof AuthenticatedQuestioncheckIdRoute
   AuthenticatedIndexacaoIndexRoute: typeof AuthenticatedIndexacaoIndexRoute
   AuthenticatedQualificacaoIndexRoute: typeof AuthenticatedQualificacaoIndexRoute
   AuthenticatedQuestioncheckIndexRoute: typeof AuthenticatedQuestioncheckIndexRoute
@@ -532,6 +553,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedComparacoesIdRoute: AuthenticatedComparacoesIdRoute,
   AuthenticatedIndexacaoIdRoute: AuthenticatedIndexacaoIdRoute,
   AuthenticatedQualificacaoIdRoute: AuthenticatedQualificacaoIdRoute,
+  AuthenticatedQuestioncheckIdRoute: AuthenticatedQuestioncheckIdRoute,
   AuthenticatedIndexacaoIndexRoute: AuthenticatedIndexacaoIndexRoute,
   AuthenticatedQualificacaoIndexRoute: AuthenticatedQualificacaoIndexRoute,
   AuthenticatedQuestioncheckIndexRoute: AuthenticatedQuestioncheckIndexRoute,
