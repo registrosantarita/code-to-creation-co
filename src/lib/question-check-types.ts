@@ -7,7 +7,7 @@
 
 export type TipoNo = "sim_nao" | "opcoes" | "multipla" | "numero" | "texto" | "info";
 
-export type Opcao = { id: string; rotulo: string };
+export type Opcao = { id: string; rotulo: string; obrigatorio?: boolean; ajuda?: string };
 
 /** Condição que dispara alertas, exigências e perguntas encadeadas. */
 export type Quando = "sim" | "nao" | "alguma" | "nenhuma" | "faltando" | `opcao:${string}`;
