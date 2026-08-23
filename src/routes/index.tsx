@@ -143,6 +143,24 @@ function Index() {
             </p>
             <span className="mt-6 text-xs uppercase tracking-wide text-accent">Acessar módulo</span>
           </Link>
+
+          <Link
+            to="/questioncheck"
+            className="group flex flex-col items-center rounded-lg border border-border bg-card p-10 text-center transition hover:border-accent"
+          >
+            <img
+              src={questioncheckLogo}
+              alt="QuestionCheck"
+              loading="lazy"
+              className="h-32 w-auto object-contain md:h-40"
+            />
+
+            <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
+              Checklist condicional de qualificação: perguntas em sequência, alertas e exigências
+              acumulados e nota de exigência editável.
+            </p>
+            <span className="mt-6 text-xs uppercase tracking-wide text-accent">Acessar módulo</span>
+          </Link>
         </div>
 
       </main>
