@@ -88,6 +88,12 @@ function AuthenticatedLayout() {
             >
               CheckIndex
             </Link>
+            <Link
+              to="/questioncheck"
+              className="text-xs text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
+            >
+              QuestionCheck
+            </Link>
 
             <Link
               to="/normas"
