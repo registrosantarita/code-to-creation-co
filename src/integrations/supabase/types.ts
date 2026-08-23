@@ -989,6 +989,60 @@ export type Database = {
         }
         Relationships: []
       }
+      question_check_sessions: {
+        Row: {
+          alertas: Json
+          created_at: string
+          created_by: string
+          exigencias: Json
+          id: string
+          lista_alertas: string
+          nota_exigencia: string
+          note: string
+          protocolo: string
+          respostas: Json
+          secoes: string[]
+          status: string
+          tipo_titulo: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          alertas?: Json
+          created_at?: string
+          created_by: string
+          exigencias?: Json
+          id?: string
+          lista_alertas?: string
+          nota_exigencia?: string
+          note?: string
+          protocolo?: string
+          respostas?: Json
+          secoes?: string[]
+          status?: string
+          tipo_titulo?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          alertas?: Json
+          created_at?: string
+          created_by?: string
+          exigencias?: Json
+          id?: string
+          lista_alertas?: string
+          nota_exigencia?: string
+          note?: string
+          protocolo?: string
+          respostas?: Json
+          secoes?: string[]
+          status?: string
+          tipo_titulo?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       segments: {
         Row: {
           altitude_from_m: number | null
