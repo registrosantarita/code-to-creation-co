@@ -1,0 +1,447 @@
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
+import { useEffect, useMemo, useState } from "react";
+import { toast } from "sonner";
+import { AlertTriangle, Ban, Check, Save } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Separator } from "@/components/ui/separator";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { obterConferencia, salvarConferencia } from "@/lib/question-check.functions";
+import {
+  TIPOS_TITULO,
+  secoesAplicaveis,
+  type No,
+  type Respostas,
+} from "@/lib/question-check-types";
+import { SECOES } from "@/lib/question-check-secoes";
+import {
+  acumular,
+  efeitoAtivo,
+  esbocoListaAlertas,
+  esbocoNotaExigencia,
+  nosVisiveis,
+  progresso,
+  respondido,
+  secaoPorId,
+} from "@/lib/question-check-engine";
+
+export const Route = createFileRoute("/_authenticated/questioncheck/$id")({
+  head: () => ({
+    meta: [
+      { title: "QuestionCheck — Conferência do título — e-Qualifica" },
+      {
+        name: "description",
+        content:
+          "Responda o checklist em sequência e acompanhe os alertas e as exigências acumulados para a nota de exigência.",
+      },
+      { property: "og:title", content: "QuestionCheck — Conferência do título" },
+      {
+        property: "og:description",
+        content: "Checklist condicional com nota de exigência e lista de alertas editáveis.",
+      },
+    ],
+  }),
+  component: QuestionCheckDetalhe,
+});
+
+const SECOES_VARIAVEIS = SECOES.filter((s) => !["A", "Q", "R"].includes(s.id));
+
+function QuestionCheckDetalhe() {
+  const { id } = Route.useParams();
+  const queryClient = useQueryClient();
+  const obter = useServerFn(obterConferencia);
+  const salvar = useServerFn(salvarConferencia);
+
+  const { data, isLoading } = useQuery({
+    queryKey: ["questioncheck", id],
+    queryFn: () => obter({ data: { id } }),
+  });
+
+  const [respostas, setRespostas] = useState<Respostas>({});
+  const [tipo, setTipo] = useState("");
+  const [extras, setExtras] = useState<string[]>([]);
+  const [nota, setNota] = useState("");
+  const [lista, setLista] = useState("");
+  const [notaTocada, setNotaTocada] = useState(false);
+
+  useEffect(() => {
+    if (!data) return;
+    setRespostas((data.respostas ?? {}) as Respostas);
+    setTipo(data.tipo_titulo ?? "");
+    const base = TIPOS_TITULO.find((t) => t.id === data.tipo_titulo)?.secoes ?? [];
+    setExtras((data.secoes ?? []).filter((s) => !["A", "Q", "R", ...base].includes(s)));
+    setNota(data.nota_exigencia ?? "");
+    setLista(data.lista_alertas ?? "");
+    setNotaTocada(Boolean(data.nota_exigencia));
+  }, [data]);
+
+  const secoesIds = useMemo(() => secoesAplicaveis(tipo, extras), [tipo, extras]);
+  const { alertas, exigencias } = useMemo(
+    () => acumular(secoesIds, respostas),
+    [secoesIds, respostas],
+  );
+  const prog = useMemo(() => progresso(secoesIds, respostas), [secoesIds, respostas]);
+
+  const cabecalho = { titulo: data?.title ?? "", protocolo: data?.protocolo ?? "" };
+  const notaSugerida = esbocoNotaExigencia(exigencias, cabecalho);
+  const listaSugerida = esbocoListaAlertas(alertas);
+
+  const persistir = useMutation({
+    mutationFn: (status?: "em_andamento" | "concluida") =>
+      salvar({
+        data: {
+          id,
+          tipoTitulo: tipo,
+          secoes: secoesIds,
+          respostas: respostas as Record<string, unknown>,
+          alertas: alertas as unknown as Record<string, unknown>[],
+          exigencias: exigencias as unknown as Record<string, unknown>[],
+          notaExigencia: notaTocada && nota ? nota : notaSugerida,
+          listaAlertas: lista || listaSugerida,
+          ...(status ? { status } : {}),
+        },
+      }),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ["questioncheck", id] });
+      toast.success("Conferência salva.");
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  function responder(no: No, valor: Respostas[string]) {
+    setRespostas((prev) => {
+      const next = { ...prev, [no.id]: valor };
+      // limpa respostas de perguntas encadeadas que deixaram de ser exibidas
+      const ativos = new Set<string>();
+      const marcar = (nos: No[]) => {
+        for (const n of nos) {
+          ativos.add(n.id);
+          const r = next[n.id];
+          if (!respondido(n, r)) continue;
+          for (const ef of n.efeitos ?? []) {
+            if (ef.filhos?.length && efeitoAtivo(n, ef, r)) marcar(ef.filhos);
+          }
+        }
+      };
+      for (const sid of secoesIds) {
+        const s = secaoPorId(sid);
+        if (s) marcar(s.itens);
+      }
+      const limpo: Respostas = {};
+      for (const [k, v] of Object.entries(next)) if (ativos.has(k)) limpo[k] = v;
+      return limpo;
+    });
+  }
+
+  if (isLoading) return <main className="mx-auto max-w-6xl px-6 py-10 text-sm text-muted-foreground">Carregando…</main>;
+  if (!data) return <main className="mx-auto max-w-6xl px-6 py-10 text-sm">Conferência não encontrada.</main>;
+
+  return (
+    <main className="mx-auto max-w-6xl px-6 py-10">
+      <div className="flex flex-wrap items-end justify-between gap-4">
+        <div>
+          <p className="eyebrow">QuestionCheck</p>
+          <h1 className="font-display text-2xl text-foreground">{data.title}</h1>
+          <p className="mt-1 text-xs text-muted-foreground">
+            {data.protocolo ? `Prenotação ${data.protocolo} · ` : ""}
+            Seções {secoesIds.join(", ")} · {prog.feitos} de {prog.total} perguntas respondidas (
+            {prog.pct}%)
+          </p>
+        </div>
+        <div className="flex items-center gap-2">
+          <Link
+            to="/questioncheck"
+            className="text-xs text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
+          >
+            Voltar às conferências
+          </Link>
+          <Button variant="outline" size="sm" onClick={() => persistir.mutate(undefined)} disabled={persistir.isPending}>
+            <Save className="mr-2 h-4 w-4" /> Salvar
+          </Button>
+          <Button
+            size="sm"
+            onClick={() => persistir.mutate(data.status === "concluida" ? "em_andamento" : "concluida")}
+            disabled={persistir.isPending}
+          >
+            <Check className="mr-2 h-4 w-4" />
+            {data.status === "concluida" ? "Reabrir" : "Concluir"}
+          </Button>
+        </div>
+      </div>
+
+      <section className="mt-8 grid gap-4 rounded-lg border border-border bg-card p-5 md:grid-cols-2">
+        <div className="space-y-2">
+          <Label>Natureza do título</Label>
+          <Select value={tipo} onValueChange={setTipo}>
+            <SelectTrigger>
+              <SelectValue placeholder="Selecione" />
+            </SelectTrigger>
+            <SelectContent>
+              {TIPOS_TITULO.map((t) => (
+                <SelectItem key={t.id} value={t.id}>
+                  {t.rotulo}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="space-y-2">
+          <Label>Seções adicionais</Label>
+          <div className="grid max-h-40 gap-2 overflow-y-auto rounded-md border border-border p-3 sm:grid-cols-2">
+            {SECOES_VARIAVEIS.map((s) => {
+              const base = TIPOS_TITULO.find((t) => t.id === tipo)?.secoes ?? [];
+              const fixa = base.includes(s.id);
+              return (
+                <label key={s.id} className="flex items-start gap-2 text-xs text-muted-foreground">
+                  <Checkbox
+                    checked={fixa || extras.includes(s.id)}
+                    disabled={fixa}
+                    onCheckedChange={(v) =>
+                      setExtras((prev) =>
+                        v === true ? [...new Set([...prev, s.id])] : prev.filter((x) => x !== s.id),
+                      )
+                    }
+                  />
+                  <span>
+                    <strong className="text-foreground">{s.id}</strong> — {s.titulo}
+                  </span>
+                </label>
+              );
+            })}
+          </div>
+        </div>
+      </section>
+
+      <div className="mt-8 grid gap-8 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
+        <div className="space-y-8">
+          {secoesIds.map((sid) => {
+            const secao = secaoPorId(sid);
+            if (!secao) return null;
+            const nos = nosVisiveis(secao, respostas);
+            let grupoAtual = "";
+            return (
+              <section key={sid} className="rounded-lg border border-border bg-card p-6">
+                <h2 className="font-display text-xl text-foreground">
+                  Seção {secao.id} — {secao.titulo}
+                </h2>
+                <Separator className="my-4" />
+                <div className="space-y-6">
+                  {nos.map((no) => {
+                    const cabecalhoGrupo = no.grupo && no.grupo !== grupoAtual ? no.grupo : "";
+                    if (no.grupo) grupoAtual = no.grupo;
+                    return (
+                      <div key={no.id} className="space-y-2">
+                        {cabecalhoGrupo && (
+                          <p className="eyebrow pt-2">{cabecalhoGrupo}</p>
+                        )}
+                        <Pergunta no={no} valor={respostas[no.id]} onChange={(v) => responder(no, v)} />
+                      </div>
+                    );
+                  })}
+                </div>
+              </section>
+            );
+          })}
+        </div>
+
+        <aside className="space-y-6 lg:sticky lg:top-24 lg:self-start">
+          <div className="rounded-lg border border-border bg-card p-5">
+            <h3 className="flex items-center gap-2 font-display text-lg text-foreground">
+              <Ban className="h-4 w-4 text-destructive" /> Exigências ({exigencias.length})
+            </h3>
+            <ol className="mt-3 space-y-2 text-sm text-muted-foreground">
+              {exigencias.map((e, i) => (
+                <li key={`${e.no}-${i}`}>
+                  <span className="text-foreground">{i + 1}.</span> {e.texto}
+                  {e.detalhe ? ` (${e.detalhe})` : ""}
+                  <span className="ml-1 text-xs">[Seção {e.secao}]</span>
+                </li>
+              ))}
+              {!exigencias.length && <li>Nenhuma exigência acumulada.</li>}
+            </ol>
+          </div>
+
+          <div className="rounded-lg border border-border bg-card p-5">
+            <h3 className="flex items-center gap-2 font-display text-lg text-foreground">
+              <AlertTriangle className="h-4 w-4 text-accent" /> Alertas ({alertas.length})
+            </h3>
+            <ol className="mt-3 space-y-2 text-sm text-muted-foreground">
+              {alertas.map((a, i) => (
+                <li key={`${a.no}-${i}`}>
+                  <span className="text-foreground">{i + 1}.</span> {a.texto}
+                  <span className="ml-1 text-xs">[Seção {a.secao}]</span>
+                </li>
+              ))}
+              {!alertas.length && <li>Nenhum alerta acumulado.</li>}
+            </ol>
+          </div>
+        </aside>
+      </div>
+
+      <section className="mt-10 grid gap-6 lg:grid-cols-2">
+        <div className="rounded-lg border border-border bg-card p-5">
+          <div className="flex items-center justify-between gap-3">
+            <h3 className="font-display text-lg text-foreground">Esboço da nota de exigência</h3>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                setNota(notaSugerida);
+                setNotaTocada(true);
+              }}
+            >
+              Regerar
+            </Button>
+          </div>
+          <Textarea
+            className="mt-3 min-h-[320px] font-mono text-xs"
+            value={notaTocada ? nota : notaSugerida}
+            onChange={(e) => {
+              setNota(e.target.value);
+              setNotaTocada(true);
+            }}
+          />
+          <Button
+            variant="ghost"
+            size="sm"
+            className="mt-2"
+            onClick={() => {
+              void navigator.clipboard.writeText(notaTocada ? nota : notaSugerida);
+              toast.success("Nota copiada.");
+            }}
+          >
+            Copiar
+          </Button>
+        </div>
+
+        <div className="rounded-lg border border-border bg-card p-5">
+          <div className="flex items-center justify-between gap-3">
+            <h3 className="font-display text-lg text-foreground">Lista de alertas</h3>
+            <Button variant="outline" size="sm" onClick={() => setLista(listaSugerida)}>
+              Regerar
+            </Button>
+          </div>
+          <Textarea
+            className="mt-3 min-h-[320px] font-mono text-xs"
+            value={lista || listaSugerida}
+            onChange={(e) => setLista(e.target.value)}
+          />
+          <Button
+            variant="ghost"
+            size="sm"
+            className="mt-2"
+            onClick={() => {
+              void navigator.clipboard.writeText(lista || listaSugerida);
+              toast.success("Lista copiada.");
+            }}
+          >
+            Copiar
+          </Button>
+        </div>
+      </section>
+
+      <p className="mt-8 text-xs text-muted-foreground">
+        Os textos acima são esboços gerados a partir das respostas do checklist. O sistema apoia a
+        decisão e não substitui a qualificação jurídica do Oficial.
+      </p>
+    </main>
+  );
+}
+
+function Pergunta({
+  no,
+  valor,
+  onChange,
+}: {
+  no: No;
+  valor: unknown;
+  onChange: (v: string | string[] | number | null) => void;
+}) {
+  if (no.tipo === "info") {
+    return <p className="rounded-md bg-muted/40 p-3 text-sm text-muted-foreground">{no.texto}</p>;
+  }
+
+  return (
+    <div className="rounded-md border border-border/70 p-4">
+      <p className="text-sm text-foreground">{no.texto}</p>
+      {no.ajuda && <p className="mt-1 text-xs text-muted-foreground">{no.ajuda}</p>}
+
+      {no.tipo === "sim_nao" && (
+        <div className="mt-3 flex gap-2">
+          {(["sim", "nao"] as const).map((v) => (
+            <Button
+              key={v}
+              type="button"
+              size="sm"
+              variant={valor === v ? "default" : "outline"}
+              onClick={() => onChange(valor === v ? null : v)}
+            >
+              {v === "sim" ? "Sim" : "Não"}
+            </Button>
+          ))}
+        </div>
+      )}
+
+      {no.tipo === "opcoes" && (
+        <div className="mt-3 space-y-2">
+          {(no.opcoes ?? []).map((o) => (
+            <label key={o.id} className="flex items-start gap-2 text-sm text-muted-foreground">
+              <input
+                type="radio"
+                className="mt-1 accent-current"
+                name={no.id}
+                checked={valor === o.id}
+                onChange={() => onChange(o.id)}
+              />
+              <span>{o.rotulo}</span>
+            </label>
+          ))}
+        </div>
+      )}
+
+      {no.tipo === "multipla" && (
+        <div className="mt-3 space-y-2">
+          {(no.opcoes ?? []).map((o) => {
+            const sel = Array.isArray(valor) ? (valor as string[]) : [];
+            return (
+              <label key={o.id} className="flex items-start gap-2 text-sm text-muted-foreground">
+                <Checkbox
+                  checked={sel.includes(o.id)}
+                  onCheckedChange={(v) =>
+                    onChange(v === true ? [...sel, o.id] : sel.filter((x) => x !== o.id))
+                  }
+                />
+                <span>{o.rotulo}</span>
+              </label>
+            );
+          })}
+          {!Array.isArray(valor) && (
+            <Button type="button" size="sm" variant="outline" onClick={() => onChange([])}>
+              Confirmar seleção
+            </Button>
+          )}
+        </div>
+      )}
+
+      {(no.tipo === "numero" || no.tipo === "texto") && (
+        <Input
+          className="mt-3"
+          type={no.tipo === "numero" ? "number" : "text"}
+          value={valor === null || valor === undefined ? "" : String(valor)}
+          onChange={(e) => onChange(e.target.value === "" ? null : e.target.value)}
+        />
+      )}
+    </div>
+  );
+}

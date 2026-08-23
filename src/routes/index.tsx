@@ -7,7 +7,9 @@ import logoAsset from "@/assets/equalifica-logo.png.asset.json";
 import geoLogo from "@/assets/geoconfronto-logo.png.asset.json";
 import checkLogo from "@/assets/checktitulo-logo.png.asset.json";
 import checkindexLogoAsset from "@/assets/checkindex-logo.png.asset.json";
+import questioncheckLogoAsset from "@/assets/questioncheck-logo.png.asset.json";
 const checkindexLogo = checkindexLogoAsset.url;
+const questioncheckLogo = questioncheckLogoAsset.url;
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -140,6 +142,24 @@ function Index() {
             <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
               Matrículas digitalizadas: extração de dados estruturados e exportação para o sistema
               interno do Cartório.
+            </p>
+            <span className="mt-6 text-xs uppercase tracking-wide text-accent">Acessar módulo</span>
+          </Link>
+
+          <Link
+            to="/questioncheck"
+            className="group flex flex-col items-center rounded-lg border border-border bg-card p-10 text-center transition hover:border-accent"
+          >
+            <img
+              src={questioncheckLogo}
+              alt="QuestionCheck"
+              loading="lazy"
+              className="h-32 w-auto object-contain md:h-40"
+            />
+
+            <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
+              Checklist condicional de qualificação: perguntas em sequência, alertas e exigências
+              acumulados e nota de exigência editável.
             </p>
             <span className="mt-6 text-xs uppercase tracking-wide text-accent">Acessar módulo</span>
           </Link>
