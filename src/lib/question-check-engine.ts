@@ -162,3 +162,44 @@ export function esbocoListaAlertas(alertas: Acumulado[]): string {
   if (!alertas.length) return "LISTA DE ALERTAS\n\nNenhum alerta acumulado.";
   return `LISTA DE ALERTAS\n\n${linhas(alertas)}`;
 }
+
+/** Títulos das subseções (grupos) de uma seção, na ordem em que aparecem. */
+export function gruposDaSecao(secao: Secao): string[] {
+  const out: string[] = [];
+  const visita = (nos: No[]) => {
+    for (const no of nos) {
+      if (no.grupo && !out.includes(no.grupo)) out.push(no.grupo);
+      for (const ef of no.efeitos ?? []) if (ef.filhos?.length) visita(ef.filhos);
+    }
+  };
+  visita(secao.itens);
+  return out;
+}
+
+/**
+ * Restringe uma seção às subseções selecionadas. Quando nenhuma subseção da
+ * seção estiver na seleção, a seção é mantida integralmente (comportamento
+ * padrão: todas as subseções ativas).
+ */
+export function secaoFiltrada(secao: Secao, subsecoes?: string[] | null): Secao {
+  if (!subsecoes?.length) return secao;
+  const grupos = gruposDaSecao(secao);
+  const ativos = grupos.filter((g) => subsecoes.includes(chaveSubsecao(secao.id, g)));
+  if (!ativos.length) return secao;
+  const filtra = (nos: No[]): No[] =>
+    nos
+      .filter((no) => !no.grupo || ativos.includes(no.grupo))
+      .map((no) => ({
+        ...no,
+        efeitos: (no.efeitos ?? []).map((ef) =>
+          ef.filhos?.length ? { ...ef, filhos: filtra(ef.filhos) } : ef,
+        ),
+      }));
+  return { ...secao, itens: filtra(secao.itens) };
+}
+
+/** Seção aplicável já restrita às subseções selecionadas. */
+export function secaoAtiva(id: string, subsecoes?: string[] | null): Secao | undefined {
+  const s = secaoPorId(id);
+  return s ? secaoFiltrada(s, subsecoes) : undefined;
+}
