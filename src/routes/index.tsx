@@ -7,7 +7,7 @@ import logoAsset from "@/assets/equalifica-logo.png.asset.json";
 import geoLogo from "@/assets/geoconfronto-logo.png.asset.json";
 import checkLogo from "@/assets/checktitulo-logo.png.asset.json";
 import checkindexLogoAsset from "@/assets/checkindex-logo.png.asset.json";
-import questioncheckLogoAsset from "@/assets/questioncheck-logo-v2.png.asset.json";
+import questioncheckLogoAsset from "@/assets/questioncheck-logo-v3.png.asset.json";
 const checkindexLogo = checkindexLogoAsset.url;
 const questioncheckLogo = questioncheckLogoAsset.url;
 
