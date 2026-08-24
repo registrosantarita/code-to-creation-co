@@ -368,6 +368,9 @@ function QuestionCheckDetalhe() {
           >
             Voltar às conferências
           </Link>
+          <Button variant="outline" size="sm" onClick={gerarPdf}>
+            <FileText className="mr-2 h-4 w-4" /> Relatório PDF
+          </Button>
           <Button variant="outline" size="sm" onClick={() => persistir.mutate(undefined)} disabled={persistir.isPending}>
             <Save className="mr-2 h-4 w-4" /> Salvar
           </Button>
