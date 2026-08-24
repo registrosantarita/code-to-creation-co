@@ -89,6 +89,7 @@ function CheckTituloFrontPage() {
             alt="CheckTítulo"
             className="h-36 w-auto object-contain md:h-48"
           />
+          <div className="rule-gold mt-3 w-40 md:w-52" />
           <h1 className="mt-8 font-display text-3xl md:text-5xl">CheckTítulo</h1>
           <div className="rule-gold mt-6 w-32" />
           <p className="mt-6 max-w-2xl text-sm leading-relaxed text-ink-foreground/75 md:text-base">
