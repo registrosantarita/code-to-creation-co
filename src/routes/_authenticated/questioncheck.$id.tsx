@@ -207,6 +207,67 @@ function QuestionCheckDetalhe() {
     [secoesIds, respostas, subsecoes],
   );
 
+  /** Monta os blocos do relatório (somente perguntas respondidas). */
+  function blocosRelatorio(): BlocoQuestionCheck[] {
+    const out: BlocoQuestionCheck[] = [];
+    for (const sid of secoesIds) {
+      const secao = secaoAtiva(sid, subsecoes);
+      if (!secao) continue;
+      const numeros = numerosDaSecao(secaoPorId(sid) ?? secao);
+      for (const no of nosVisiveis(secao, respostas)) {
+        if (no.tipo === "info") continue;
+        const r = respostas[no.id];
+        if (!respondido(no, r)) continue;
+        const sub = no.grupo ?? "";
+        let bloco = out.find((b) => b.secao === secao.id && b.subsecao === sub);
+        if (!bloco) {
+          bloco = { secao: secao.id, titulo: secao.titulo, subsecao: sub, linhas: [] };
+          out.push(bloco);
+        }
+        bloco.linhas.push({
+          numero: numeros[no.id] ?? no.id,
+          pergunta: no.texto,
+          resposta: textoResposta(no, r),
+        });
+      }
+    }
+    return out;
+  }
+
+  function gerarPdf() {
+    const blocos = blocosRelatorio();
+    if (!blocos.length) {
+      toast.error("Responda ao menos uma pergunta para gerar o relatório.");
+      return;
+    }
+    exportarQuestionCheckPdf(
+      {
+        titulo: data?.title ?? "",
+        protocolo: data?.protocolo ?? "",
+        tipoTitulo: TIPOS_TITULO.find((t) => t.id === tipo)?.rotulo ?? "",
+        secoes: secoesIds,
+        observacao: data?.note ?? "",
+        emitidoEm: new Date().toLocaleString("pt-BR"),
+        progresso: prog,
+        blocos,
+        exigencias: exigencias.map((e) => ({
+          texto: e.texto,
+          detalhe: e.detalhe,
+          secao: e.secao,
+        })),
+        alertas: alertas.map((a) => ({ texto: a.texto, detalhe: a.detalhe, secao: a.secao })),
+        perfil: nomePerfil,
+      },
+      `questioncheck-${(data?.protocolo || data?.title || "conferencia")
+        .toString()
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .replace(/[^a-zA-Z0-9]+/g, "-")
+        .toLowerCase()}.pdf`,
+    );
+    toast.success("Relatório gerado.");
+  }
+
 
   const cabecalho = { titulo: data?.title ?? "", protocolo: data?.protocolo ?? "" };
   const notaSugerida = esbocoNotaExigencia(exigencias, cabecalho);
