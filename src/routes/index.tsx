@@ -134,16 +134,16 @@ function Index() {
             to="/checkindex"
             className="group flex flex-col items-center rounded-lg border border-border bg-card p-6 text-center transition hover:border-accent"
           >
-            <img
-              src={checkindexLogo}
-              alt="CheckIndex"
-              width={1024}
-              height={1024}
-              loading="lazy"
-              className="h-24 w-auto object-contain lg:h-28"
-            />
-
-            <div className="rule-gold mt-3 w-16 opacity-80" />
+            <div className="border border-solid border-accent p-1">
+              <img
+                src={checkindexLogo}
+                alt="CheckIndex"
+                width={1024}
+                height={1024}
+                loading="lazy"
+                className="h-24 w-auto object-contain lg:h-28"
+              />
+            </div>
 
             <p className="mt-3 text-xs leading-relaxed text-muted-foreground">
               Matrículas digitalizadas: extração de dados estruturados e exportação para o sistema
