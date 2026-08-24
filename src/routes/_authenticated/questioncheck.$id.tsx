@@ -606,7 +606,7 @@ function Pergunta({
   onChange,
 }: {
   no: No;
-  numero?: string;
+  numero?: string | undefined;
   valor: unknown;
   temAlerta?: boolean;
   temExigencia?: boolean;
