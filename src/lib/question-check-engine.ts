@@ -1,4 +1,5 @@
 import { SECOES } from "./question-check-secoes";
+import { chaveSubsecao } from "./question-check-types";
 import type { Acumulado, Efeito, No, Respostas, Secao } from "./question-check-types";
 
 export function secaoPorId(id: string): Secao | undefined {
@@ -86,12 +87,16 @@ export function nosVisiveis(secao: Secao, respostas: Respostas): No[] {
 export type Acumulo = { alertas: Acumulado[]; exigencias: Acumulado[] };
 
 /** Percorre as seções na ordem e acumula alertas (⚠) e exigências (⛔). */
-export function acumular(secoesIds: string[], respostas: Respostas): Acumulo {
+export function acumular(
+  secoesIds: string[],
+  respostas: Respostas,
+  subsecoes?: string[] | null,
+): Acumulo {
   const alertas: Acumulado[] = [];
   const exigencias: Acumulado[] = [];
 
   for (const sid of secoesIds) {
-    const secao = secaoPorId(sid);
+    const secao = secaoAtiva(sid, subsecoes);
     if (!secao) continue;
     const visita = (nos: No[]) => {
       for (const no of nos) {
@@ -120,11 +125,11 @@ export function acumular(secoesIds: string[], respostas: Respostas): Acumulo {
   return { alertas, exigencias };
 }
 
-export function progresso(secoesIds: string[], respostas: Respostas) {
+export function progresso(secoesIds: string[], respostas: Respostas, subsecoes?: string[] | null) {
   let total = 0;
   let feitos = 0;
   for (const sid of secoesIds) {
-    const secao = secaoPorId(sid);
+    const secao = secaoAtiva(sid, subsecoes);
     if (!secao) continue;
     for (const no of nosVisiveis(secao, respostas)) {
       if (no.tipo === "info") continue;
