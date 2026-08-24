@@ -3,7 +3,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
-import { AlertTriangle, Ban, Check, ListTree, OctagonAlert, Save } from "lucide-react";
+import { AlertTriangle, Ban, Check, FileText, ListTree, OctagonAlert, Save } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -39,6 +39,10 @@ import {
   respondido,
   secaoPorId,
 } from "@/lib/question-check-engine";
+import {
+  exportarQuestionCheckPdf,
+  type BlocoQuestionCheck,
+} from "@/lib/export-questioncheck";
 
 export const Route = createFileRoute("/_authenticated/questioncheck/$id")({
   head: () => ({
@@ -84,9 +88,34 @@ function irPara(anc: string) {
   document.getElementById(anc)?.scrollIntoView({ behavior: "smooth", block: "start" });
 }
 
+/** Resposta em texto legível para o relatório em PDF. */
+function textoResposta(no: No, valor: unknown): string {
+  if (no.tipo === "sim_nao") {
+    if (valor === "sim" || valor === true) return "SIM";
+    if (valor === "nao" || valor === false) return "NÃO";
+    return "NÃO SE APLICA";
+  }
+  if (no.tipo === "opcoes") {
+    const o = (no.opcoes ?? []).find((x) => x.id === valor);
+    return o ? `(x) ${o.id}) ${o.rotulo}` : "NÃO SE APLICA";
+  }
+  if (no.tipo === "multipla") {
+    const sel = Array.isArray(valor) ? (valor as string[]) : [];
+    const marcadas = (no.opcoes ?? []).filter((o) => sel.includes(o.id));
+    if (!marcadas.length) return "Nenhum item marcado";
+    return marcadas.map((o) => `[v] ${o.id}) ${o.rotulo}`).join("\n");
+  }
+  if (valor === null || valor === undefined || String(valor).trim() === "") return "NÃO SE APLICA";
+  return String(valor);
+}
+
+
 
 function QuestionCheckDetalhe() {
   const { id } = Route.useParams();
+  const { user } = Route.useRouteContext();
+  const nomePerfil =
+    (user?.user_metadata?.['full_name'] as string | undefined) ?? user?.email ?? "—";
   const queryClient = useQueryClient();
   const obter = useServerFn(obterConferencia);
   const salvar = useServerFn(salvarConferencia);
@@ -203,6 +232,67 @@ function QuestionCheckDetalhe() {
     [secoesIds, respostas, subsecoes],
   );
 
+  /** Monta os blocos do relatório (somente perguntas respondidas). */
+  function blocosRelatorio(): BlocoQuestionCheck[] {
+    const out: BlocoQuestionCheck[] = [];
+    for (const sid of secoesIds) {
+      const secao = secaoAtiva(sid, subsecoes);
+      if (!secao) continue;
+      const numeros = numerosDaSecao(secaoPorId(sid) ?? secao);
+      for (const no of nosVisiveis(secao, respostas)) {
+        if (no.tipo === "info") continue;
+        const r = respostas[no.id];
+        if (!respondido(no, r)) continue;
+        const sub = no.grupo ?? "";
+        let bloco = out.find((b) => b.secao === secao.id && b.subsecao === sub);
+        if (!bloco) {
+          bloco = { secao: secao.id, titulo: secao.titulo, subsecao: sub, linhas: [] };
+          out.push(bloco);
+        }
+        bloco.linhas.push({
+          numero: numeros[no.id] ?? no.id,
+          pergunta: no.texto,
+          resposta: textoResposta(no, r),
+        });
+      }
+    }
+    return out;
+  }
+
+  function gerarPdf() {
+    const blocos = blocosRelatorio();
+    if (!blocos.length) {
+      toast.error("Responda ao menos uma pergunta para gerar o relatório.");
+      return;
+    }
+    exportarQuestionCheckPdf(
+      {
+        titulo: data?.title ?? "",
+        protocolo: data?.protocolo ?? "",
+        tipoTitulo: TIPOS_TITULO.find((t) => t.id === tipo)?.rotulo ?? "",
+        secoes: secoesIds,
+        observacao: data?.note ?? "",
+        emitidoEm: new Date().toLocaleString("pt-BR"),
+        progresso: prog,
+        blocos,
+        exigencias: exigencias.map((e) => ({
+          texto: e.texto,
+          detalhe: e.detalhe,
+          secao: e.secao,
+        })),
+        alertas: alertas.map((a) => ({ texto: a.texto, detalhe: a.detalhe, secao: a.secao })),
+        perfil: nomePerfil,
+      },
+      `questioncheck-${(data?.protocolo || data?.title || "conferencia")
+        .toString()
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .replace(/[^a-zA-Z0-9]+/g, "-")
+        .toLowerCase()}.pdf`,
+    );
+    toast.success("Relatório gerado.");
+  }
+
 
   const cabecalho = { titulo: data?.title ?? "", protocolo: data?.protocolo ?? "" };
   const notaSugerida = esbocoNotaExigencia(exigencias, cabecalho);
@@ -278,6 +368,9 @@ function QuestionCheckDetalhe() {
           >
             Voltar às conferências
           </Link>
+          <Button variant="outline" size="sm" onClick={gerarPdf}>
+            <FileText className="mr-2 h-4 w-4" /> Relatório PDF
+          </Button>
           <Button variant="outline" size="sm" onClick={() => persistir.mutate(undefined)} disabled={persistir.isPending}>
             <Save className="mr-2 h-4 w-4" /> Salvar
           </Button>
@@ -588,6 +681,14 @@ function QuestionCheckDetalhe() {
           </Button>
         </div>
       </section>
+
+      <div className="mt-6 flex justify-end">
+        <Button variant="outline" size="sm" onClick={gerarPdf}>
+          <FileText className="mr-2 h-4 w-4" /> Gerar relatório em PDF
+        </Button>
+      </div>
+
+
 
       <p className="mt-8 text-xs text-muted-foreground">
         Os textos acima são esboços gerados a partir das respostas do checklist. O sistema apoia a
