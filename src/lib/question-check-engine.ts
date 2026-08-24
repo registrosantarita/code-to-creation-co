@@ -99,12 +99,14 @@ export function acumular(secoesIds: string[], respostas: Respostas): Acumulo {
         if (!respondido(no, r)) continue;
         for (const ef of no.efeitos ?? []) {
           if (!efeitoAtivo(no, ef, r)) continue;
+          const selecionados = no.tipo === "multipla" ? opcoesSelecionadas(no, r) : [];
           const detalhe =
             ef.quando === "faltando"
               ? opcoesFaltantes(no, r).join("; ")
-              : no.tipo === "multipla"
-                ? opcoesSelecionadas(no, r).join("; ")
+              : selecionados.length
+                ? `itens selecionados: ${selecionados.join("; ")}`
                 : "";
+
 
           const base = { no: no.id, secao: secao.id, pergunta: no.texto, detalhe };
           if (ef.alerta) alertas.push({ ...base, texto: ef.alerta });
