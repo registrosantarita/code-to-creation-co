@@ -91,6 +91,9 @@ function irPara(anc: string) {
 
 function QuestionCheckDetalhe() {
   const { id } = Route.useParams();
+  const { user } = Route.useRouteContext();
+  const nomePerfil =
+    (user?.user_metadata?.['full_name'] as string | undefined) ?? user?.email ?? "—";
   const queryClient = useQueryClient();
   const obter = useServerFn(obterConferencia);
   const salvar = useServerFn(salvarConferencia);
