@@ -79,14 +79,15 @@ function CheckIndexFrontPage() {
 
       <section className="bg-ink text-ink-foreground">
         <div className="mx-auto flex max-w-5xl flex-col items-center px-6 py-16 text-center md:py-20">
-          <img
-            src={checkindexLogo}
-            alt="CheckIndex"
-            width={1024}
-            height={1024}
-            className="h-40 w-auto object-contain md:h-52"
-          />
-          <div className="rule-gold mt-3 w-40 md:w-52" />
+          <div className="border border-solid border-accent p-1.5">
+            <img
+              src={checkindexLogo}
+              alt="CheckIndex"
+              width={1024}
+              height={1024}
+              className="h-40 w-auto object-contain md:h-52"
+            />
+          </div>
           <p className="mt-6 max-w-2xl text-sm leading-relaxed text-ink-foreground/75 md:text-base">
             Módulo de indexação: extrai dados estruturados das matrículas digitalizadas e gera um
             arquivo padronizado para importação no sistema interno do Cartório.
