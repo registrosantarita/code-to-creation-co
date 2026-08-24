@@ -3,7 +3,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
-import { AlertTriangle, Ban, Check, Save } from "lucide-react";
+import { AlertTriangle, Ban, Check, ListTree, Save } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -57,6 +57,22 @@ export const Route = createFileRoute("/_authenticated/questioncheck/$id")({
 
 const SECOES_VARIAVEIS = SECOES.filter((s) => !["A", "Q", "R"].includes(s.id));
 
+/** Âncora estável para cada subseção (seção + título do grupo). */
+function ancora(secaoId: string, grupo: string) {
+  const slug = grupo
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/(^-|-$)/g, "");
+  return `sub-${secaoId}-${slug}`;
+}
+
+function irPara(anc: string) {
+  document.getElementById(anc)?.scrollIntoView({ behavior: "smooth", block: "start" });
+}
+
+
 function QuestionCheckDetalhe() {
   const { id } = Route.useParams();
   const queryClient = useQueryClient();
@@ -92,6 +108,21 @@ function QuestionCheckDetalhe() {
     [secoesIds, respostas],
   );
   const prog = useMemo(() => progresso(secoesIds, respostas), [secoesIds, respostas]);
+
+  const sumario = useMemo(
+    () =>
+      secoesIds.flatMap((sid) => {
+        const secao = secaoPorId(sid);
+        if (!secao) return [];
+        const grupos: string[] = [];
+        for (const no of nosVisiveis(secao, respostas)) {
+          if (no.grupo && !grupos.includes(no.grupo)) grupos.push(no.grupo);
+        }
+        return [{ id: secao.id, titulo: secao.titulo, grupos }];
+      }),
+    [secoesIds, respostas],
+  );
+
 
   const cabecalho = { titulo: data?.title ?? "", protocolo: data?.protocolo ?? "" };
   const notaSugerida = esbocoNotaExigencia(exigencias, cabecalho);
@@ -231,7 +262,11 @@ function QuestionCheckDetalhe() {
             const nos = nosVisiveis(secao, respostas);
             let grupoAtual = "";
             return (
-              <section key={sid} className="rounded-lg border border-border bg-card p-6">
+              <section
+                key={sid}
+                id={`sec-${sid}`}
+                className="scroll-mt-24 rounded-lg border border-border bg-card p-6"
+              >
                 <h2 className="font-display text-xl text-foreground">
                   Seção {secao.id} — {secao.titulo}
                 </h2>
@@ -243,7 +278,12 @@ function QuestionCheckDetalhe() {
                     return (
                       <div key={no.id} className="space-y-2">
                         {cabecalhoGrupo && (
-                          <p className="eyebrow pt-2">{cabecalhoGrupo}</p>
+                          <h3
+                            id={ancora(sid, cabecalhoGrupo)}
+                            className="eyebrow scroll-mt-24 border-t border-border/60 pt-4 text-foreground"
+                          >
+                            {cabecalhoGrupo}
+                          </h3>
                         )}
                         <Pergunta no={no} valor={respostas[no.id]} onChange={(v) => responder(no, v)} />
                       </div>
@@ -256,6 +296,46 @@ function QuestionCheckDetalhe() {
         </div>
 
         <aside className="space-y-6 lg:sticky lg:top-24 lg:self-start">
+          <nav className="rounded-lg border border-border bg-card p-5">
+            <h3 className="flex items-center gap-2 font-display text-lg text-foreground">
+              <ListTree className="h-4 w-4 text-accent" /> Seções e subseções
+            </h3>
+            <div className="mt-3 max-h-[420px] space-y-4 overflow-y-auto pr-1">
+              {sumario.map((s) => (
+                <div key={s.id}>
+                  <button
+                    type="button"
+                    onClick={() => irPara(`sec-${s.id}`)}
+                    className="text-left text-sm text-foreground underline-offset-4 hover:underline"
+                  >
+                    Seção {s.id} — {s.titulo}
+                  </button>
+                  {s.grupos.length > 0 && (
+                    <ul className="mt-1 space-y-1 border-l border-border/60 pl-3">
+                      {s.grupos.map((g) => (
+                        <li key={g}>
+                          <button
+                            type="button"
+                            onClick={() => irPara(ancora(s.id, g))}
+                            className="text-left text-xs text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
+                          >
+                            {g}
+                          </button>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+              ))}
+              {!sumario.length && (
+                <p className="text-xs text-muted-foreground">
+                  Selecione a natureza do título para listar as seções.
+                </p>
+              )}
+            </div>
+          </nav>
+
+
           <div className="rounded-lg border border-border bg-card p-5">
             <h3 className="flex items-center gap-2 font-display text-lg text-foreground">
               <Ban className="h-4 w-4 text-destructive" /> Exigências ({exigencias.length})

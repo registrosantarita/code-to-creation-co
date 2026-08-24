@@ -30,7 +30,7 @@ import {
   listarConferencias,
 } from "@/lib/question-check.functions";
 import { TIPOS_TITULO, secoesAplicaveis } from "@/lib/question-check-types";
-import logoAsset from "@/assets/questioncheck-logo.png.asset.json";
+import logoAsset from "@/assets/questioncheck-logo-v2.png.asset.json";
 
 export const Route = createFileRoute("/_authenticated/questioncheck/")({
   head: () => ({
