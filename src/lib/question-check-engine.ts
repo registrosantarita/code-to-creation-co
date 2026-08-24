@@ -53,6 +53,13 @@ export function opcoesFaltantes(no: No, resposta: unknown): string[] {
     .map((o) => o.rotulo);
 }
 
+/** Rótulos das opções efetivamente marcadas — enumerados nos alertas/exigências. */
+export function opcoesSelecionadas(no: No, resposta: unknown): string[] {
+  const sel = Array.isArray(resposta) ? (resposta as string[]) : [];
+  return (no.opcoes ?? []).filter((o) => sel.includes(o.id)).map((o) => o.rotulo);
+}
+
+
 export function respondido(no: No, resposta: unknown): boolean {
   if (no.tipo === "info") return true;
   if (no.tipo === "multipla") return Array.isArray(resposta);
