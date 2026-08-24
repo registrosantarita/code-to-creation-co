@@ -109,6 +109,21 @@ function QuestionCheckDetalhe() {
   );
   const prog = useMemo(() => progresso(secoesIds, respostas), [secoesIds, respostas]);
 
+  const sumario = useMemo(
+    () =>
+      secoesIds.flatMap((sid) => {
+        const secao = secaoPorId(sid);
+        if (!secao) return [];
+        const grupos: string[] = [];
+        for (const no of nosVisiveis(secao, respostas)) {
+          if (no.grupo && !grupos.includes(no.grupo)) grupos.push(no.grupo);
+        }
+        return [{ id: secao.id, titulo: secao.titulo, grupos }];
+      }),
+    [secoesIds, respostas],
+  );
+
+
   const cabecalho = { titulo: data?.title ?? "", protocolo: data?.protocolo ?? "" };
   const notaSugerida = esbocoNotaExigencia(exigencias, cabecalho);
   const listaSugerida = esbocoListaAlertas(alertas);
