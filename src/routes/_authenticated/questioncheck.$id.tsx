@@ -409,7 +409,7 @@ function QuestionCheckDetalhe() {
             const secao = secaoAtiva(sid, subsecoes);
             if (!secao) return null;
             const nos = nosVisiveis(secao, respostas);
-            const numeros = numerosDaSecao(secao);
+            const numeros = numerosDaSecao(secaoPorId(sid) ?? secao);
             let grupoAtual = "";
             return (
               <section
