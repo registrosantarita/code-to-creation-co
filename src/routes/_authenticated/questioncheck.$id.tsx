@@ -34,6 +34,7 @@ import {
   esbocoListaAlertas,
   esbocoNotaExigencia,
   nosVisiveis,
+  numerosDaSecao,
   progresso,
   respondido,
   secaoPorId,
@@ -408,6 +409,7 @@ function QuestionCheckDetalhe() {
             const secao = secaoAtiva(sid, subsecoes);
             if (!secao) return null;
             const nos = nosVisiveis(secao, respostas);
+            const numeros = numerosDaSecao(secao);
             let grupoAtual = "";
             return (
               <section
@@ -435,6 +437,7 @@ function QuestionCheckDetalhe() {
                         )}
                         <Pergunta
                           no={no}
+                          numero={numeros[no.id]}
                           valor={respostas[no.id]}
                           temAlerta={nosComAlerta.has(no.id)}
                           temExigencia={nosComExigencia.has(no.id)}
@@ -596,12 +599,14 @@ function QuestionCheckDetalhe() {
 
 function Pergunta({
   no,
+  numero,
   valor,
   temAlerta,
   temExigencia,
   onChange,
 }: {
   no: No;
+  numero?: string | undefined;
   valor: unknown;
   temAlerta?: boolean;
   temExigencia?: boolean;
@@ -613,7 +618,10 @@ function Pergunta({
 
   return (
     <div className="relative rounded-md border border-border/70 p-4 pb-10">
-      <p className="text-sm text-foreground">{no.texto}</p>
+      <p className="text-sm text-foreground">
+        {numero && <span className="mr-2 font-semibold text-accent">{numero}</span>}
+        {no.texto}
+      </p>
       {no.ajuda && <p className="mt-1 text-xs text-muted-foreground">{no.ajuda}</p>}
       {(temAlerta || temExigencia) && (
         <div className="absolute bottom-2 right-3 flex items-center gap-2">
