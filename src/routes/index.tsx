@@ -101,6 +101,8 @@ function Index() {
               alt="GeoConfronto"
               className="h-24 w-auto object-contain lg:h-28"
             />
+
+            <div className="rule-gold mt-3 w-16 opacity-80" />
             
             <p className="mt-3 text-xs leading-relaxed text-muted-foreground">
               Memoriais descritivos, plantas e divisas: extração, normalização e comparação
@@ -118,6 +120,8 @@ function Index() {
               alt="CheckTítulo"
               className="h-24 w-auto object-contain lg:h-28"
             />
+
+            <div className="rule-gold mt-3 w-16 opacity-80" />
             
             <p className="mt-3 text-xs leading-relaxed text-muted-foreground">
               Títulos e matrículas: conferência de partes, documentos, estado civil, cadastros do
@@ -139,6 +143,8 @@ function Index() {
               className="h-24 w-auto object-contain lg:h-28"
             />
 
+            <div className="rule-gold mt-3 w-16 opacity-80" />
+
             <p className="mt-3 text-xs leading-relaxed text-muted-foreground">
               Matrículas digitalizadas: extração de dados estruturados e exportação para o sistema
               interno do Cartório.
@@ -156,6 +162,8 @@ function Index() {
               loading="lazy"
               className="h-24 w-auto object-contain lg:h-28"
             />
+
+            <div className="rule-gold mt-3 w-16 opacity-80" />
 
             <p className="mt-3 text-xs leading-relaxed text-muted-foreground">
               Checklist condicional de qualificação: perguntas em sequência, alertas e exigências
