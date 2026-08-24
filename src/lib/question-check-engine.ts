@@ -211,22 +211,19 @@ export function secaoAtiva(id: string, subsecoes?: string[] | null): Secao | und
 }
 
 /**
- * Numeração estável das perguntas de uma seção (A-1, A-2, …), seguindo a ordem
- * da árvore completa — perguntas condicionais mantêm o número mesmo quando
- * ainda não estão visíveis. Nós informativos não recebem número.
+ * Numeração das perguntas conforme a transcrição original do checklist: o
+ * próprio identificador do nó já reproduz a numeração do documento (A-1, A-3-1,
+ * G-4…). Nós informativos não recebem número.
  */
 export function numerosDaSecao(secao: Secao): Record<string, string> {
   const out: Record<string, string> = {};
-  let n = 0;
   const visita = (nos: No[]) => {
     for (const no of nos) {
-      if (no.tipo !== "info") {
-        n += 1;
-        out[no.id] = `${secao.id}-${n}`;
-      }
+      if (no.tipo !== "info") out[no.id] = no.id;
       for (const ef of no.efeitos ?? []) if (ef.filhos?.length) visita(ef.filhos);
     }
   };
   visita(secao.itens);
   return out;
 }
+
