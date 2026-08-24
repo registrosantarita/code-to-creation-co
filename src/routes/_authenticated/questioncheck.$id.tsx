@@ -292,6 +292,78 @@ function QuestionCheckDetalhe() {
         </div>
       </section>
 
+      {subsecoesDisponiveis.length > 0 && (
+        <section className="mt-4 rounded-lg border border-border bg-card p-5">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <Label>Subseções do checklist</Label>
+              <p className="mt-1 text-xs text-muted-foreground">
+                Marque as subseções que deseja responder. Sem nenhuma marcação em uma seção, todas
+                as suas subseções permanecem ativas.
+              </p>
+            </div>
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() =>
+                  setSubsecoes(
+                    subsecoesDisponiveis.flatMap((s) =>
+                      s.grupos.map((g) => chaveSubsecao(s.id, g)),
+                    ),
+                  )
+                }
+              >
+                Marcar todas
+              </Button>
+              <Button variant="ghost" size="sm" onClick={() => setSubsecoes([])}>
+                Limpar
+              </Button>
+            </div>
+          </div>
+
+          <div className="mt-4 grid gap-5 md:grid-cols-2">
+            {subsecoesDisponiveis.map((s) => {
+              const chaves = s.grupos.map((g) => chaveSubsecao(s.id, g));
+              const todas = chaves.every((c) => subsecoes.includes(c));
+              return (
+                <div key={s.id} className="rounded-md border border-border/70 p-4">
+                  <div className="flex items-start justify-between gap-3">
+                    <p className="text-sm text-foreground">
+                      Seção {s.id} — {s.titulo}
+                    </p>
+                    <button
+                      type="button"
+                      className="shrink-0 text-xs text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
+                      onClick={() => alternarSecaoToda(s.id, s.grupos, !todas)}
+                    >
+                      {todas ? "Desmarcar" : "Marcar todas"}
+                    </button>
+                  </div>
+                  <div className="mt-3 space-y-2">
+                    {s.grupos.map((g) => {
+                      const chave = chaveSubsecao(s.id, g);
+                      return (
+                        <label
+                          key={chave}
+                          className="flex items-start gap-2 text-xs text-muted-foreground"
+                        >
+                          <Checkbox
+                            checked={subsecoes.includes(chave)}
+                            onCheckedChange={(v) => alternarSub(chave, v === true)}
+                          />
+                          <span>{g}</span>
+                        </label>
+                      );
+                    })}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </section>
+      )}
+
       <div className="mt-8 grid gap-8 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
         <div className="space-y-8">
           {secoesIds.map((sid) => {
