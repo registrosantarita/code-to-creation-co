@@ -24,6 +24,7 @@ export const criarConferencia = createServerFn({ method: "POST" })
         note: z.string().max(2000).default(""),
         tipoTitulo: z.string().max(60).default(""),
         secoes: z.array(z.string().max(2)).max(20).default([]),
+        subsecoes: z.array(z.string().max(240)).max(400).default([]),
       })
       .parse(input),
   )
@@ -36,6 +37,7 @@ export const criarConferencia = createServerFn({ method: "POST" })
         note: data.note,
         tipo_titulo: data.tipoTitulo,
         secoes: data.secoes,
+        subsecoes: data.subsecoes,
         created_by: context.userId,
       })
       .select("id")
@@ -66,6 +68,7 @@ export const salvarConferencia = createServerFn({ method: "POST" })
         id: z.string().uuid(),
         tipoTitulo: z.string().max(60).optional(),
         secoes: z.array(z.string().max(2)).max(20).optional(),
+        subsecoes: z.array(z.string().max(240)).max(400).optional(),
         respostas: z.record(z.string(), z.unknown()).optional(),
         exigencias: z.array(z.record(z.string(), z.unknown())).max(500).optional(),
         alertas: z.array(z.record(z.string(), z.unknown())).max(500).optional(),
@@ -79,6 +82,7 @@ export const salvarConferencia = createServerFn({ method: "POST" })
     const patch: Record<string, unknown> = {};
     if (data.tipoTitulo !== undefined) patch['tipo_titulo'] = data.tipoTitulo;
     if (data.secoes !== undefined) patch['secoes'] = data.secoes;
+    if (data.subsecoes !== undefined) patch['subsecoes'] = data.subsecoes;
     if (data.respostas !== undefined) patch['respostas'] = JSON.parse(JSON.stringify(data.respostas));
     if (data.exigencias !== undefined) patch['exigencias'] = JSON.parse(JSON.stringify(data.exigencias));
     if (data.alertas !== undefined) patch['alertas'] = JSON.parse(JSON.stringify(data.alertas));

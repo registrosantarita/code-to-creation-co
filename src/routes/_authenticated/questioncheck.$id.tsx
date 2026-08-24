@@ -20,6 +20,7 @@ import {
 import { obterConferencia, salvarConferencia } from "@/lib/question-check.functions";
 import {
   TIPOS_TITULO,
+  chaveSubsecao,
   secoesAplicaveis,
   type No,
   type Respostas,
@@ -28,6 +29,8 @@ import { SECOES } from "@/lib/question-check-secoes";
 import {
   acumular,
   efeitoAtivo,
+  gruposDaSecao,
+  secaoAtiva,
   esbocoListaAlertas,
   esbocoNotaExigencia,
   nosVisiveis,
@@ -87,6 +90,7 @@ function QuestionCheckDetalhe() {
   const [respostas, setRespostas] = useState<Respostas>({});
   const [tipo, setTipo] = useState("");
   const [extras, setExtras] = useState<string[]>([]);
+  const [subsecoes, setSubsecoes] = useState<string[]>([]);
   const [nota, setNota] = useState("");
   const [lista, setLista] = useState("");
   const [notaTocada, setNotaTocada] = useState(false);
@@ -97,6 +101,7 @@ function QuestionCheckDetalhe() {
     setTipo(data.tipo_titulo ?? "");
     const base = TIPOS_TITULO.find((t) => t.id === data.tipo_titulo)?.secoes ?? [];
     setExtras((data.secoes ?? []).filter((s) => !["A", "Q", "R", ...base].includes(s)));
+    setSubsecoes((data.subsecoes ?? []) as string[]);
     setNota(data.nota_exigencia ?? "");
     setLista(data.lista_alertas ?? "");
     setNotaTocada(Boolean(data.nota_exigencia));
@@ -104,15 +109,47 @@ function QuestionCheckDetalhe() {
 
   const secoesIds = useMemo(() => secoesAplicaveis(tipo, extras), [tipo, extras]);
   const { alertas, exigencias } = useMemo(
-    () => acumular(secoesIds, respostas),
-    [secoesIds, respostas],
+    () => acumular(secoesIds, respostas, subsecoes),
+    [secoesIds, respostas, subsecoes],
   );
-  const prog = useMemo(() => progresso(secoesIds, respostas), [secoesIds, respostas]);
+  const prog = useMemo(
+    () => progresso(secoesIds, respostas, subsecoes),
+    [secoesIds, respostas, subsecoes],
+  );
+
+  /** Subseções disponíveis em cada seção aplicável. */
+  const subsecoesDisponiveis = useMemo(
+    () =>
+      secoesIds.flatMap((sid) => {
+        const secao = secaoPorId(sid);
+        if (!secao) return [];
+        const grupos = gruposDaSecao(secao);
+        if (!grupos.length) return [];
+        return [{ id: secao.id, titulo: secao.titulo, grupos }];
+      }),
+    [secoesIds],
+  );
+
+  function alternarSub(chave: string, ligado: boolean) {
+    setSubsecoes((prev) =>
+      ligado ? [...new Set([...prev, chave])] : prev.filter((x) => x !== chave),
+    );
+  }
+
+  /** Marca/desmarca todas as subseções de uma seção. */
+  function alternarSecaoToda(secaoId: string, grupos: string[], ligado: boolean) {
+    const chaves = grupos.map((g) => chaveSubsecao(secaoId, g));
+    setSubsecoes((prev) =>
+      ligado
+        ? [...new Set([...prev, ...chaves])]
+        : prev.filter((x) => !chaves.includes(x)),
+    );
+  }
 
   const sumario = useMemo(
     () =>
       secoesIds.flatMap((sid) => {
-        const secao = secaoPorId(sid);
+        const secao = secaoAtiva(sid, subsecoes);
         if (!secao) return [];
         const grupos: string[] = [];
         for (const no of nosVisiveis(secao, respostas)) {
@@ -120,7 +157,7 @@ function QuestionCheckDetalhe() {
         }
         return [{ id: secao.id, titulo: secao.titulo, grupos }];
       }),
-    [secoesIds, respostas],
+    [secoesIds, respostas, subsecoes],
   );
 
 
@@ -135,6 +172,7 @@ function QuestionCheckDetalhe() {
           id,
           tipoTitulo: tipo,
           secoes: secoesIds,
+          subsecoes,
           respostas: respostas as Record<string, unknown>,
           alertas: alertas as unknown as Record<string, unknown>[],
           exigencias: exigencias as unknown as Record<string, unknown>[],
@@ -166,7 +204,7 @@ function QuestionCheckDetalhe() {
         }
       };
       for (const sid of secoesIds) {
-        const s = secaoPorId(sid);
+        const s = secaoAtiva(sid, subsecoes);
         if (s) marcar(s.itens);
       }
       const limpo: Respostas = {};
@@ -254,10 +292,82 @@ function QuestionCheckDetalhe() {
         </div>
       </section>
 
+      {subsecoesDisponiveis.length > 0 && (
+        <section className="mt-4 rounded-lg border border-border bg-card p-5">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <Label>Subseções do checklist</Label>
+              <p className="mt-1 text-xs text-muted-foreground">
+                Marque as subseções que deseja responder. Sem nenhuma marcação em uma seção, todas
+                as suas subseções permanecem ativas.
+              </p>
+            </div>
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() =>
+                  setSubsecoes(
+                    subsecoesDisponiveis.flatMap((s) =>
+                      s.grupos.map((g) => chaveSubsecao(s.id, g)),
+                    ),
+                  )
+                }
+              >
+                Marcar todas
+              </Button>
+              <Button variant="ghost" size="sm" onClick={() => setSubsecoes([])}>
+                Limpar
+              </Button>
+            </div>
+          </div>
+
+          <div className="mt-4 grid gap-5 md:grid-cols-2">
+            {subsecoesDisponiveis.map((s) => {
+              const chaves = s.grupos.map((g) => chaveSubsecao(s.id, g));
+              const todas = chaves.every((c) => subsecoes.includes(c));
+              return (
+                <div key={s.id} className="rounded-md border border-border/70 p-4">
+                  <div className="flex items-start justify-between gap-3">
+                    <p className="text-sm text-foreground">
+                      Seção {s.id} — {s.titulo}
+                    </p>
+                    <button
+                      type="button"
+                      className="shrink-0 text-xs text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
+                      onClick={() => alternarSecaoToda(s.id, s.grupos, !todas)}
+                    >
+                      {todas ? "Desmarcar" : "Marcar todas"}
+                    </button>
+                  </div>
+                  <div className="mt-3 space-y-2">
+                    {s.grupos.map((g) => {
+                      const chave = chaveSubsecao(s.id, g);
+                      return (
+                        <label
+                          key={chave}
+                          className="flex items-start gap-2 text-xs text-muted-foreground"
+                        >
+                          <Checkbox
+                            checked={subsecoes.includes(chave)}
+                            onCheckedChange={(v) => alternarSub(chave, v === true)}
+                          />
+                          <span>{g}</span>
+                        </label>
+                      );
+                    })}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </section>
+      )}
+
       <div className="mt-8 grid gap-8 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
         <div className="space-y-8">
           {secoesIds.map((sid) => {
-            const secao = secaoPorId(sid);
+            const secao = secaoAtiva(sid, subsecoes);
             if (!secao) return null;
             const nos = nosVisiveis(secao, respostas);
             let grupoAtual = "";

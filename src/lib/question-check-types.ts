@@ -75,3 +75,8 @@ export function secoesAplicaveis(tipoTitulo: string, extras: string[] = []): str
   const variaveis = [...new Set([...(tipo?.secoes ?? []), ...extras])].sort();
   return [...SECOES_COMUNS_INICIAIS, ...variaveis, ...SECOES_COMUNS_FINAIS];
 }
+
+/** Chave estável de uma subseção (seção + título do grupo). */
+export function chaveSubsecao(secaoId: string, grupo: string): string {
+  return `${secaoId}|${grupo}`;
+}

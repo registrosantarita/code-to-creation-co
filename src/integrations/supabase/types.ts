@@ -1003,6 +1003,7 @@ export type Database = {
           respostas: Json
           secoes: string[]
           status: string
+          subsecoes: string[]
           tipo_titulo: string
           title: string
           updated_at: string
@@ -1020,6 +1021,7 @@ export type Database = {
           respostas?: Json
           secoes?: string[]
           status?: string
+          subsecoes?: string[]
           tipo_titulo?: string
           title: string
           updated_at?: string
@@ -1037,6 +1039,7 @@ export type Database = {
           respostas?: Json
           secoes?: string[]
           status?: string
+          subsecoes?: string[]
           tipo_titulo?: string
           title?: string
           updated_at?: string

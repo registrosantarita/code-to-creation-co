@@ -1,0 +1,1 @@
+ALTER TABLE public.question_check_sessions ADD COLUMN IF NOT EXISTS subsecoes text[] NOT NULL DEFAULT '{}'::text[];
