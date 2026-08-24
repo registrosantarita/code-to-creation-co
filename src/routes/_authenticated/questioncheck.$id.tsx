@@ -599,12 +599,14 @@ function QuestionCheckDetalhe() {
 
 function Pergunta({
   no,
+  numero,
   valor,
   temAlerta,
   temExigencia,
   onChange,
 }: {
   no: No;
+  numero?: string;
   valor: unknown;
   temAlerta?: boolean;
   temExigencia?: boolean;
@@ -616,7 +618,10 @@ function Pergunta({
 
   return (
     <div className="relative rounded-md border border-border/70 p-4 pb-10">
-      <p className="text-sm text-foreground">{no.texto}</p>
+      <p className="text-sm text-foreground">
+        {numero && <span className="mr-2 font-semibold text-accent">{numero}</span>}
+        {no.texto}
+      </p>
       {no.ajuda && <p className="mt-1 text-xs text-muted-foreground">{no.ajuda}</p>}
       {(temAlerta || temExigencia) && (
         <div className="absolute bottom-2 right-3 flex items-center gap-2">
