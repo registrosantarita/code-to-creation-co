@@ -211,19 +211,44 @@ export function secaoAtiva(id: string, subsecoes?: string[] | null): Secao | und
 }
 
 /**
- * Numeração das perguntas conforme a transcrição original do checklist: o
- * próprio identificador do nó já reproduz a numeração do documento (A-1, A-3-1,
- * G-4…). Nós informativos não recebem número.
+ * Numeração Seção–Subseção–Pergunta, espelhando a renumeração por subseção do
+ * documento original: `A-1-1` (seção A, 1ª subseção, 1ª pergunta), `A-2-4`, e
+ * perguntas condicionais com sufixo por ponto (`A-2-4.1`, `A-2-4.1.1`).
+ * Perguntas sem subseção usam `Seção-Pergunta` (`Q-1`). Nós informativos não
+ * recebem número, mas seus filhos herdam o prefixo do pai.
  */
 export function numerosDaSecao(secao: Secao): Record<string, string> {
   const out: Record<string, string> = {};
-  const visita = (nos: No[]) => {
+
+  const visitaFilhos = (nos: No[], prefixo: string) => {
+    let n = 0;
     for (const no of nos) {
-      if (no.tipo !== "info") out[no.id] = no.id;
-      for (const ef of no.efeitos ?? []) if (ef.filhos?.length) visita(ef.filhos);
+      let atual = prefixo;
+      if (no.tipo !== "info") {
+        n += 1;
+        atual = `${prefixo}.${n}`;
+        out[no.id] = atual;
+      }
+      for (const ef of no.efeitos ?? []) if (ef.filhos?.length) visitaFilhos(ef.filhos, atual);
     }
   };
-  visita(secao.itens);
+
+  const grupos = gruposDaSecao(secao);
+  const contador: Record<string, number> = {};
+
+  for (const no of secao.itens) {
+    const idxGrupo = no.grupo ? grupos.indexOf(no.grupo) + 1 : 0;
+    const chave = String(idxGrupo);
+    const base = idxGrupo ? `${secao.id}-${idxGrupo}` : secao.id;
+    let atual = base;
+    if (no.tipo !== "info") {
+      contador[chave] = (contador[chave] ?? 0) + 1;
+      atual = `${base}-${contador[chave]}`;
+      out[no.id] = atual;
+    }
+    for (const ef of no.efeitos ?? []) if (ef.filhos?.length) visitaFilhos(ef.filhos, atual);
+  }
   return out;
 }
+
 
