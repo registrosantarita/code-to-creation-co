@@ -39,6 +39,10 @@ import {
   respondido,
   secaoPorId,
 } from "@/lib/question-check-engine";
+import {
+  exportarQuestionCheckPdf,
+  type BlocoQuestionCheck,
+} from "@/lib/export-questioncheck";
 
 export const Route = createFileRoute("/_authenticated/questioncheck/$id")({
   head: () => ({
