@@ -57,6 +57,22 @@ export const Route = createFileRoute("/_authenticated/questioncheck/$id")({
 
 const SECOES_VARIAVEIS = SECOES.filter((s) => !["A", "Q", "R"].includes(s.id));
 
+/** Âncora estável para cada subseção (seção + título do grupo). */
+function ancora(secaoId: string, grupo: string) {
+  const slug = grupo
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/(^-|-$)/g, "");
+  return `sub-${secaoId}-${slug}`;
+}
+
+function irPara(anc: string) {
+  document.getElementById(anc)?.scrollIntoView({ behavior: "smooth", block: "start" });
+}
+
+
 function QuestionCheckDetalhe() {
   const { id } = Route.useParams();
   const queryClient = useQueryClient();
