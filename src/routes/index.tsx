@@ -89,46 +89,46 @@ function Index() {
         </div>
       </section>
 
-      <main className="mx-auto max-w-5xl px-6 py-16">
+      <main className="mx-auto max-w-7xl px-6 py-16">
         <p className="eyebrow text-center">Módulos</p>
-        <div className="mt-8 grid gap-6 md:grid-cols-3">
+        <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <Link
             to="/geoconfronto"
-            className="group flex flex-col items-center rounded-lg border border-border bg-card p-10 text-center transition hover:border-accent"
+            className="group flex flex-col items-center rounded-lg border border-border bg-card p-6 text-center transition hover:border-accent"
           >
             <img
               src={geoLogo.url}
               alt="GeoConfronto"
-              className="h-32 w-auto object-contain md:h-40"
+              className="h-24 w-auto object-contain lg:h-28"
             />
             
-            <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
+            <p className="mt-3 text-xs leading-relaxed text-muted-foreground">
               Memoriais descritivos, plantas e divisas: extração, normalização e comparação
               geométrica auditável.
             </p>
-            <span className="mt-6 text-xs uppercase tracking-wide text-accent">Acessar módulo</span>
+            <span className="mt-4 text-[11px] uppercase tracking-wide text-accent">Acessar módulo</span>
           </Link>
 
           <Link
             to="/checktitulo"
-            className="group flex flex-col items-center rounded-lg border border-border bg-card p-10 text-center transition hover:border-accent"
+            className="group flex flex-col items-center rounded-lg border border-border bg-card p-6 text-center transition hover:border-accent"
           >
             <img
               src={checkLogo.url}
               alt="CheckTítulo"
-              className="h-32 w-auto object-contain md:h-40"
+              className="h-24 w-auto object-contain lg:h-28"
             />
             
-            <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
+            <p className="mt-3 text-xs leading-relaxed text-muted-foreground">
               Títulos e matrículas: conferência de partes, documentos, estado civil, cadastros do
               imóvel e cadeia registral.
             </p>
-            <span className="mt-6 text-xs uppercase tracking-wide text-accent">Acessar módulo</span>
+            <span className="mt-4 text-[11px] uppercase tracking-wide text-accent">Acessar módulo</span>
           </Link>
 
           <Link
             to="/checkindex"
-            className="group flex flex-col items-center rounded-lg border border-border bg-card p-10 text-center transition hover:border-accent"
+            className="group flex flex-col items-center rounded-lg border border-border bg-card p-6 text-center transition hover:border-accent"
           >
             <img
               src={checkindexLogo}
@@ -136,32 +136,32 @@ function Index() {
               width={1024}
               height={1024}
               loading="lazy"
-              className="h-32 w-auto object-contain md:h-40"
+              className="h-24 w-auto object-contain lg:h-28"
             />
 
-            <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
+            <p className="mt-3 text-xs leading-relaxed text-muted-foreground">
               Matrículas digitalizadas: extração de dados estruturados e exportação para o sistema
               interno do Cartório.
             </p>
-            <span className="mt-6 text-xs uppercase tracking-wide text-accent">Acessar módulo</span>
+            <span className="mt-4 text-[11px] uppercase tracking-wide text-accent">Acessar módulo</span>
           </Link>
 
           <Link
             to="/questioncheck"
-            className="group flex flex-col items-center rounded-lg border border-border bg-card p-10 text-center transition hover:border-accent"
+            className="group flex flex-col items-center rounded-lg border border-border bg-card p-6 text-center transition hover:border-accent"
           >
             <img
               src={questioncheckLogo}
               alt="QuestionCheck"
               loading="lazy"
-              className="h-32 w-auto object-contain md:h-40"
+              className="h-24 w-auto object-contain lg:h-28"
             />
 
-            <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
+            <p className="mt-3 text-xs leading-relaxed text-muted-foreground">
               Checklist condicional de qualificação: perguntas em sequência, alertas e exigências
               acumulados e nota de exigência editável.
             </p>
-            <span className="mt-6 text-xs uppercase tracking-wide text-accent">Acessar módulo</span>
+            <span className="mt-4 text-[11px] uppercase tracking-wide text-accent">Acessar módulo</span>
           </Link>
         </div>
 
