@@ -20,6 +20,7 @@ import {
 import { obterConferencia, salvarConferencia } from "@/lib/question-check.functions";
 import {
   TIPOS_TITULO,
+  chaveSubsecao,
   secoesAplicaveis,
   type No,
   type Respostas,
@@ -28,6 +29,8 @@ import { SECOES } from "@/lib/question-check-secoes";
 import {
   acumular,
   efeitoAtivo,
+  gruposDaSecao,
+  secaoAtiva,
   esbocoListaAlertas,
   esbocoNotaExigencia,
   nosVisiveis,
@@ -87,6 +90,7 @@ function QuestionCheckDetalhe() {
   const [respostas, setRespostas] = useState<Respostas>({});
   const [tipo, setTipo] = useState("");
   const [extras, setExtras] = useState<string[]>([]);
+  const [subsecoes, setSubsecoes] = useState<string[]>([]);
   const [nota, setNota] = useState("");
   const [lista, setLista] = useState("");
   const [notaTocada, setNotaTocada] = useState(false);
@@ -97,6 +101,7 @@ function QuestionCheckDetalhe() {
     setTipo(data.tipo_titulo ?? "");
     const base = TIPOS_TITULO.find((t) => t.id === data.tipo_titulo)?.secoes ?? [];
     setExtras((data.secoes ?? []).filter((s) => !["A", "Q", "R", ...base].includes(s)));
+    setSubsecoes((data.subsecoes ?? []) as string[]);
     setNota(data.nota_exigencia ?? "");
     setLista(data.lista_alertas ?? "");
     setNotaTocada(Boolean(data.nota_exigencia));
@@ -104,15 +109,47 @@ function QuestionCheckDetalhe() {
 
   const secoesIds = useMemo(() => secoesAplicaveis(tipo, extras), [tipo, extras]);
   const { alertas, exigencias } = useMemo(
-    () => acumular(secoesIds, respostas),
-    [secoesIds, respostas],
+    () => acumular(secoesIds, respostas, subsecoes),
+    [secoesIds, respostas, subsecoes],
   );
-  const prog = useMemo(() => progresso(secoesIds, respostas), [secoesIds, respostas]);
+  const prog = useMemo(
+    () => progresso(secoesIds, respostas, subsecoes),
+    [secoesIds, respostas, subsecoes],
+  );
+
+  /** Subseções disponíveis em cada seção aplicável. */
+  const subsecoesDisponiveis = useMemo(
+    () =>
+      secoesIds.flatMap((sid) => {
+        const secao = secaoPorId(sid);
+        if (!secao) return [];
+        const grupos = gruposDaSecao(secao);
+        if (!grupos.length) return [];
+        return [{ id: secao.id, titulo: secao.titulo, grupos }];
+      }),
+    [secoesIds],
+  );
+
+  function alternarSub(chave: string, ligado: boolean) {
+    setSubsecoes((prev) =>
+      ligado ? [...new Set([...prev, chave])] : prev.filter((x) => x !== chave),
+    );
+  }
+
+  /** Marca/desmarca todas as subseções de uma seção. */
+  function alternarSecaoToda(secaoId: string, grupos: string[], ligado: boolean) {
+    const chaves = grupos.map((g) => chaveSubsecao(secaoId, g));
+    setSubsecoes((prev) =>
+      ligado
+        ? [...new Set([...prev, ...chaves])]
+        : prev.filter((x) => !chaves.includes(x)),
+    );
+  }
 
   const sumario = useMemo(
     () =>
       secoesIds.flatMap((sid) => {
-        const secao = secaoPorId(sid);
+        const secao = secaoAtiva(sid, subsecoes);
         if (!secao) return [];
         const grupos: string[] = [];
         for (const no of nosVisiveis(secao, respostas)) {
@@ -120,7 +157,7 @@ function QuestionCheckDetalhe() {
         }
         return [{ id: secao.id, titulo: secao.titulo, grupos }];
       }),
-    [secoesIds, respostas],
+    [secoesIds, respostas, subsecoes],
   );
 
 
@@ -135,6 +172,7 @@ function QuestionCheckDetalhe() {
           id,
           tipoTitulo: tipo,
           secoes: secoesIds,
+          subsecoes,
           respostas: respostas as Record<string, unknown>,
           alertas: alertas as unknown as Record<string, unknown>[],
           exigencias: exigencias as unknown as Record<string, unknown>[],
@@ -166,7 +204,7 @@ function QuestionCheckDetalhe() {
         }
       };
       for (const sid of secoesIds) {
-        const s = secaoPorId(sid);
+        const s = secaoAtiva(sid, subsecoes);
         if (s) marcar(s.itens);
       }
       const limpo: Respostas = {};
@@ -257,7 +295,7 @@ function QuestionCheckDetalhe() {
       <div className="mt-8 grid gap-8 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
         <div className="space-y-8">
           {secoesIds.map((sid) => {
-            const secao = secaoPorId(sid);
+            const secao = secaoAtiva(sid, subsecoes);
             if (!secao) return null;
             const nos = nosVisiveis(secao, respostas);
             let grupoAtual = "";
