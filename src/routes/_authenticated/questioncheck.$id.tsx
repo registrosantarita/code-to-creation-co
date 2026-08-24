@@ -437,6 +437,7 @@ function QuestionCheckDetalhe() {
                         )}
                         <Pergunta
                           no={no}
+                          numero={numeros[no.id]}
                           valor={respostas[no.id]}
                           temAlerta={nosComAlerta.has(no.id)}
                           temExigencia={nosComExigencia.has(no.id)}
