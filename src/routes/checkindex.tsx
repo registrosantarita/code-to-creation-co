@@ -86,7 +86,7 @@ function CheckIndexFrontPage() {
             height={1024}
             className="h-40 w-auto object-contain md:h-52"
           />
-          <div className="rule-gold mt-6 w-32" />
+          <div className="rule-gold mt-3 w-40 md:w-52" />
           <p className="mt-6 max-w-2xl text-sm leading-relaxed text-ink-foreground/75 md:text-base">
             Módulo de indexação: extrai dados estruturados das matrículas digitalizadas e gera um
             arquivo padronizado para importação no sistema interno do Cartório.

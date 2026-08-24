@@ -57,10 +57,10 @@ function Index() {
           <img
             src={logoAsset.url}
             alt="e-Qualifica"
-            className="mb-[38px] h-32 w-32 object-contain md:h-40 md:w-40"
+            className="h-32 w-32 object-contain md:h-40 md:w-40"
           />
 
-          <div className="rule-gold w-40" />
+          <div className="rule-gold mt-3 w-32 md:w-40" />
 
           <p className="mt-4 text-base tracking-wide text-ink-foreground/80 md:text-lg">
             Qualificação Registral Assistida
