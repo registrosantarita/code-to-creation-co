@@ -318,7 +318,9 @@ function QualificacaoDetalhe() {
   return (
     <main className="mx-auto max-w-6xl px-6 py-10">
       <div className="flex flex-wrap items-center gap-3">
-        <img src={checktituloLogo.url} alt="CheckTítulo" className="h-10 w-auto object-contain" />
+        <div className="border border-solid border-accent p-0.5">
+          <img src={checktituloLogo.url} alt="CheckTítulo" className="h-10 w-auto object-contain" />
+        </div>
         <div>
           <p className="eyebrow">CheckTítulo — Conferência de dados de qualificação</p>
           <h1 className="font-display text-2xl text-foreground">{data?.conjunto.title}</h1>
