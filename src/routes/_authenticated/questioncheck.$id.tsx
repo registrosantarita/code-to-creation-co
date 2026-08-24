@@ -679,6 +679,14 @@ function QuestionCheckDetalhe() {
         </div>
       </section>
 
+      <div className="mt-6 flex justify-end">
+        <Button variant="outline" size="sm" onClick={gerarPdf}>
+          <FileText className="mr-2 h-4 w-4" /> Gerar relatório em PDF
+        </Button>
+      </div>
+
+
+
       <p className="mt-8 text-xs text-muted-foreground">
         Os textos acima são esboços gerados a partir das respostas do checklist. O sistema apoia a
         decisão e não substitui a qualificação jurídica do Oficial.
