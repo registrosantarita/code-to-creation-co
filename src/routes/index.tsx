@@ -54,13 +54,13 @@ function Index() {
     <div className="min-h-screen bg-background">
       <section className="bg-ink text-ink-foreground">
         <div className="mx-auto flex max-w-5xl flex-col items-center justify-center px-6 py-16 text-center md:py-24">
-          <img
-            src={logoAsset.url}
-            alt="e-Qualifica"
-            className="h-32 w-32 object-contain md:h-40 md:w-40"
-          />
-
-          <div className="rule-gold mt-3 w-32 md:w-40" />
+          <div className="border border-solid border-accent p-1">
+            <img
+              src={logoAsset.url}
+              alt="e-Qualifica"
+              className="h-32 w-32 object-contain md:h-40 md:w-40"
+            />
+          </div>
 
           <p className="mt-4 text-base tracking-wide text-ink-foreground/80 md:text-lg">
             Qualificação Registral Assistida
@@ -96,13 +96,13 @@ function Index() {
             to="/geoconfronto"
             className="group flex flex-col items-center rounded-lg border border-border bg-card p-6 text-center transition hover:border-accent"
           >
-            <img
-              src={geoLogo.url}
-              alt="GeoConfronto"
-              className="h-24 w-auto object-contain lg:h-28"
-            />
-
-            <div className="rule-gold mt-3 w-16 opacity-80" />
+            <div className="border border-solid border-accent p-1">
+              <img
+                src={geoLogo.url}
+                alt="GeoConfronto"
+                className="h-24 w-auto object-contain lg:h-28"
+              />
+            </div>
             
             <p className="mt-3 text-xs leading-relaxed text-muted-foreground">
               Memoriais descritivos, plantas e divisas: extração, normalização e comparação
@@ -115,13 +115,13 @@ function Index() {
             to="/checktitulo"
             className="group flex flex-col items-center rounded-lg border border-border bg-card p-6 text-center transition hover:border-accent"
           >
-            <img
-              src={checkLogo.url}
-              alt="CheckTítulo"
-              className="h-24 w-auto object-contain lg:h-28"
-            />
-
-            <div className="rule-gold mt-3 w-16 opacity-80" />
+            <div className="border border-solid border-accent p-1">
+              <img
+                src={checkLogo.url}
+                alt="CheckTítulo"
+                className="h-24 w-auto object-contain lg:h-28"
+              />
+            </div>
             
             <p className="mt-3 text-xs leading-relaxed text-muted-foreground">
               Títulos e matrículas: conferência de partes, documentos, estado civil, cadastros do
@@ -134,16 +134,16 @@ function Index() {
             to="/checkindex"
             className="group flex flex-col items-center rounded-lg border border-border bg-card p-6 text-center transition hover:border-accent"
           >
-            <img
-              src={checkindexLogo}
-              alt="CheckIndex"
-              width={1024}
-              height={1024}
-              loading="lazy"
-              className="h-24 w-auto object-contain lg:h-28"
-            />
-
-            <div className="rule-gold mt-3 w-16 opacity-80" />
+            <div className="border border-solid border-accent p-1">
+              <img
+                src={checkindexLogo}
+                alt="CheckIndex"
+                width={1024}
+                height={1024}
+                loading="lazy"
+                className="h-24 w-auto object-contain lg:h-28"
+              />
+            </div>
 
             <p className="mt-3 text-xs leading-relaxed text-muted-foreground">
               Matrículas digitalizadas: extração de dados estruturados e exportação para o sistema
@@ -156,14 +156,14 @@ function Index() {
             to="/questioncheck"
             className="group flex flex-col items-center rounded-lg border border-border bg-card p-6 text-center transition hover:border-accent"
           >
-            <img
-              src={questioncheckLogo}
-              alt="QuestionCheck"
-              loading="lazy"
-              className="h-24 w-auto object-contain lg:h-28"
-            />
-
-            <div className="rule-gold mt-3 w-16 opacity-80" />
+            <div className="border border-solid border-accent p-1">
+              <img
+                src={questioncheckLogo}
+                alt="QuestionCheck"
+                loading="lazy"
+                className="h-24 w-auto object-contain lg:h-28"
+              />
+            </div>
 
             <p className="mt-3 text-xs leading-relaxed text-muted-foreground">
               Checklist condicional de qualificação: perguntas em sequência, alertas e exigências

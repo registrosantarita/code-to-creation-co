@@ -152,11 +152,13 @@ function AuthPage() {
       <aside className="hidden flex-col items-center justify-center bg-ink p-12 text-center text-ink-foreground lg:flex">
         <div className="flex flex-1 flex-col items-center justify-center">
           <Link to="/" className="flex flex-col items-center">
-            <img
-              src={logoAsset.url}
-              alt="e-Qualifica"
-              className="h-44 w-44 object-contain"
-            />
+            <div className="border border-solid border-accent p-1.5">
+              <img
+                src={logoAsset.url}
+                alt="e-Qualifica"
+                className="h-44 w-44 object-contain"
+              />
+            </div>
           </Link>
 
           <div className="mt-[38px] flex flex-col items-center">
