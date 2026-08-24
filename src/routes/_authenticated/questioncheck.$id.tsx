@@ -668,7 +668,10 @@ function Pergunta({
                 checked={valor === o.id}
                 onChange={() => onChange(o.id)}
               />
-              <span>{o.rotulo}</span>
+              <span>
+                <span className="mr-1 font-medium text-foreground">{o.id})</span>
+                {o.rotulo}
+              </span>
             </label>
           ))}
         </div>
@@ -686,10 +689,14 @@ function Pergunta({
                     onChange(v === true ? [...sel, o.id] : sel.filter((x) => x !== o.id))
                   }
                 />
-                <span>{o.rotulo}</span>
+                <span>
+                  <span className="mr-1 font-medium text-foreground">{o.id})</span>
+                  {o.rotulo}
+                </span>
               </label>
             );
           })}
+
           {!Array.isArray(valor) && (
             <Button type="button" size="sm" variant="outline" onClick={() => onChange([])}>
               Confirmar seleção
