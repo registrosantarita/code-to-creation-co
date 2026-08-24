@@ -182,15 +182,16 @@ export function gruposDaSecao(secao: Secao): string[] {
 }
 
 /**
- * Restringe uma seção às subseções selecionadas. Quando nenhuma subseção da
- * seção estiver na seleção, a seção é mantida integralmente (comportamento
- * padrão: todas as subseções ativas).
+ * Restringe uma seção às subseções selecionadas. Quando a seleção global está
+ * vazia (sessões antigas), a seção é mantida integralmente. Quando há seleção
+ * mas nenhuma subseção desta seção está marcada, as perguntas agrupadas são
+ * removidas.
  */
 export function secaoFiltrada(secao: Secao, subsecoes?: string[] | null): Secao {
   if (!subsecoes?.length) return secao;
   const grupos = gruposDaSecao(secao);
   const ativos = grupos.filter((g) => subsecoes.includes(chaveSubsecao(secao.id, g)));
-  if (!ativos.length) return secao;
+
   const filtra = (nos: No[]): No[] =>
     nos
       .filter((no) => !no.grupo || ativos.includes(no.grupo))

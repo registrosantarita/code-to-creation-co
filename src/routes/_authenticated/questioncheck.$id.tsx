@@ -1,9 +1,9 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
-import { AlertTriangle, Ban, Check, ListTree, Save } from "lucide-react";
+import { AlertTriangle, Ban, Check, ListTree, OctagonAlert, Save } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -60,6 +60,14 @@ export const Route = createFileRoute("/_authenticated/questioncheck/$id")({
 
 const SECOES_VARIAVEIS = SECOES.filter((s) => !["A", "Q", "R"].includes(s.id));
 
+/**
+ * Marcador de "nenhuma subseção marcada". A seleção vazia significa, no motor,
+ * "todas ativas" (sessões antigas); por isso a tela nunca deixa o array vazio.
+ */
+const NENHUMA = "__nenhuma__";
+const normalizar = (chaves: string[]) => (chaves.length ? chaves : [NENHUMA]);
+
+
 /** Âncora estável para cada subseção (seção + título do grupo). */
 function ancora(secaoId: string, grupo: string) {
   const slug = grupo
@@ -95,23 +103,40 @@ function QuestionCheckDetalhe() {
   const [lista, setLista] = useState("");
   const [notaTocada, setNotaTocada] = useState(false);
 
+  const vistas = useRef<Set<string>>(new Set());
+
   useEffect(() => {
     if (!data) return;
     setRespostas((data.respostas ?? {}) as Respostas);
     setTipo(data.tipo_titulo ?? "");
     const base = TIPOS_TITULO.find((t) => t.id === data.tipo_titulo)?.secoes ?? [];
     setExtras((data.secoes ?? []).filter((s) => !["A", "Q", "R", ...base].includes(s)));
-    setSubsecoes((data.subsecoes ?? []) as string[]);
+    const salvas = (data.subsecoes ?? []) as string[];
+    setSubsecoes(salvas);
+    // Sessões já salvas conservam a seleção do conferente; novas começam com
+    // todas as subseções marcadas (ver efeito abaixo).
+    vistas.current = salvas.length
+      ? new Set(
+          (data.secoes ?? []).flatMap((sid) => {
+            const s = secaoPorId(sid);
+            return s ? gruposDaSecao(s).map((g) => chaveSubsecao(sid, g)) : [];
+          }),
+        )
+      : new Set();
     setNota(data.nota_exigencia ?? "");
     setLista(data.lista_alertas ?? "");
     setNotaTocada(Boolean(data.nota_exigencia));
   }, [data]);
+
 
   const secoesIds = useMemo(() => secoesAplicaveis(tipo, extras), [tipo, extras]);
   const { alertas, exigencias } = useMemo(
     () => acumular(secoesIds, respostas, subsecoes),
     [secoesIds, respostas, subsecoes],
   );
+  const nosComAlerta = useMemo(() => new Set(alertas.map((a) => a.no)), [alertas]);
+  const nosComExigencia = useMemo(() => new Set(exigencias.map((e) => e.no)), [exigencias]);
+
   const prog = useMemo(
     () => progresso(secoesIds, respostas, subsecoes),
     [secoesIds, respostas, subsecoes],
@@ -130,9 +155,25 @@ function QuestionCheckDetalhe() {
     [secoesIds],
   );
 
+  const todasChaves = useMemo(
+    () => subsecoesDisponiveis.flatMap((s) => s.grupos.map((g) => chaveSubsecao(s.id, g))),
+    [subsecoesDisponiveis],
+  );
+
+  /** Subseções recém-disponíveis entram já marcadas. */
+  useEffect(() => {
+    const novas = todasChaves.filter((k) => !vistas.current.has(k));
+    if (!novas.length) return;
+    for (const k of novas) vistas.current.add(k);
+    setSubsecoes((prev) => [...new Set([...prev, ...novas])]);
+  }, [todasChaves]);
+
+
   function alternarSub(chave: string, ligado: boolean) {
     setSubsecoes((prev) =>
-      ligado ? [...new Set([...prev, chave])] : prev.filter((x) => x !== chave),
+      ligado
+        ? [...new Set([...prev.filter((x) => x !== NENHUMA), chave])]
+        : normalizar(prev.filter((x) => x !== chave)),
     );
   }
 
@@ -141,10 +182,11 @@ function QuestionCheckDetalhe() {
     const chaves = grupos.map((g) => chaveSubsecao(secaoId, g));
     setSubsecoes((prev) =>
       ligado
-        ? [...new Set([...prev, ...chaves])]
-        : prev.filter((x) => !chaves.includes(x)),
+        ? [...new Set([...prev.filter((x) => x !== NENHUMA), ...chaves])]
+        : normalizar(prev.filter((x) => !chaves.includes(x))),
     );
   }
+
 
   const sumario = useMemo(
     () =>
@@ -298,71 +340,67 @@ function QuestionCheckDetalhe() {
             <div>
               <Label>Subseções do checklist</Label>
               <p className="mt-1 text-xs text-muted-foreground">
-                Marque as subseções que deseja responder. Sem nenhuma marcação em uma seção, todas
-                as suas subseções permanecem ativas.
+                Todas as subseções começam marcadas. Desmarque as que não deseja responder — elas
+                deixam de ser exibidas no checklist.
               </p>
             </div>
             <div className="flex gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() =>
-                  setSubsecoes(
-                    subsecoesDisponiveis.flatMap((s) =>
-                      s.grupos.map((g) => chaveSubsecao(s.id, g)),
-                    ),
-                  )
-                }
-              >
-                Marcar todas
+              <Button variant="outline" size="sm" onClick={() => setSubsecoes(todasChaves)}>
+                Marcar tudo
               </Button>
-              <Button variant="ghost" size="sm" onClick={() => setSubsecoes([])}>
-                Limpar
+              <Button variant="outline" size="sm" onClick={() => setSubsecoes(normalizar([]))}>
+                Desmarcar tudo
               </Button>
             </div>
           </div>
 
           <div className="mt-4 grid gap-5 md:grid-cols-2">
-            {subsecoesDisponiveis.map((s) => {
-              const chaves = s.grupos.map((g) => chaveSubsecao(s.id, g));
-              const todas = chaves.every((c) => subsecoes.includes(c));
-              return (
-                <div key={s.id} className="rounded-md border border-border/70 p-4">
-                  <div className="flex items-start justify-between gap-3">
-                    <p className="text-sm text-foreground">
-                      Seção {s.id} — {s.titulo}
-                    </p>
+            {subsecoesDisponiveis.map((s) => (
+              <div key={s.id} className="rounded-md border border-border/70 p-4">
+                <div className="flex flex-wrap items-start justify-between gap-3">
+                  <p className="text-sm text-foreground">
+                    Seção {s.id} — {s.titulo}
+                  </p>
+                  <div className="flex shrink-0 gap-3">
                     <button
                       type="button"
-                      className="shrink-0 text-xs text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
-                      onClick={() => alternarSecaoToda(s.id, s.grupos, !todas)}
+                      className="text-xs text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
+                      onClick={() => alternarSecaoToda(s.id, s.grupos, true)}
                     >
-                      {todas ? "Desmarcar" : "Marcar todas"}
+                      Marcar todas
+                    </button>
+                    <button
+                      type="button"
+                      className="text-xs text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
+                      onClick={() => alternarSecaoToda(s.id, s.grupos, false)}
+                    >
+                      Desmarcar todas
                     </button>
                   </div>
-                  <div className="mt-3 space-y-2">
-                    {s.grupos.map((g) => {
-                      const chave = chaveSubsecao(s.id, g);
-                      return (
-                        <label
-                          key={chave}
-                          className="flex items-start gap-2 text-xs text-muted-foreground"
-                        >
-                          <Checkbox
-                            checked={subsecoes.includes(chave)}
-                            onCheckedChange={(v) => alternarSub(chave, v === true)}
-                          />
-                          <span>{g}</span>
-                        </label>
-                      );
-                    })}
-                  </div>
                 </div>
-              );
-            })}
+                <div className="mt-3 space-y-2">
+                  {s.grupos.map((g) => {
+                    const chave = chaveSubsecao(s.id, g);
+                    return (
+                      <label
+                        key={chave}
+                        className="flex items-start gap-2 text-xs text-muted-foreground"
+                      >
+                        <Checkbox
+                          checked={subsecoes.includes(chave)}
+                          onCheckedChange={(v) => alternarSub(chave, v === true)}
+                        />
+                        <span>{g}</span>
+                      </label>
+                    );
+                  })}
+                </div>
+              </div>
+            ))}
           </div>
         </section>
       )}
+
 
       <div className="mt-8 grid gap-8 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
         <div className="space-y-8">
@@ -395,7 +433,14 @@ function QuestionCheckDetalhe() {
                             {cabecalhoGrupo}
                           </h3>
                         )}
-                        <Pergunta no={no} valor={respostas[no.id]} onChange={(v) => responder(no, v)} />
+                        <Pergunta
+                          no={no}
+                          valor={respostas[no.id]}
+                          temAlerta={nosComAlerta.has(no.id)}
+                          temExigencia={nosComExigencia.has(no.id)}
+                          onChange={(v) => responder(no, v)}
+                        />
+
                       </div>
                     );
                   })}
@@ -552,10 +597,14 @@ function QuestionCheckDetalhe() {
 function Pergunta({
   no,
   valor,
+  temAlerta,
+  temExigencia,
   onChange,
 }: {
   no: No;
   valor: unknown;
+  temAlerta?: boolean;
+  temExigencia?: boolean;
   onChange: (v: string | string[] | number | null) => void;
 }) {
   if (no.tipo === "info") {
@@ -563,9 +612,26 @@ function Pergunta({
   }
 
   return (
-    <div className="rounded-md border border-border/70 p-4">
+    <div className="relative rounded-md border border-border/70 p-4 pb-10">
       <p className="text-sm text-foreground">{no.texto}</p>
       {no.ajuda && <p className="mt-1 text-xs text-muted-foreground">{no.ajuda}</p>}
+      {(temAlerta || temExigencia) && (
+        <div className="absolute bottom-2 right-3 flex items-center gap-2">
+          {temAlerta && (
+            <AlertTriangle
+              className="h-5 w-5 text-yellow-500"
+              aria-label="Alerta gerado por esta pergunta"
+            />
+          )}
+          {temExigencia && (
+            <OctagonAlert
+              className="h-5 w-5 text-red-600"
+              aria-label="Exigência gerada por esta pergunta"
+            />
+          )}
+        </div>
+      )}
+
 
       {no.tipo === "sim_nao" && (
         <div className="mt-3 flex gap-2">

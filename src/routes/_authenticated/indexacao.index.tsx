@@ -83,13 +83,16 @@ function IndexacaoLista() {
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
           <div className="flex items-center gap-3">
-            <img
-              src={checkindexLogo}
-              alt="CheckIndex"
-              width={1024}
-              height={1024}
-              className="h-12 w-auto object-contain"
-            />
+            <div className="border border-solid border-accent p-0.5">
+              <img
+                src={checkindexLogo}
+                alt="CheckIndex"
+                width={1024}
+                height={1024}
+                className="h-12 w-auto object-contain"
+              />
+            </div>
+
             <div>
               <p className="eyebrow">Módulo de indexação</p>
               <h1 className="font-display text-2xl text-foreground">

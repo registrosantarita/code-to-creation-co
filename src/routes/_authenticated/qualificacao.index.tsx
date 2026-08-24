@@ -88,11 +88,14 @@ function QualificacaoLista() {
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
           <div className="flex items-center gap-3">
-            <img
-              src={checktituloLogo.url}
-              alt="CheckTítulo"
-              className="h-10 w-auto object-contain"
-            />
+            <div className="border border-solid border-accent p-0.5">
+              <img
+                src={checktituloLogo.url}
+                alt="CheckTítulo"
+                className="h-10 w-auto object-contain"
+              />
+            </div>
+
             <div>
               <p className="eyebrow">Módulo cadastral</p>
               <h1 className="font-display text-2xl text-foreground">

@@ -45,11 +45,14 @@ function AuthenticatedLayout() {
           <div className="flex items-center gap-4">
             <NavArrows showHome={false} />
             <Link to="/" className="flex items-center gap-3">
-              <img
-                src={logoAsset.url}
-                alt="e-Qualifica"
-                className="h-8 w-8 object-contain"
-              />
+              <div className="border border-solid border-accent p-0.5">
+                <img
+                  src={logoAsset.url}
+                  alt="e-Qualifica"
+                  className="h-8 w-8 object-contain"
+                />
+              </div>
+
               <div className="leading-tight">
                 <p className="font-display text-sm text-foreground">
                   e-Qualifica

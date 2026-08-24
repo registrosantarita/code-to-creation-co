@@ -54,7 +54,9 @@ function GeoFrontPage() {
         <div className="mx-auto flex max-w-5xl items-center gap-4 px-6 py-5">
           <NavArrows showHome />
           <Link to="/" className="flex items-center gap-2 text-xs text-muted-foreground hover:text-foreground">
-            <img src={equalificaLogo.url} alt="e-Qualifica" className="h-7 w-7 object-contain" />
+            <div className="border border-solid border-accent p-0.5">
+              <img src={equalificaLogo.url} alt="e-Qualifica" className="h-7 w-7 object-contain" />
+            </div>
             e-Qualifica
           </Link>
         </div>

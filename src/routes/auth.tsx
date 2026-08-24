@@ -180,7 +180,9 @@ function AuthPage() {
         <div className="w-full max-w-sm">
           <div className="flex items-center gap-3">
             <NavArrows showHome={false} />
-            <img src={logoAsset.url} alt="e-Qualifica" className="h-12 w-12 object-contain" />
+            <div className="border border-solid border-accent p-0.5">
+              <img src={logoAsset.url} alt="e-Qualifica" className="h-12 w-12 object-contain" />
+            </div>
             <Link
               to="/"
               className="text-xs text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
