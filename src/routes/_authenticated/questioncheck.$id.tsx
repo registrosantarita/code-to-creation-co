@@ -34,6 +34,7 @@ import {
   esbocoListaAlertas,
   esbocoNotaExigencia,
   nosVisiveis,
+  numerosDaSecao,
   progresso,
   respondido,
   secaoPorId,
