@@ -54,13 +54,13 @@ function Index() {
     <div className="min-h-screen bg-background">
       <section className="bg-ink text-ink-foreground">
         <div className="mx-auto flex max-w-5xl flex-col items-center justify-center px-6 py-16 text-center md:py-24">
-          <img
-            src={logoAsset.url}
-            alt="e-Qualifica"
-            className="h-32 w-32 object-contain md:h-40 md:w-40"
-          />
-
-          <div className="rule-gold mt-3 w-32 md:w-40" />
+          <div className="border border-solid border-accent p-1">
+            <img
+              src={logoAsset.url}
+              alt="e-Qualifica"
+              className="h-32 w-32 object-contain md:h-40 md:w-40"
+            />
+          </div>
 
           <p className="mt-4 text-base tracking-wide text-ink-foreground/80 md:text-lg">
             Qualificação Registral Assistida
