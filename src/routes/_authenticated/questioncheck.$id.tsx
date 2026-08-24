@@ -88,6 +88,28 @@ function irPara(anc: string) {
   document.getElementById(anc)?.scrollIntoView({ behavior: "smooth", block: "start" });
 }
 
+/** Resposta em texto legível para o relatório em PDF. */
+function textoResposta(no: No, valor: unknown): string {
+  if (no.tipo === "sim_nao") {
+    if (valor === "sim" || valor === true) return "SIM";
+    if (valor === "nao" || valor === false) return "NÃO";
+    return "NÃO SE APLICA";
+  }
+  if (no.tipo === "opcoes") {
+    const o = (no.opcoes ?? []).find((x) => x.id === valor);
+    return o ? `(x) ${o.id}) ${o.rotulo}` : "NÃO SE APLICA";
+  }
+  if (no.tipo === "multipla") {
+    const sel = Array.isArray(valor) ? (valor as string[]) : [];
+    const marcadas = (no.opcoes ?? []).filter((o) => sel.includes(o.id));
+    if (!marcadas.length) return "Nenhum item marcado";
+    return marcadas.map((o) => `[v] ${o.id}) ${o.rotulo}`).join("\n");
+  }
+  if (valor === null || valor === undefined || String(valor).trim() === "") return "NÃO SE APLICA";
+  return String(valor);
+}
+
+
 
 function QuestionCheckDetalhe() {
   const { id } = Route.useParams();
