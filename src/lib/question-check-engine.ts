@@ -99,7 +99,13 @@ export function acumular(secoesIds: string[], respostas: Respostas): Acumulo {
         if (!respondido(no, r)) continue;
         for (const ef of no.efeitos ?? []) {
           if (!efeitoAtivo(no, ef, r)) continue;
-          const detalhe = ef.quando === "faltando" ? opcoesFaltantes(no, r).join("; ") : "";
+          const detalhe =
+            ef.quando === "faltando"
+              ? opcoesFaltantes(no, r).join("; ")
+              : no.tipo === "multipla"
+                ? opcoesSelecionadas(no, r).join("; ")
+                : "";
+
           const base = { no: no.id, secao: secao.id, pergunta: no.texto, detalhe };
           if (ef.alerta) alertas.push({ ...base, texto: ef.alerta });
           if (ef.exigencia) exigencias.push({ ...base, texto: ef.exigencia });
