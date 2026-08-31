@@ -736,6 +736,19 @@ function QuestionCheckDetalhe() {
   );
 }
 
+/** Campos monetários: rotulados com "R$" no texto da pergunta. */
+function ehMoeda(no: No): boolean {
+  return no.tipo === "numero" && /r\$/i.test(no.texto);
+}
+
+/** Máscara de moeda pt-BR: milhar com ponto e duas casas decimais. */
+function formatarMoeda(bruto: string): string {
+  const digitos = bruto.replace(/\D/g, "").slice(0, 15);
+  if (!digitos) return "";
+  const centavos = Number(digitos) / 100;
+  return centavos.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
 function Pergunta({
   no,
   numero,
