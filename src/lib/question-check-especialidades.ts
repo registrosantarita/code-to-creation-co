@@ -26,6 +26,12 @@ export type Especialidade = {
   tipos: TipoTitulo[];
   comunsIniciais: string[];
   comunsFinais: string[];
+  /**
+   * Seções comuns finais dispensadas quando o título ativa alguma das seções
+   * variáveis listadas (ex.: a Seção "S" — COAF — não se aplica a penhora,
+   * usucapião, loteamento, incorporação, retificação e execução de garantias).
+   */
+  dispensaFinais?: Record<string, string[]>;
 };
 
 export const ESPECIALIDADE_PADRAO = "registro_imoveis";
