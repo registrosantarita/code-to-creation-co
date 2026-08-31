@@ -5,7 +5,9 @@
  * seções comuns da especialidade. As perguntas específicas serão inseridas
  * assim que o usuário finalizar a elaboração do checklist.
  */
-import type { Secao, TipoTitulo } from "./question-check-types";
+import type { Secao } from "./question-check-types";
+
+type TipoTitulo = { id: string; rotulo: string; secoes: string[] };
 
 /** Naturezas de título típicas do Registro de Títulos e Documentos. */
 export const TIPOS_TITULO_RTD: TipoTitulo[] = [
