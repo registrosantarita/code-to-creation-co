@@ -80,5 +80,9 @@ export function secoesAplicaveisNaEspecialidade(
   const esp = especialidadePorId(especialidade);
   const tipo = esp.tipos.find((t) => t.id === tipoTitulo);
   const variaveis = [...new Set([...(tipo?.secoes ?? []), ...extras])].sort();
-  return [...esp.comunsIniciais, ...variaveis, ...esp.comunsFinais];
+  const finais = esp.comunsFinais.filter((sid) => {
+    const dispensa = esp.dispensaFinais?.[sid];
+    return !dispensa?.some((v) => variaveis.includes(v));
+  });
+  return [...esp.comunsIniciais, ...variaveis, ...finais];
 }
