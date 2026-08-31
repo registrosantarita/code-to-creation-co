@@ -553,11 +553,13 @@ function QuestionCheckDetalhe() {
                 </h2>
                 <Separator className="my-4" />
                 <div className="space-y-6">
-                  {nos.map((no) => {
-                    const cabecalhoGrupo = no.grupo && no.grupo !== grupoAtual ? no.grupo : "";
-                    if (no.grupo) grupoAtual = no.grupo;
+                  {agruparPorCodigo(nos, numeros).map((bloco) => {
+                    const primeiro = bloco[0]!;
+                    const cabecalhoGrupo =
+                      primeiro.grupo && primeiro.grupo !== grupoAtual ? primeiro.grupo : "";
+                    if (primeiro.grupo) grupoAtual = primeiro.grupo;
                     return (
-                      <div key={no.id} className="space-y-2">
+                      <div key={primeiro.id} className="space-y-2">
                         {cabecalhoGrupo && (
                           <h3
                             id={ancora(sid, cabecalhoGrupo)}
@@ -566,15 +568,31 @@ function QuestionCheckDetalhe() {
                             {cabecalhoGrupo}
                           </h3>
                         )}
-                        <Pergunta
-                          no={no}
-                          numero={numeros[no.id]}
-                          valor={respostas[no.id]}
-                          temAlerta={nosComAlerta.has(no.id)}
-                          temExigencia={nosComExigencia.has(no.id)}
-                          onChange={(v) => responder(no, v)}
-                        />
-
+                        {bloco.length === 1 ? (
+                          <Pergunta
+                            no={primeiro}
+                            numero={numeros[primeiro.id]}
+                            valor={respostas[primeiro.id]}
+                            temAlerta={nosComAlerta.has(primeiro.id)}
+                            temExigencia={nosComExigencia.has(primeiro.id)}
+                            onChange={(v) => responder(primeiro, v)}
+                          />
+                        ) : (
+                          <div className="space-y-4 rounded-md border border-border/70 p-4">
+                            {bloco.map((no) => (
+                              <Pergunta
+                                key={no.id}
+                                no={no}
+                                embutido
+                                numero={numeros[no.id]}
+                                valor={respostas[no.id]}
+                                temAlerta={nosComAlerta.has(no.id)}
+                                temExigencia={nosComExigencia.has(no.id)}
+                                onChange={(v) => responder(no, v)}
+                              />
+                            ))}
+                          </div>
+                        )}
                       </div>
                     );
                   })}
