@@ -3,6 +3,7 @@
  * de seções, naturezas de título e seções comuns.
  */
 import { SECOES } from "./question-check-secoes";
+import { SECAO_S } from "./question-check-secao-s";
 import {
   SECOES_RCPJ,
   TIPOS_TITULO_RCPJ,
@@ -33,7 +34,7 @@ export const ESPECIALIDADES: Especialidade[] = [
   {
     id: "registro_imoveis",
     rotulo: "Registro de Imóveis",
-    secoes: SECOES,
+    secoes: [...SECOES, SECAO_S],
     tipos: TIPOS_TITULO,
     comunsIniciais: SECOES_COMUNS_INICIAIS,
     comunsFinais: SECOES_COMUNS_FINAIS,
