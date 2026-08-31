@@ -255,6 +255,8 @@ function QuestionCheckDetalhe() {
         if (no.tipo === "info") continue;
         const r = respostas[no.id];
         if (!respondido(no, r)) continue;
+        // Seções COAF: perguntas respondidas com "NÃO" ficam fora do relatório.
+        if (secao.coaf && no.tipo === "sim_nao" && (r === "nao" || r === false)) continue;
         const sub = no.grupo ?? "";
         let bloco = out.find((b) => b.secao === secao.id && b.subsecao === sub);
         if (!bloco) {
