@@ -34,7 +34,7 @@ export const ESPECIALIDADES: Especialidade[] = [
   {
     id: "registro_imoveis",
     rotulo: "Registro de Imóveis",
-    secoes: SECOES,
+    secoes: [...SECOES, SECAO_S],
     tipos: TIPOS_TITULO,
     comunsIniciais: SECOES_COMUNS_INICIAIS,
     comunsFinais: SECOES_COMUNS_FINAIS,
