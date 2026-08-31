@@ -33,6 +33,8 @@ export type Secao = {
   id: string;
   titulo: string;
   itens: No[];
+  /** Seção de comunicações ao COAF: respostas "NÃO" não entram no relatório. */
+  coaf?: boolean;
 };
 
 /** Resposta do conferente para cada nó (chave = id do nó). */

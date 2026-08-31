@@ -2088,6 +2088,7 @@ const SECAO_E: Secao = {
 const SECAO_F: Secao = {
   id: "F",
   titulo: "Comunicações ao COAF",
+  coaf: true,
   itens: [
     coaf(
       "F-951",

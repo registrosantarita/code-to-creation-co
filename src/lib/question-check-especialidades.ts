@@ -26,6 +26,12 @@ export type Especialidade = {
   tipos: TipoTitulo[];
   comunsIniciais: string[];
   comunsFinais: string[];
+  /**
+   * Seções comuns finais dispensadas quando o título ativa alguma das seções
+   * variáveis listadas (ex.: a Seção "S" — COAF — não se aplica a penhora,
+   * usucapião, loteamento, incorporação, retificação e execução de garantias).
+   */
+  dispensaFinais?: Record<string, string[]>;
 };
 
 export const ESPECIALIDADE_PADRAO = "registro_imoveis";
@@ -38,6 +44,7 @@ export const ESPECIALIDADES: Especialidade[] = [
     tipos: TIPOS_TITULO,
     comunsIniciais: SECOES_COMUNS_INICIAIS,
     comunsFinais: SECOES_COMUNS_FINAIS,
+    dispensaFinais: { S: ["G", "J", "K", "L", "M", "N", "O"] },
   },
   {
     id: "rcpj",
@@ -73,5 +80,9 @@ export function secoesAplicaveisNaEspecialidade(
   const esp = especialidadePorId(especialidade);
   const tipo = esp.tipos.find((t) => t.id === tipoTitulo);
   const variaveis = [...new Set([...(tipo?.secoes ?? []), ...extras])].sort();
-  return [...esp.comunsIniciais, ...variaveis, ...esp.comunsFinais];
+  const finais = esp.comunsFinais.filter((sid) => {
+    const dispensa = esp.dispensaFinais?.[sid];
+    return !dispensa?.some((v) => variaveis.includes(v));
+  });
+  return [...esp.comunsIniciais, ...variaveis, ...finais];
 }
