@@ -11,6 +11,12 @@ import {
   SECOES_COMUNS_FINAIS_RCPJ,
 } from "./question-check-rcpj";
 import {
+  SECOES_RTD,
+  TIPOS_TITULO_RTD,
+  SECOES_COMUNS_INICIAIS_RTD,
+  SECOES_COMUNS_FINAIS_RTD,
+} from "./question-check-rtd";
+import {
   SECOES_COMUNS_FINAIS,
   SECOES_COMUNS_INICIAIS,
   TIPOS_TITULO,
@@ -53,6 +59,14 @@ export const ESPECIALIDADES: Especialidade[] = [
     tipos: TIPOS_TITULO_RCPJ,
     comunsIniciais: SECOES_COMUNS_INICIAIS_RCPJ,
     comunsFinais: SECOES_COMUNS_FINAIS_RCPJ,
+  },
+  {
+    id: "rtd",
+    rotulo: "Registro de Títulos e Documentos",
+    secoes: SECOES_RTD,
+    tipos: TIPOS_TITULO_RTD,
+    comunsIniciais: SECOES_COMUNS_INICIAIS_RTD,
+    comunsFinais: SECOES_COMUNS_FINAIS_RTD,
   },
 ];
 
