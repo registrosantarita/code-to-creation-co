@@ -3,6 +3,7 @@
  * de seções, naturezas de título e seções comuns.
  */
 import { SECOES } from "./question-check-secoes";
+import { SECAO_S } from "./question-check-secao-s";
 import {
   SECOES_RCPJ,
   TIPOS_TITULO_RCPJ,
