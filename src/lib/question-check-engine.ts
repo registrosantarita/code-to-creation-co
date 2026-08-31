@@ -234,7 +234,10 @@ export function numerosDaSecao(secao: Secao): Record<string, string> {
     let n = 0;
     for (const no of nos) {
       let atual = prefixo;
-      if (no.tipo !== "info") {
+      if (no.codigo) {
+        atual = `Código ${no.codigo}`;
+        out[no.id] = atual;
+      } else if (no.tipo !== "info") {
         n += 1;
         atual = `${prefixo}.${n}`;
         out[no.id] = atual;
@@ -251,7 +254,10 @@ export function numerosDaSecao(secao: Secao): Record<string, string> {
     const chave = String(idxGrupo);
     const base = idxGrupo ? `${secao.id}-${idxGrupo}` : secao.id;
     let atual = base;
-    if (no.tipo !== "info") {
+    if (no.codigo) {
+      atual = `Código ${no.codigo}`;
+      out[no.id] = atual;
+    } else if (no.tipo !== "info") {
       contador[chave] = (contador[chave] ?? 0) + 1;
       atual = `${base}-${contador[chave]}`;
       out[no.id] = atual;

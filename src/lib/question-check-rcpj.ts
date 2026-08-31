@@ -21,6 +21,7 @@ function coaf(id: string, texto: string, grupo: string) {
     id,
     texto,
     grupo,
+    codigo: id.slice(2),
     tipo: "sim_nao" as const,
     efeitos: [{ quando: "sim", alerta: `Comunicação ao COAF — ${id}: ${texto}` }],
   };
@@ -2145,12 +2146,19 @@ const SECAO_F: Secao = {
       "A operação é FICTÍCIA ou com INDÍCIOS DE VALORES INCOMPATÍVEIS COM AS PRATICADAS NO MERCADO?",
       G_F1,
     ),
-    { id: "F-961-a", texto: "Valor declarado (R$):", grupo: G_F1, tipo: "numero" },
-    { id: "F-961-b", texto: "Valor aproximado de mercado (R$):", grupo: G_F1, tipo: "numero" },
+    { id: "F-961-a", texto: "Valor declarado (R$):", grupo: G_F1, codigo: "961.1", tipo: "numero" },
+    {
+      id: "F-961-b",
+      texto: "Valor aproximado de mercado (R$):",
+      grupo: G_F1,
+      codigo: "961.2",
+      tipo: "numero",
+    },
     {
       id: "F-961-c",
       texto: "Tipo de Imóvel:",
       grupo: G_F1,
+      codigo: "961.3",
       tipo: "opcoes",
       opcoes: [
         { id: "a", rotulo: "Terreno ou lote urbano" },
@@ -2159,7 +2167,7 @@ const SECAO_F: Secao = {
         { id: "d", rotulo: "Imóvel rural com benfeitorias" },
       ],
     },
-    { id: "F-961-d", texto: "Fonte de pesquisa:", grupo: G_F1, tipo: "texto" },
+    { id: "F-961-d", texto: "Fonte de pesquisa:", grupo: G_F1, codigo: "961.4", tipo: "texto" },
     coaf(
       "F-962",
       "A operação contém cláusulas que estabeleçam CONDIÇÕES INCOMPATÍVEIS COM AS PRATICADAS NO MERCADO?",
@@ -2202,7 +2210,12 @@ const SECAO_F: Secao = {
           quando: "sim",
           alerta: "Comunicação ao COAF — F-969: outras situações previstas como suspeitas.",
           filhos: [
-            { id: "F-969-1", texto: "Descreva a situação identificada:", tipo: "texto" },
+            {
+              id: "F-969-1",
+              texto: "Descreva a situação identificada:",
+              codigo: "969.1",
+              tipo: "texto",
+            },
           ],
         },
       ],

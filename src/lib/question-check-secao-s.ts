@@ -13,6 +13,7 @@ function coaf(id: string, texto: string, grupo: string): No {
     id,
     texto,
     grupo,
+    codigo: id.slice(2),
     tipo: "sim_nao",
     efeitos: [{ quando: "sim", alerta: `Comunicação ao COAF — ${id}: ${texto}` }],
   };
@@ -27,14 +28,29 @@ const TIPO_IMOVEL = [
 
 /** Campos de valor de mercado sempre abertos, independentemente da resposta. */
 function camposMercado(prefixo: string, grupo: string): No[] {
+  const cod = prefixo.slice(2);
   return [
-    { id: `${prefixo}-a`, texto: "Valor declarado (R$):", grupo, tipo: "numero" },
-    { id: `${prefixo}-b`, texto: "Valor aproximado de mercado (R$):", grupo, tipo: "numero" },
-    { id: `${prefixo}-c`, texto: "Tipo de Imóvel:", grupo, tipo: "opcoes", opcoes: TIPO_IMOVEL },
+    { id: `${prefixo}-a`, texto: "Valor declarado (R$):", grupo, codigo: `${cod}.1`, tipo: "numero" },
+    {
+      id: `${prefixo}-b`,
+      texto: "Valor aproximado de mercado (R$):",
+      grupo,
+      codigo: `${cod}.2`,
+      tipo: "numero",
+    },
+    {
+      id: `${prefixo}-c`,
+      texto: "Tipo de Imóvel:",
+      grupo,
+      codigo: `${cod}.3`,
+      tipo: "opcoes",
+      opcoes: TIPO_IMOVEL,
+    },
     {
       id: `${prefixo}-d`,
       texto: "Fonte de pesquisa:",
       grupo,
+      codigo: `${cod}.4`,
       tipo: "texto",
       ajuda: "Campo de texto livre, sem limite de quantidade de caracteres",
     },
@@ -139,6 +155,7 @@ export const SECAO_S: Secao = {
             {
               id: "S-969-1",
               texto: "Descreva a situação identificada:",
+              codigo: "969.1",
               tipo: "texto",
               ajuda: "Campo de texto livre, sem limite de quantidade de caracteres",
             },
@@ -156,14 +173,21 @@ export const SECAO_S: Secao = {
       "A operação se refere a registro de título com DIFERENÇAS entre valor de avaliação FISCAL (IPTU, ITR, ITBI, ITCMD) e o valor DECLARADO, superiores a 100% (cem por cento), para mais ou para menos?",
       G_S2,
     ),
-    { id: "S-974-a-1", texto: "Valor declarado (R$):", grupo: G_S2, tipo: "numero" },
+    { id: "S-974-a-1", texto: "Valor declarado (R$):", grupo: G_S2, codigo: "974-a.1", tipo: "numero" },
     {
       id: "S-974-a-2",
       texto: "Valor fiscal para fins de IPTU (se urbano) ou ITR (se rural) (R$):",
       grupo: G_S2,
+      codigo: "974-a.2",
       tipo: "numero",
     },
-    { id: "S-974-a-3", texto: "Valor fiscal para fins de ITBI/ITCMD (R$):", grupo: G_S2, tipo: "numero" },
+    {
+      id: "S-974-a-3",
+      texto: "Valor fiscal para fins de ITBI/ITCMD (R$):",
+      grupo: G_S2,
+      codigo: "974-a.3",
+      tipo: "numero",
+    },
     coaf(
       "S-974-b",
       "A operação se refere a registro de título com DIFERENÇAS entre valor PATRIMONIAL (DE MERCADO) e o valor DECLARADO, superiores a 100% (cem por cento), para mais ou para menos?",

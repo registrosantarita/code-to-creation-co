@@ -23,6 +23,8 @@ export type No = {
   id: string;
   texto: string;
   grupo?: string;
+  /** Numeração fixa (ex.: código do Provimento 88/CNJ nas seções COAF). */
+  codigo?: string;
   tipo: TipoNo;
   ajuda?: string;
   opcoes?: Opcao[];
