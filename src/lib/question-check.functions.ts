@@ -69,6 +69,7 @@ export const salvarConferencia = createServerFn({ method: "POST" })
       .object({
         id: z.string().uuid(),
         tipoTitulo: z.string().max(60).optional(),
+        especialidade: z.string().max(60).optional(),
         secoes: z.array(z.string().max(2)).max(20).optional(),
         subsecoes: z.array(z.string().max(240)).max(400).optional(),
         respostas: z.record(z.string(), z.unknown()).optional(),
@@ -83,6 +84,7 @@ export const salvarConferencia = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const patch: Record<string, unknown> = {};
     if (data.tipoTitulo !== undefined) patch['tipo_titulo'] = data.tipoTitulo;
+    if (data.especialidade !== undefined) patch['especialidade'] = data.especialidade;
     if (data.secoes !== undefined) patch['secoes'] = data.secoes;
     if (data.subsecoes !== undefined) patch['subsecoes'] = data.subsecoes;
     if (data.respostas !== undefined) patch['respostas'] = JSON.parse(JSON.stringify(data.respostas));
