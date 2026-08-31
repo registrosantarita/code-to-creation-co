@@ -860,9 +860,13 @@ function Pergunta({
       {(no.tipo === "numero" || no.tipo === "texto") && (
         <Input
           className="mt-3"
-          type={no.tipo === "numero" ? "number" : "text"}
+          type={no.tipo === "numero" && !ehMoeda(no) ? "number" : "text"}
+          inputMode={ehMoeda(no) ? "numeric" : undefined}
           value={valor === null || valor === undefined ? "" : String(valor)}
-          onChange={(e) => onChange(e.target.value === "" ? null : e.target.value)}
+          onChange={(e) => {
+            const v = ehMoeda(no) ? formatarMoeda(e.target.value) : e.target.value;
+            onChange(v === "" ? null : v);
+          }}
         />
       )}
     </div>
