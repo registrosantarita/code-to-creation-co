@@ -1,9 +1,9 @@
-import { SECOES } from "./question-check-secoes";
+import { secoesDaEspecialidade } from "./question-check-especialidades";
 import { chaveSubsecao } from "./question-check-types";
 import type { Acumulado, Efeito, No, Respostas, Secao } from "./question-check-types";
 
-export function secaoPorId(id: string): Secao | undefined {
-  return SECOES.find((s) => s.id === id);
+export function secaoPorId(id: string, especialidade?: string | null): Secao | undefined {
+  return secoesDaEspecialidade(especialidade).find((s) => s.id === id);
 }
 
 function respostaBooleana(v: unknown): boolean | null {
@@ -91,12 +91,13 @@ export function acumular(
   secoesIds: string[],
   respostas: Respostas,
   subsecoes?: string[] | null,
+  especialidade?: string | null,
 ): Acumulo {
   const alertas: Acumulado[] = [];
   const exigencias: Acumulado[] = [];
 
   for (const sid of secoesIds) {
-    const secao = secaoAtiva(sid, subsecoes);
+    const secao = secaoAtiva(sid, subsecoes, especialidade);
     if (!secao) continue;
     const visita = (nos: No[]) => {
       for (const no of nos) {
@@ -125,11 +126,16 @@ export function acumular(
   return { alertas, exigencias };
 }
 
-export function progresso(secoesIds: string[], respostas: Respostas, subsecoes?: string[] | null) {
+export function progresso(
+  secoesIds: string[],
+  respostas: Respostas,
+  subsecoes?: string[] | null,
+  especialidade?: string | null,
+) {
   let total = 0;
   let feitos = 0;
   for (const sid of secoesIds) {
-    const secao = secaoAtiva(sid, subsecoes);
+    const secao = secaoAtiva(sid, subsecoes, especialidade);
     if (!secao) continue;
     for (const no of nosVisiveis(secao, respostas)) {
       if (no.tipo === "info") continue;
@@ -205,8 +211,12 @@ export function secaoFiltrada(secao: Secao, subsecoes?: string[] | null): Secao 
 }
 
 /** Seção aplicável já restrita às subseções selecionadas. */
-export function secaoAtiva(id: string, subsecoes?: string[] | null): Secao | undefined {
-  const s = secaoPorId(id);
+export function secaoAtiva(
+  id: string,
+  subsecoes?: string[] | null,
+  especialidade?: string | null,
+): Secao | undefined {
+  const s = secaoPorId(id, especialidade);
   return s ? secaoFiltrada(s, subsecoes) : undefined;
 }
 

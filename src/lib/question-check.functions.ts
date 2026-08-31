@@ -8,7 +8,7 @@ export const listarConferencias = createServerFn({ method: "POST" })
   .handler(async ({ context }) => {
     const { data, error } = await context.supabase
       .from("question_check_sessions")
-      .select("id, title, protocolo, tipo_titulo, secoes, status, created_at, updated_at")
+      .select("id, title, protocolo, tipo_titulo, especialidade, secoes, status, created_at, updated_at")
       .order("updated_at", { ascending: false });
     if (error) throw new Error(error.message);
     return data ?? [];
@@ -23,6 +23,7 @@ export const criarConferencia = createServerFn({ method: "POST" })
         protocolo: z.string().trim().max(80).default(""),
         note: z.string().max(2000).default(""),
         tipoTitulo: z.string().max(60).default(""),
+        especialidade: z.string().max(60).default("registro_imoveis"),
         secoes: z.array(z.string().max(2)).max(20).default([]),
         subsecoes: z.array(z.string().max(240)).max(400).default([]),
       })
@@ -36,6 +37,7 @@ export const criarConferencia = createServerFn({ method: "POST" })
         protocolo: data.protocolo,
         note: data.note,
         tipo_titulo: data.tipoTitulo,
+        especialidade: data.especialidade,
         secoes: data.secoes,
         subsecoes: data.subsecoes,
         created_by: context.userId,
@@ -67,6 +69,7 @@ export const salvarConferencia = createServerFn({ method: "POST" })
       .object({
         id: z.string().uuid(),
         tipoTitulo: z.string().max(60).optional(),
+        especialidade: z.string().max(60).optional(),
         secoes: z.array(z.string().max(2)).max(20).optional(),
         subsecoes: z.array(z.string().max(240)).max(400).optional(),
         respostas: z.record(z.string(), z.unknown()).optional(),
@@ -81,6 +84,7 @@ export const salvarConferencia = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const patch: Record<string, unknown> = {};
     if (data.tipoTitulo !== undefined) patch['tipo_titulo'] = data.tipoTitulo;
+    if (data.especialidade !== undefined) patch['especialidade'] = data.especialidade;
     if (data.secoes !== undefined) patch['secoes'] = data.secoes;
     if (data.subsecoes !== undefined) patch['subsecoes'] = data.subsecoes;
     if (data.respostas !== undefined) patch['respostas'] = JSON.parse(JSON.stringify(data.respostas));

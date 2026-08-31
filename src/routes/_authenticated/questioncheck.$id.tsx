@@ -18,14 +18,14 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { obterConferencia, salvarConferencia } from "@/lib/question-check.functions";
+import { chaveSubsecao, type No, type Respostas } from "@/lib/question-check-types";
 import {
-  TIPOS_TITULO,
-  chaveSubsecao,
-  secoesAplicaveis,
-  type No,
-  type Respostas,
-} from "@/lib/question-check-types";
-import { SECOES } from "@/lib/question-check-secoes";
+  ESPECIALIDADES,
+  ESPECIALIDADE_PADRAO,
+  especialidadePorId,
+  secoesAplicaveisNaEspecialidade,
+  tiposDaEspecialidade,
+} from "@/lib/question-check-especialidades";
 import {
   acumular,
   efeitoAtivo,
@@ -63,7 +63,7 @@ export const Route = createFileRoute("/_authenticated/questioncheck/$id")({
   component: QuestionCheckDetalhe,
 });
 
-const SECOES_VARIAVEIS = SECOES.filter((s) => !["A", "Q", "R"].includes(s.id));
+
 
 /**
  * Marcador de "nenhuma subseção marcada". A seleção vazia significa, no motor,
@@ -127,6 +127,7 @@ function QuestionCheckDetalhe() {
 
   const [respostas, setRespostas] = useState<Respostas>({});
   const [tipo, setTipo] = useState("");
+  const [especialidade, setEspecialidade] = useState(ESPECIALIDADE_PADRAO);
   const [extras, setExtras] = useState<string[]>([]);
   const [subsecoes, setSubsecoes] = useState<string[]>([]);
   const [nota, setNota] = useState("");
@@ -139,7 +140,10 @@ function QuestionCheckDetalhe() {
     if (!data) return;
     setRespostas((data.respostas ?? {}) as Respostas);
     setTipo(data.tipo_titulo ?? "");
-    const base = TIPOS_TITULO.find((t) => t.id === data.tipo_titulo)?.secoes ?? [];
+    const esp = data.especialidade ?? ESPECIALIDADE_PADRAO;
+    setEspecialidade(esp);
+    const base =
+      tiposDaEspecialidade(esp).find((t) => t.id === data.tipo_titulo)?.secoes ?? [];
     setExtras((data.secoes ?? []).filter((s) => !["A", "Q", "R", ...base].includes(s)));
     const salvas = (data.subsecoes ?? []) as string[];
     setSubsecoes(salvas);
@@ -148,7 +152,7 @@ function QuestionCheckDetalhe() {
     vistas.current = salvas.length
       ? new Set(
           (data.secoes ?? []).flatMap((sid) => {
-            const s = secaoPorId(sid);
+            const s = secaoPorId(sid, data.especialidade);
             return s ? gruposDaSecao(s).map((g) => chaveSubsecao(sid, g)) : [];
           }),
         )
@@ -159,30 +163,38 @@ function QuestionCheckDetalhe() {
   }, [data]);
 
 
-  const secoesIds = useMemo(() => secoesAplicaveis(tipo, extras), [tipo, extras]);
+  const secoesIds = useMemo(
+    () => secoesAplicaveisNaEspecialidade(especialidade, tipo, extras),
+    [especialidade, tipo, extras],
+  );
+  const secoesVariaveis = useMemo(
+    () => especialidadePorId(especialidade).secoes.filter((s) => !["A", "Q", "R"].includes(s.id)),
+    [especialidade],
+  );
+  const tiposDisponiveis = useMemo(() => tiposDaEspecialidade(especialidade), [especialidade]);
   const { alertas, exigencias } = useMemo(
-    () => acumular(secoesIds, respostas, subsecoes),
-    [secoesIds, respostas, subsecoes],
+    () => acumular(secoesIds, respostas, subsecoes, especialidade),
+    [secoesIds, respostas, subsecoes, especialidade],
   );
   const nosComAlerta = useMemo(() => new Set(alertas.map((a) => a.no)), [alertas]);
   const nosComExigencia = useMemo(() => new Set(exigencias.map((e) => e.no)), [exigencias]);
 
   const prog = useMemo(
-    () => progresso(secoesIds, respostas, subsecoes),
-    [secoesIds, respostas, subsecoes],
+    () => progresso(secoesIds, respostas, subsecoes, especialidade),
+    [secoesIds, respostas, subsecoes, especialidade],
   );
 
   /** Subseções disponíveis em cada seção aplicável. */
   const subsecoesDisponiveis = useMemo(
     () =>
       secoesIds.flatMap((sid) => {
-        const secao = secaoPorId(sid);
+        const secao = secaoPorId(sid, especialidade);
         if (!secao) return [];
         const grupos = gruposDaSecao(secao);
         if (!grupos.length) return [];
         return [{ id: secao.id, titulo: secao.titulo, grupos }];
       }),
-    [secoesIds],
+    [secoesIds, especialidade],
   );
 
   const todasChaves = useMemo(
@@ -221,7 +233,7 @@ function QuestionCheckDetalhe() {
   const sumario = useMemo(
     () =>
       secoesIds.flatMap((sid) => {
-        const secao = secaoAtiva(sid, subsecoes);
+        const secao = secaoAtiva(sid, subsecoes, especialidade);
         if (!secao) return [];
         const grupos: string[] = [];
         for (const no of nosVisiveis(secao, respostas)) {
@@ -229,16 +241,16 @@ function QuestionCheckDetalhe() {
         }
         return [{ id: secao.id, titulo: secao.titulo, grupos }];
       }),
-    [secoesIds, respostas, subsecoes],
+    [secoesIds, respostas, subsecoes, especialidade],
   );
 
   /** Monta os blocos do relatório (somente perguntas respondidas). */
   function blocosRelatorio(): BlocoQuestionCheck[] {
     const out: BlocoQuestionCheck[] = [];
     for (const sid of secoesIds) {
-      const secao = secaoAtiva(sid, subsecoes);
+      const secao = secaoAtiva(sid, subsecoes, especialidade);
       if (!secao) continue;
-      const numeros = numerosDaSecao(secaoPorId(sid) ?? secao);
+      const numeros = numerosDaSecao(secaoPorId(sid, especialidade) ?? secao);
       for (const no of nosVisiveis(secao, respostas)) {
         if (no.tipo === "info") continue;
         const r = respostas[no.id];
@@ -269,7 +281,8 @@ function QuestionCheckDetalhe() {
       {
         titulo: data?.title ?? "",
         protocolo: data?.protocolo ?? "",
-        tipoTitulo: TIPOS_TITULO.find((t) => t.id === tipo)?.rotulo ?? "",
+        tipoTitulo: tiposDaEspecialidade(especialidade).find((t) => t.id === tipo)?.rotulo ?? "",
+        especialidade: especialidadePorId(especialidade).rotulo,
         secoes: secoesIds,
         observacao: data?.note ?? "",
         emitidoEm: new Date().toLocaleString("pt-BR"),
@@ -304,6 +317,7 @@ function QuestionCheckDetalhe() {
         data: {
           id,
           tipoTitulo: tipo,
+          especialidade,
           secoes: secoesIds,
           subsecoes,
           respostas: respostas as Record<string, unknown>,
@@ -337,7 +351,7 @@ function QuestionCheckDetalhe() {
         }
       };
       for (const sid of secoesIds) {
-        const s = secaoAtiva(sid, subsecoes);
+        const s = secaoAtiva(sid, subsecoes, especialidade);
         if (s) marcar(s.itens);
       }
       const limpo: Respostas = {};
@@ -387,13 +401,35 @@ function QuestionCheckDetalhe() {
 
       <section className="mt-8 grid gap-4 rounded-lg border border-border bg-card p-5 md:grid-cols-2">
         <div className="space-y-2">
+          <Label>Especialidade</Label>
+          <Select
+            value={especialidade}
+            onValueChange={(v) => {
+              setEspecialidade(v);
+              setTipo(tiposDaEspecialidade(v)[0]?.id ?? "");
+              setExtras([]);
+            }}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Selecione" />
+            </SelectTrigger>
+            <SelectContent>
+              {ESPECIALIDADES.map((e) => (
+                <SelectItem key={e.id} value={e.id}>
+                  {e.rotulo}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="space-y-2">
           <Label>Natureza do título</Label>
           <Select value={tipo} onValueChange={setTipo}>
             <SelectTrigger>
               <SelectValue placeholder="Selecione" />
             </SelectTrigger>
             <SelectContent>
-              {TIPOS_TITULO.map((t) => (
+              {tiposDisponiveis.map((t) => (
                 <SelectItem key={t.id} value={t.id}>
                   {t.rotulo}
                 </SelectItem>
@@ -404,8 +440,8 @@ function QuestionCheckDetalhe() {
         <div className="space-y-2">
           <Label>Seções adicionais</Label>
           <div className="grid max-h-40 gap-2 overflow-y-auto rounded-md border border-border p-3 sm:grid-cols-2">
-            {SECOES_VARIAVEIS.map((s) => {
-              const base = TIPOS_TITULO.find((t) => t.id === tipo)?.secoes ?? [];
+            {secoesVariaveis.map((s) => {
+              const base = tiposDisponiveis.find((t) => t.id === tipo)?.secoes ?? [];
               const fixa = base.includes(s.id);
               return (
                 <label key={s.id} className="flex items-start gap-2 text-xs text-muted-foreground">
@@ -499,10 +535,10 @@ function QuestionCheckDetalhe() {
       <div className="mt-8 grid gap-8 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
         <div className="space-y-8">
           {secoesIds.map((sid) => {
-            const secao = secaoAtiva(sid, subsecoes);
+            const secao = secaoAtiva(sid, subsecoes, especialidade);
             if (!secao) return null;
             const nos = nosVisiveis(secao, respostas);
-            const numeros = numerosDaSecao(secaoPorId(sid) ?? secao);
+            const numeros = numerosDaSecao(secaoPorId(sid, especialidade) ?? secao);
             let grupoAtual = "";
             return (
               <section

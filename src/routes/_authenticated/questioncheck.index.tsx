@@ -29,7 +29,13 @@ import {
   excluirConferencia,
   listarConferencias,
 } from "@/lib/question-check.functions";
-import { TIPOS_TITULO, secoesAplicaveis } from "@/lib/question-check-types";
+import {
+  ESPECIALIDADES,
+  ESPECIALIDADE_PADRAO,
+  especialidadePorId,
+  secoesAplicaveisNaEspecialidade,
+  tiposDaEspecialidade,
+} from "@/lib/question-check-especialidades";
 import logoAsset from "@/assets/questioncheck-logo-v3.png.asset.json";
 
 export const Route = createFileRoute("/_authenticated/questioncheck/")({
@@ -61,7 +67,13 @@ function QuestionCheckLista() {
   const [title, setTitle] = useState("");
   const [protocolo, setProtocolo] = useState("");
   const [note, setNote] = useState("");
+  const [especialidade, setEspecialidade] = useState(ESPECIALIDADE_PADRAO);
   const [tipo, setTipo] = useState("compra_venda");
+
+  const tiposDisponiveis = tiposDaEspecialidade(especialidade);
+  const tipoValido = tiposDisponiveis.some((t) => t.id === tipo)
+    ? tipo
+    : (tiposDisponiveis[0]?.id ?? "");
 
   const { data, isLoading } = useQuery({
     queryKey: ["questioncheck-lista"],
@@ -76,8 +88,9 @@ function QuestionCheckLista() {
           title: title.trim(),
           protocolo: protocolo.trim(),
           note: note.trim(),
-          tipoTitulo: tipo,
-          secoes: secoesAplicaveis(tipo),
+          tipoTitulo: tipoValido,
+          especialidade,
+          secoes: secoesAplicaveisNaEspecialidade(especialidade, tipoValido),
         },
       });
     },
@@ -161,13 +174,34 @@ function QuestionCheckLista() {
                 />
               </div>
               <div className="space-y-2">
-                <Label>Natureza do título</Label>
-                <Select value={tipo} onValueChange={setTipo}>
+                <Label>Especialidade</Label>
+                <Select
+                  value={especialidade}
+                  onValueChange={(v) => {
+                    setEspecialidade(v);
+                    setTipo(tiposDaEspecialidade(v)[0]?.id ?? "");
+                  }}
+                >
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    {TIPOS_TITULO.map((t) => (
+                    {ESPECIALIDADES.map((e) => (
+                      <SelectItem key={e.id} value={e.id}>
+                        {e.rotulo}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label>Natureza do título</Label>
+                <Select value={tipoValido} onValueChange={setTipo}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {tiposDisponiveis.map((t) => (
                       <SelectItem key={t.id} value={t.id}>
                         {t.rotulo}
                       </SelectItem>
@@ -175,7 +209,8 @@ function QuestionCheckLista() {
                   </SelectContent>
                 </Select>
                 <p className="text-xs text-muted-foreground">
-                  Seções aplicáveis: {secoesAplicaveis(tipo).join(" · ")}
+                  Seções aplicáveis:{" "}
+                  {secoesAplicaveisNaEspecialidade(especialidade, tipoValido).join(" · ") || "—"}
                 </p>
               </div>
               <div className="space-y-2">
@@ -218,7 +253,9 @@ function QuestionCheckLista() {
                 {s.title}
               </Link>
               <p className="mt-1 text-xs text-muted-foreground">
-                {TIPOS_TITULO.find((t) => t.id === s.tipo_titulo)?.rotulo ?? "Título não classificado"}
+                {especialidadePorId(s.especialidade).rotulo} ·{" "}
+                {tiposDaEspecialidade(s.especialidade).find((t) => t.id === s.tipo_titulo)
+                  ?.rotulo ?? "Título não classificado"}
                 {s.protocolo ? ` · Prenotação ${s.protocolo}` : ""} · Seções{" "}
                 {(s.secoes ?? []).join(", ")}
               </p>
