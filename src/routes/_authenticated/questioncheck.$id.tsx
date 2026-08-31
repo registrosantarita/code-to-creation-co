@@ -754,6 +754,19 @@ function QuestionCheckDetalhe() {
   );
 }
 
+/** Agrupa cada pergunta com seus subitens (códigos "X.1", "X.2"…) num só bloco. */
+function agruparPorCodigo(nos: No[], numeros: Record<string, string>): No[][] {
+  const blocos: No[][] = [];
+  for (const no of nos) {
+    const num = numeros[no.id] ?? "";
+    const base = /^(.*)\.\d+$/.exec(num)?.[1];
+    const anterior = blocos[blocos.length - 1];
+    if (base && anterior && numeros[anterior[0]!.id] === base) anterior.push(no);
+    else blocos.push([no]);
+  }
+  return blocos;
+}
+
 /** Campos monetários: rotulados com "R$" no texto da pergunta. */
 function ehMoeda(no: No): boolean {
   return no.tipo === "numero" && /r\$/i.test(no.texto);
@@ -770,6 +783,7 @@ function formatarMoeda(bruto: string): string {
 function Pergunta({
   no,
   numero,
+  embutido,
   valor,
   temAlerta,
   temExigencia,
@@ -777,6 +791,7 @@ function Pergunta({
 }: {
   no: No;
   numero?: string | undefined;
+  embutido?: boolean;
   valor: unknown;
   temAlerta?: boolean;
   temExigencia?: boolean;
@@ -787,7 +802,11 @@ function Pergunta({
   }
 
   return (
-    <div className="relative rounded-md border border-border/70 p-4 pb-10">
+    <div
+      className={
+        embutido ? "relative pb-8" : "relative rounded-md border border-border/70 p-4 pb-10"
+      }
+    >
       <p className="text-sm text-foreground">
         {numero && <span className="mr-2 font-semibold text-accent">{numero}</span>}
         {no.texto}
