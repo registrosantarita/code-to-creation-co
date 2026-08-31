@@ -68,7 +68,7 @@ export const TIPOS_TITULO: { id: string; rotulo: string; secoes: string[] }[] = 
 ];
 
 export const SECOES_COMUNS_INICIAIS = ["A"];
-export const SECOES_COMUNS_FINAIS = ["Q", "R"];
+export const SECOES_COMUNS_FINAIS = ["Q", "R", "S"];
 
 export function secoesAplicaveis(tipoTitulo: string, extras: string[] = []): string[] {
   const tipo = TIPOS_TITULO.find((t) => t.id === tipoTitulo);
