@@ -553,11 +553,13 @@ function QuestionCheckDetalhe() {
                 </h2>
                 <Separator className="my-4" />
                 <div className="space-y-6">
-                  {nos.map((no) => {
-                    const cabecalhoGrupo = no.grupo && no.grupo !== grupoAtual ? no.grupo : "";
-                    if (no.grupo) grupoAtual = no.grupo;
+                  {agruparPorCodigo(nos, numeros).map((bloco) => {
+                    const primeiro = bloco[0]!;
+                    const cabecalhoGrupo =
+                      primeiro.grupo && primeiro.grupo !== grupoAtual ? primeiro.grupo : "";
+                    if (primeiro.grupo) grupoAtual = primeiro.grupo;
                     return (
-                      <div key={no.id} className="space-y-2">
+                      <div key={primeiro.id} className="space-y-2">
                         {cabecalhoGrupo && (
                           <h3
                             id={ancora(sid, cabecalhoGrupo)}
@@ -566,15 +568,31 @@ function QuestionCheckDetalhe() {
                             {cabecalhoGrupo}
                           </h3>
                         )}
-                        <Pergunta
-                          no={no}
-                          numero={numeros[no.id]}
-                          valor={respostas[no.id]}
-                          temAlerta={nosComAlerta.has(no.id)}
-                          temExigencia={nosComExigencia.has(no.id)}
-                          onChange={(v) => responder(no, v)}
-                        />
-
+                        {bloco.length === 1 ? (
+                          <Pergunta
+                            no={primeiro}
+                            numero={numeros[primeiro.id]}
+                            valor={respostas[primeiro.id]}
+                            temAlerta={nosComAlerta.has(primeiro.id)}
+                            temExigencia={nosComExigencia.has(primeiro.id)}
+                            onChange={(v) => responder(primeiro, v)}
+                          />
+                        ) : (
+                          <div className="space-y-4 rounded-md border border-border/70 p-4">
+                            {bloco.map((no) => (
+                              <Pergunta
+                                key={no.id}
+                                no={no}
+                                embutido
+                                numero={numeros[no.id]}
+                                valor={respostas[no.id]}
+                                temAlerta={nosComAlerta.has(no.id)}
+                                temExigencia={nosComExigencia.has(no.id)}
+                                onChange={(v) => responder(no, v)}
+                              />
+                            ))}
+                          </div>
+                        )}
                       </div>
                     );
                   })}
@@ -736,6 +754,19 @@ function QuestionCheckDetalhe() {
   );
 }
 
+/** Agrupa cada pergunta com seus subitens (códigos "X.1", "X.2"…) num só bloco. */
+function agruparPorCodigo(nos: No[], numeros: Record<string, string>): No[][] {
+  const blocos: No[][] = [];
+  for (const no of nos) {
+    const num = numeros[no.id] ?? "";
+    const base = /^(.*)\.\d+$/.exec(num)?.[1];
+    const anterior = blocos[blocos.length - 1];
+    if (base && anterior && numeros[anterior[0]!.id] === base) anterior.push(no);
+    else blocos.push([no]);
+  }
+  return blocos;
+}
+
 /** Campos monetários: rotulados com "R$" no texto da pergunta. */
 function ehMoeda(no: No): boolean {
   return no.tipo === "numero" && /r\$/i.test(no.texto);
@@ -752,6 +783,7 @@ function formatarMoeda(bruto: string): string {
 function Pergunta({
   no,
   numero,
+  embutido,
   valor,
   temAlerta,
   temExigencia,
@@ -759,6 +791,7 @@ function Pergunta({
 }: {
   no: No;
   numero?: string | undefined;
+  embutido?: boolean;
   valor: unknown;
   temAlerta?: boolean;
   temExigencia?: boolean;
@@ -769,7 +802,11 @@ function Pergunta({
   }
 
   return (
-    <div className="relative rounded-md border border-border/70 p-4 pb-10">
+    <div
+      className={
+        embutido ? "relative pb-8" : "relative rounded-md border border-border/70 p-4 pb-10"
+      }
+    >
       <p className="text-sm text-foreground">
         {numero && <span className="mr-2 font-semibold text-accent">{numero}</span>}
         {no.texto}
