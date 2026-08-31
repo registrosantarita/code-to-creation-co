@@ -44,6 +44,7 @@ export const ESPECIALIDADES: Especialidade[] = [
     tipos: TIPOS_TITULO,
     comunsIniciais: SECOES_COMUNS_INICIAIS,
     comunsFinais: SECOES_COMUNS_FINAIS,
+    dispensaFinais: { S: ["G", "J", "K", "L", "M", "N", "O"] },
   },
   {
     id: "rcpj",
