@@ -736,6 +736,19 @@ function QuestionCheckDetalhe() {
   );
 }
 
+/** Campos monetários: rotulados com "R$" no texto da pergunta. */
+function ehMoeda(no: No): boolean {
+  return no.tipo === "numero" && /r\$/i.test(no.texto);
+}
+
+/** Máscara de moeda pt-BR: milhar com ponto e duas casas decimais. */
+function formatarMoeda(bruto: string): string {
+  const digitos = bruto.replace(/\D/g, "").slice(0, 15);
+  if (!digitos) return "";
+  const centavos = Number(digitos) / 100;
+  return centavos.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
 function Pergunta({
   no,
   numero,
@@ -860,9 +873,13 @@ function Pergunta({
       {(no.tipo === "numero" || no.tipo === "texto") && (
         <Input
           className="mt-3"
-          type={no.tipo === "numero" ? "number" : "text"}
+          type={no.tipo === "numero" && !ehMoeda(no) ? "number" : "text"}
+          inputMode={ehMoeda(no) ? "numeric" : undefined}
           value={valor === null || valor === undefined ? "" : String(valor)}
-          onChange={(e) => onChange(e.target.value === "" ? null : e.target.value)}
+          onChange={(e) => {
+            const v = ehMoeda(no) ? formatarMoeda(e.target.value) : e.target.value;
+            onChange(v === "" ? null : v);
+          }}
         />
       )}
     </div>
