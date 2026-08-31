@@ -26,6 +26,7 @@ export type RelatorioQuestionCheckInput = {
   titulo: string;
   protocolo: string;
   tipoTitulo: string;
+  especialidade?: string;
   secoes: string[];
   observacao: string;
   emitidoEm: string;
@@ -70,6 +71,7 @@ export function exportarQuestionCheckPdf(
     head: [["Identificação da conferência", ""]],
     body: [
       ["Título", input.titulo || "—"],
+      ["Especialidade", input.especialidade || "—"],
       ["Prenotação", input.protocolo || "—"],
       ["Natureza do título", input.tipoTitulo || "—"],
       ["Seções aplicáveis", input.secoes.join(", ") || "—"],
