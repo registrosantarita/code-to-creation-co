@@ -44,6 +44,7 @@ function camposMercado(prefixo: string, grupo: string): No[] {
 export const SECAO_S: Secao = {
   id: "S",
   titulo: "Comunicações ao COAF",
+  coaf: true,
   itens: [
     coaf(
       "S-951",
