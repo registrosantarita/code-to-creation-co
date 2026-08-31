@@ -796,21 +796,34 @@ function Pergunta({
 
       {no.tipo === "opcoes" && (
         <div className="mt-3 space-y-2">
-          {(no.opcoes ?? []).map((o) => (
-            <label key={o.id} className="flex items-start gap-2 text-sm text-muted-foreground">
-              <input
-                type="radio"
-                className="mt-1 accent-current"
-                name={no.id}
-                checked={valor === o.id}
-                onChange={() => onChange(o.id)}
-              />
-              <span>
-                <span className="mr-1 font-medium text-foreground">{o.id})</span>
-                {o.rotulo}
-              </span>
-            </label>
-          ))}
+          {(no.opcoes ?? []).map((o) => {
+            const marcado = valor === o.id;
+            return (
+              <button
+                key={o.id}
+                type="button"
+                aria-pressed={marcado}
+                onClick={() => onChange(marcado ? null : o.id)}
+                className={`flex w-full items-start gap-2 rounded-md border px-2 py-1.5 text-left text-sm transition-colors ${
+                  marcado
+                    ? "border-accent bg-accent/10 text-foreground"
+                    : "border-transparent text-muted-foreground hover:bg-muted/40"
+                }`}
+              >
+                <span
+                  className={`mt-1 flex h-4 w-4 shrink-0 items-center justify-center rounded-full border ${
+                    marcado ? "border-accent" : "border-muted-foreground/60"
+                  }`}
+                >
+                  {marcado && <span className="h-2 w-2 rounded-full bg-accent" />}
+                </span>
+                <span>
+                  <span className="mr-1 font-medium text-foreground">{o.id})</span>
+                  {o.rotulo}
+                </span>
+              </button>
+            );
+          })}
         </div>
       )}
 
