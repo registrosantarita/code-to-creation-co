@@ -1,0 +1,1 @@
+ALTER TABLE public.index_records ADD COLUMN IF NOT EXISTS ultimo_ato text;

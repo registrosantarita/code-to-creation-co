@@ -60,7 +60,7 @@ export const obterLote = createServerFn({ method: "POST" })
       context.supabase
         .from("index_records")
         .select(
-          "id, label, file_name, file_extension, source_type, tipo_livro, livro, matricula_numero, cns, data_abertura, ultima_ficha, registro_anterior, encerrada, matriculas_abertas, natureza, cep, tipo_logradouro, logradouro, numero_logradouro, bairro, lote, quadra, condominio, unidade, andar, bloco, tipo_rural, denominacao_rural, cim, certificacao, area_m2, area_hectare, perimetro_m, area_construida_m2, descricao, endereco, prenotacao, tipo_ato, ato, data_ato, selo, adquirente, conjuge_adq, transmitente, conjuge_transm, usufrutuario, conjuge_usu, outorgante, conjuge_outorgante, outorgado, conjuge_outorgado, credor, devedor, serviente, dominante, estado_civil, data_casamento, lei_casamento, reg_bens, pacto, email, telefone, identificacao, inscricao_estadual, situacao_titulares, cadastros, proprietarios, atos, onus, extraction_source, review_status, created_at",
+          "id, label, file_name, file_extension, source_type, tipo_livro, livro, matricula_numero, cns, data_abertura, ultima_ficha, ultimo_ato, registro_anterior, encerrada, matriculas_abertas, natureza, cep, tipo_logradouro, logradouro, numero_logradouro, bairro, lote, quadra, condominio, unidade, andar, bloco, tipo_rural, denominacao_rural, cim, certificacao, area_m2, area_hectare, perimetro_m, area_construida_m2, descricao, endereco, prenotacao, tipo_ato, ato, data_ato, selo, adquirente, conjuge_adq, transmitente, conjuge_transm, usufrutuario, conjuge_usu, outorgante, conjuge_outorgante, outorgado, conjuge_outorgado, credor, devedor, serviente, dominante, estado_civil, data_casamento, lei_casamento, reg_bens, pacto, email, telefone, identificacao, inscricao_estadual, situacao_titulares, cadastros, proprietarios, atos, onus, extraction_source, review_status, created_at",
         )
         .eq("batch_id", data.id)
         .order("created_at", { ascending: true }),
@@ -133,6 +133,7 @@ export const indexarMatricula = createServerFn({ method: "POST" })
         cns: dados.cns,
         data_abertura: dados.data_abertura,
         ultima_ficha: dados.ultima_ficha,
+        ultimo_ato: dados.ultimo_ato,
         registro_anterior: dados.registro_anterior,
         encerrada: dados.encerrada,
         matriculas_abertas: dados.matriculas_abertas,
@@ -220,6 +221,7 @@ export const atualizarRegistro = createServerFn({ method: "POST" })
             cns: z.string().max(30).nullable().optional(),
             data_abertura: z.string().max(10).nullable().optional(),
             ultima_ficha: z.string().max(20).nullable().optional(),
+            ultimo_ato: z.string().max(20).nullable().optional(),
             registro_anterior: z.string().max(120).nullable().optional(),
             encerrada: z.boolean().optional(),
             matriculas_abertas: z.array(z.string().max(20)).max(200).optional(),

@@ -280,6 +280,7 @@ function LoteDetalhe() {
                     ["CNS", r.cns],
                     ["Abertura", r.data_abertura],
                     ["Última ficha", r.ultima_ficha],
+                    ["Último ato", r.ultimo_ato],
                     ["Registro anterior", r.registro_anterior],
                     [
                       "Encerrada",
