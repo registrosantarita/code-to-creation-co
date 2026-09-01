@@ -436,7 +436,8 @@ export function extrairIndiceMatricula(textoBruto: string): MatriculaIndexada {
     cns,
     data_abertura: dataAbertura,
     ultima_ficha: extrairUltimaFicha(compacto),
-    ultimo_ato: ultimoAto ? rotuloAto(ultimoAto.tipo, ultimoAto.numero) : null,
+    // Apenas o número sequencial do ato (vale para R e Av).
+    ultimo_ato: ultimoAto?.numero ?? null,
     registro_anterior: auxiliar ? null : extrairRegistroAnterior(compacto),
     encerrada: ENCERRAMENTO.test(compacto),
     matriculas_abertas: extrairMatriculasAbertas(compacto),

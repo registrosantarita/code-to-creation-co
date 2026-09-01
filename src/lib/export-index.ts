@@ -214,7 +214,7 @@ export function linhaDoRegistro(r: RegistroIndexado): (string | number)[] {
     texto(r.cns),
     dataBr(r.data_abertura),
     texto(r.ultima_ficha).toUpperCase(),
-    texto(r.ultimo_ato).toUpperCase(),
+    texto(r.ultimo_ato),
     texto(r.registro_anterior),
     encerramento(r),
     texto(r.natureza).toUpperCase(),
