@@ -465,6 +465,7 @@ export type Database = {
           tipo_rural: string | null
           transmitente: string | null
           ultima_ficha: string | null
+          ultimo_ato: string | null
           unidade: string | null
           updated_at: string
           usufrutuario: string | null
@@ -544,6 +545,7 @@ export type Database = {
           tipo_rural?: string | null
           transmitente?: string | null
           ultima_ficha?: string | null
+          ultimo_ato?: string | null
           unidade?: string | null
           updated_at?: string
           usufrutuario?: string | null
@@ -623,6 +625,7 @@ export type Database = {
           tipo_rural?: string | null
           transmitente?: string | null
           ultima_ficha?: string | null
+          ultimo_ato?: string | null
           unidade?: string | null
           updated_at?: string
           usufrutuario?: string | null
