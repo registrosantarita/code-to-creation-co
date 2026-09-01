@@ -16,6 +16,7 @@ export type RegistroIndexado = {
   cns: string | null;
   data_abertura: string | null;
   ultima_ficha: string | null;
+  ultimo_ato: string | null;
   registro_anterior: string | null;
   encerrada: boolean | null;
   matriculas_abertas: string[] | null;
@@ -84,6 +85,7 @@ export const COLUNAS_EXPORT = [
   "CNS",
   "DATA_ABERTURA",
   "ULTIMAFICHA",
+  "ULTIMOATO",
   "REGISTROANTERIOR",
   "ENCERRADA",
   "NATUREZA",
@@ -212,6 +214,7 @@ export function linhaDoRegistro(r: RegistroIndexado): (string | number)[] {
     texto(r.cns),
     dataBr(r.data_abertura),
     texto(r.ultima_ficha).toUpperCase(),
+    texto(r.ultimo_ato).toUpperCase(),
     texto(r.registro_anterior),
     encerramento(r),
     texto(r.natureza).toUpperCase(),

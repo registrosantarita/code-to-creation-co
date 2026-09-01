@@ -52,6 +52,8 @@ export type MatriculaIndexada = {
   data_abertura: string | null;
   /** Número da última ficha, com V quando verso. */
   ultima_ficha: string | null;
+  /** Rótulo do último ato sequencial de registro ou averbação (R.05, AV.08). */
+  ultimo_ato: string | null;
   /** Origem da matrícula (R.01/M.10.345, AV.01/M.9.856, TR.12.456/L.3-K). */
   registro_anterior: string | null;
   encerrada: boolean;
@@ -434,6 +436,7 @@ export function extrairIndiceMatricula(textoBruto: string): MatriculaIndexada {
     cns,
     data_abertura: dataAbertura,
     ultima_ficha: extrairUltimaFicha(compacto),
+    ultimo_ato: ultimoAto ? rotuloAto(ultimoAto.tipo, ultimoAto.numero) : null,
     registro_anterior: auxiliar ? null : extrairRegistroAnterior(compacto),
     encerrada: ENCERRAMENTO.test(compacto),
     matriculas_abertas: extrairMatriculasAbertas(compacto),
@@ -658,6 +661,7 @@ export const CAMPOS_INDICE: { chave: keyof MatriculaIndexada; rotulo: string }[]
   { chave: "cns", rotulo: "CNS" },
   { chave: "data_abertura", rotulo: "Data de abertura" },
   { chave: "ultima_ficha", rotulo: "Última ficha" },
+  { chave: "ultimo_ato", rotulo: "Último ato" },
   { chave: "registro_anterior", rotulo: "Registro anterior" },
   { chave: "natureza", rotulo: "Natureza" },
   { chave: "certificacao", rotulo: "Certificação (INCRA)" },
